@@ -1,5 +1,5 @@
 /*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[11].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[11].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"Inter","arguments":[{"subsets":["latin"],"variable":"--font-sans"}],"variableName":"inter"} ***!
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[14].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"Inter","arguments":[{"subsets":["latin"],"variable":"--font-sans"}],"variableName":"inter"} ***!
   \***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /* cyrillic-ext */
 @font-face {
@@ -63,13 +63,13 @@
   font-display: swap;
   src: url(/_next/static/media/a34f9d1faa5f3315-s.p.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}@font-face {font-family: '__Inter_Fallback_d65c78';src: local("Arial");ascent-override: 90.20%;descent-override: 22.48%;line-gap-override: 0.00%;size-adjust: 107.40%
+}@font-face {font-family: '__Inter_Fallback_d65c78';src: local("Arial");ascent-override: 90.49%;descent-override: 22.56%;line-gap-override: 0.00%;size-adjust: 107.06%
 }.__className_d65c78 {font-family: '__Inter_d65c78', '__Inter_Fallback_d65c78';font-style: normal
 }.__variable_d65c78 {--font-sans: '__Inter_d65c78', '__Inter_Fallback_d65c78'
 }
 
 /*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[11].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[11].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"Press_Start_2P","arguments":[{"weight":"400","subsets":["latin"],"variable":"--font-arcade"}],"variableName":"pressStart2P"} ***!
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[14].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"Press_Start_2P","arguments":[{"weight":"400","subsets":["latin"],"variable":"--font-arcade"}],"variableName":"pressStart2P"} ***!
   \********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /* cyrillic-ext */
 @font-face {
@@ -115,13 +115,13 @@
   font-display: swap;
   src: url(/_next/static/media/9b8c15de1de72117-s.p.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}@font-face {font-family: '__Press_Start_2P_Fallback_3757f2';src: local("Arial");ascent-override: 44.14%;descent-override: 0.00%;line-gap-override: 0.00%;size-adjust: 226.55%
+}@font-face {font-family: '__Press_Start_2P_Fallback_3757f2';src: local("Arial");ascent-override: 44.58%;descent-override: 0.00%;line-gap-override: 0.00%;size-adjust: 224.32%
 }.__className_3757f2 {font-family: '__Press_Start_2P_3757f2', '__Press_Start_2P_Fallback_3757f2';font-weight: 400;font-style: normal
 }.__variable_3757f2 {--font-arcade: '__Press_Start_2P_3757f2', '__Press_Start_2P_Fallback_3757f2'
 }
 
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[11].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[11].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"VT323","arguments":[{"weight":"400","subsets":["latin"],"variable":"--font-terminal"}],"variableName":"vt323"} ***!
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[14].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"VT323","arguments":[{"weight":"400","subsets":["latin"],"variable":"--font-terminal"}],"variableName":"vt323"} ***!
   \******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /* vietnamese */
 @font-face {
@@ -149,13 +149,13 @@
   font-display: swap;
   src: url(/_next/static/media/f36ad5a94261c3ca-s.p.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}@font-face {font-family: '__VT323_Fallback_b4e394';src: local("Arial");ascent-override: 88.28%;descent-override: 22.07%;line-gap-override: 0.00%;size-adjust: 90.62%
+}@font-face {font-family: '__VT323_Fallback_b4e394';src: local("Arial");ascent-override: 89.16%;descent-override: 22.29%;line-gap-override: 0.00%;size-adjust: 89.73%
 }.__className_b4e394 {font-family: '__VT323_b4e394', '__VT323_Fallback_b4e394';font-weight: 400;font-style: normal
 }.__variable_b4e394 {--font-terminal: '__VT323_b4e394', '__VT323_Fallback_b4e394'
 }
 
 /*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[11].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[11].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"Silkscreen","arguments":[{"weight":"400","subsets":["latin"],"variable":"--font-pixel"}],"variableName":"silkscreen"} ***!
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[2].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[14].oneOf[2].use[2]!./node_modules/next/font/google/target.css?{"path":"src\\app\\layout.tsx","import":"Silkscreen","arguments":[{"weight":"400","subsets":["latin"],"variable":"--font-pixel"}],"variableName":"silkscreen"} ***!
   \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
 /* latin-ext */
 @font-face {
@@ -174,13 +174,13 @@
   font-display: swap;
   src: url(/_next/static/media/561cbdec896e9b46-s.p.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}@font-face {font-family: '__Silkscreen_Fallback_02bd42';src: local("Arial");ascent-override: 67.96%;descent-override: 16.50%;line-gap-override: 0.00%;size-adjust: 151.56%
+}@font-face {font-family: '__Silkscreen_Fallback_02bd42';src: local("Arial");ascent-override: 68.84%;descent-override: 16.71%;line-gap-override: 0.00%;size-adjust: 149.62%
 }.__className_02bd42 {font-family: '__Silkscreen_02bd42', '__Silkscreen_Fallback_02bd42';font-weight: 400;font-style: normal
 }.__variable_02bd42 {--font-pixel: '__Silkscreen_02bd42', '__Silkscreen_Fallback_02bd42'
 }
 
 /*!*****************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[11].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[11].oneOf[12].use[3]!./src/app/globals.css ***!
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[3]!./src/app/globals.css ***!
   \*****************************************************************************************************************************************************************************************************************************************************************/
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
@@ -692,6 +692,13 @@ video {
   * {
     cursor: none !important;
   }
+  
+  img, svg {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+  }
 .container {
   width: 100%;
   margin-right: auto;
@@ -711,6 +718,12 @@ video {
 .pointer-events-auto {
   pointer-events: auto;
 }
+.visible {
+  visibility: visible;
+}
+.invisible {
+  visibility: hidden;
+}
 .fixed {
   position: fixed;
 }
@@ -726,8 +739,17 @@ video {
 .inset-0 {
   inset: 0px;
 }
+.-bottom-2 {
+  bottom: -0.5rem;
+}
 .-bottom-9 {
   bottom: -2.25rem;
+}
+.bottom-0 {
+  bottom: 0px;
+}
+.bottom-10 {
+  bottom: 2.5rem;
 }
 .left-0 {
   left: 0px;
@@ -735,26 +757,71 @@ video {
 .left-1\/2 {
   left: 50%;
 }
+.left-4 {
+  left: 1rem;
+}
 .right-0 {
   right: 0px;
 }
 .right-4 {
   right: 1rem;
 }
+.right-8 {
+  right: 2rem;
+}
 .top-0 {
   top: 0px;
+}
+.top-24 {
+  top: 6rem;
 }
 .top-4 {
   top: 1rem;
 }
+.right-\[20\%\] {
+  right: 20%;
+}
+.left-\[20\%\] {
+  left: 20%;
+}
+.-right-2 {
+  right: -0.5rem;
+}
+.left-6 {
+  left: 1.5rem;
+}
+.top-1\/2 {
+  top: 50%;
+}
+.top-1\/3 {
+  top: 33.333333%;
+}
+.top-1\/4 {
+  top: 25%;
+}
+.-right-4 {
+  right: -1rem;
+}
+.left-8 {
+  left: 2rem;
+}
+.top-32 {
+  top: 8rem;
+}
 .z-10 {
   z-index: 10;
+}
+.z-20 {
+  z-index: 20;
 }
 .z-40 {
   z-index: 40;
 }
 .z-50 {
   z-index: 50;
+}
+.z-\[60\] {
+  z-index: 60;
 }
 .mx-4 {
   margin-left: 1rem;
@@ -788,6 +855,9 @@ video {
 .mb-8 {
   margin-bottom: 2rem;
 }
+.mt-1 {
+  margin-top: 0.25rem;
+}
 .mt-12 {
   margin-top: 3rem;
 }
@@ -796,6 +866,27 @@ video {
 }
 .mt-6 {
   margin-top: 1.5rem;
+}
+.mt-8 {
+  margin-top: 2rem;
+}
+.ml-4 {
+  margin-left: 1rem;
+}
+.mr-4 {
+  margin-right: 1rem;
+}
+.-mr-10 {
+  margin-right: -2.5rem;
+}
+.mb-0 {
+  margin-bottom: 0px;
+}
+.-ml-10 {
+  margin-left: -2.5rem;
+}
+.block {
+  display: block;
 }
 .inline-block {
   display: inline-block;
@@ -835,6 +926,9 @@ video {
 }
 .h-8 {
   height: 2rem;
+}
+.h-full {
+  height: 100%;
 }
 .min-h-screen {
   min-height: 100vh;
@@ -881,8 +975,22 @@ video {
 .max-w-lg {
   max-width: 32rem;
 }
+.max-w-xs {
+  max-width: 20rem;
+}
+.max-w-xl {
+  max-width: 36rem;
+}
 .flex-1 {
   flex: 1 1 0%;
+}
+.rotate-45 {
+  --tw-rotate: 45deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.scale-x-\[-1\] {
+  --tw-scale-x: -1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 .transform {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
@@ -896,9 +1004,6 @@ video {
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-.resize {
-  resize: both;
-}
 .grid-cols-1 {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
@@ -910,6 +1015,9 @@ video {
 }
 .items-start {
   align-items: flex-start;
+}
+.items-end {
+  align-items: flex-end;
 }
 .items-center {
   align-items: center;
@@ -991,15 +1099,33 @@ video {
 .border-2 {
   border-width: 2px;
 }
+.border-4 {
+  border-width: 4px;
+}
 .border-b {
   border-bottom-width: 1px;
 }
 .border-t {
   border-top-width: 1px;
 }
+.border-b-2 {
+  border-bottom-width: 2px;
+}
+.border-r-2 {
+  border-right-width: 2px;
+}
+.border-b-4 {
+  border-bottom-width: 4px;
+}
+.border-r-4 {
+  border-right-width: 4px;
+}
 .border-arcade-cyan {
   --tw-border-opacity: 1;
   border-color: rgb(0 255 255 / var(--tw-border-opacity, 1));
+}
+.border-arcade-cyan\/30 {
+  border-color: rgb(0 255 255 / 0.3);
 }
 .border-arcade-green {
   --tw-border-opacity: 1;
@@ -1026,6 +1152,10 @@ video {
 }
 .border-white\/10 {
   border-color: rgb(255 255 255 / 0.1);
+}
+.border-white {
+  --tw-border-opacity: 1;
+  border-color: rgb(255 255 255 / var(--tw-border-opacity, 1));
 }
 .bg-arcade-bg {
   --tw-bg-opacity: 1;
@@ -1103,6 +1233,14 @@ video {
 .bg-gray-900\/50 {
   background-color: rgb(17 24 39 / 0.5);
 }
+.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+.bg-yellow-300 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(253 224 71 / var(--tw-bg-opacity, 1));
+}
 .object-contain {
   -o-object-fit: contain;
      object-fit: contain;
@@ -1118,6 +1256,9 @@ video {
 }
 .p-8 {
   padding: 2rem;
+}
+.p-5 {
+  padding: 1.25rem;
 }
 .px-10 {
   padding-left: 2.5rem;
@@ -1230,6 +1371,12 @@ video {
   font-size: 1.25rem;
   line-height: 1.75rem;
 }
+.font-medium {
+  font-weight: 500;
+}
+.font-bold {
+  font-weight: 700;
+}
 .leading-relaxed {
   line-height: 1.625;
 }
@@ -1286,12 +1433,21 @@ video {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
+.text-white\/70 {
+  color: rgb(255 255 255 / 0.7);
+}
 .antialiased {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+.opacity-0 {
+  opacity: 0;
+}
 .opacity-10 {
   opacity: 0.1;
+}
+.opacity-100 {
+  opacity: 1;
 }
 .opacity-20 {
   opacity: 0.2;
@@ -1304,6 +1460,16 @@ video {
 .shadow-2xl {
   --tw-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   --tw-shadow-colored: 0 25px 50px -12px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-lg {
+  --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-xl {
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 .drop-shadow {
@@ -1335,14 +1501,16 @@ video {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
 .duration-300 {
   transition-duration: 300ms;
 }
 .ease-in-out {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-.ease-out {
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
 @keyframes enter {
 
@@ -1363,9 +1531,6 @@ video {
 }
 .ease-in-out {
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-.ease-out {
-  animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
 .custom-cursor {
     width: 24px;
@@ -1804,85 +1969,136 @@ video {
   }
 .swimming-fish {
     filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 4px currentColor);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, filter 0.3s ease;
     will-change: transform;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    position: relative;
   }
 .swimming-fish:hover {
-    cursor: pointer;
-    filter: drop-shadow(0 0 12px currentColor) drop-shadow(0 0 6px currentColor) brightness(1.3);
+    filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 8px currentColor) brightness(1.5);
+    transform: scale(1.15) !important;
+    z-index: 100 !important;
   }
-.swimming-fish.flipped {
-    transform: rotateY(180deg);
+.swimming-fish:active {
+    transform: scale(0.9) !important;
+  }
+.swimming-fish::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: currentColor;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
     opacity: 0;
-    transition: transform 0.5s ease, opacity 0.5s ease;
+    z-index: -1;
+    transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+  }
+.swimming-fish:hover::before {
+    width: 80px;
+    height: 80px;
+    opacity: 0.2;
+  }
+.fish-inner {
+    transition: transform 0.2s ease;
+  }
+.swimming-fish:hover .fish-inner {
+    animation: wiggle 0.5s infinite alternate ease-in-out;
+  }
+@keyframes wiggle {
+    0% {
+      transform: rotate(-5deg);
+    }
+    100% {
+      transform: rotate(5deg);
+    }
+  }
+.fish-image {
+    transition: filter 0.3s ease;
+  }
+.swimming-fish:hover .fish-image {
+    filter: brightness(1.5) !important;
+  }
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+  }
+::-webkit-scrollbar-track {
+    background: #121212;
+  }
+::-webkit-scrollbar-thumb {
+    background: #00FFFF;
+    border-radius: 4px;
+  }
+::-webkit-scrollbar-thumb:hover {
+    background: #FF00FF;
+  }
+/* Fireworks effects */
+@keyframes firework-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0);
+      opacity: 0;
+    }
+  }
+/* Modal backdrop blur effect */
+/* Glow effects for the fireworks */
+.drop-shadow-glow-cyan {
+    filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.8));
+  }
+/* Custom cursor enhancements */
+.custom-cursor {
+    width: 24px;
+    height: 24px;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+.custom-cursor.hover-fish {
+    width: 32px;
+    height: 32px;
+  }
+.custom-cursor.hover-fish::before {
+    background: #FF00FF;
+    width: 12px;
+    height: 12px;
+    box-shadow: 0 0 15px #FF00FF;
+  }
+.custom-cursor.hover-fish::after {
+    border-color: #FF00FF;
+    width: 36px;
+    height: 36px;
+    animation: pulse 1s ease-out infinite;
+  }
+/* Blinking text animation */
+.blinking-text {
+    animation: blink-text 1.5s infinite;
+    text-shadow: 0 0 8px currentColor;
+  }
+@keyframes blink-text {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
   }
 
 :root {
   --background: 0 0% 7%;
   --foreground: 0 0% 100%;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #121212;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #00FFFF;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #FF00FF;
-}
-
-/* Fireworks effects */
-@keyframes firework-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0);
-    opacity: 0;
-  }
-}
-
-.firework-particle {
-  position: absolute;
-  border-radius: 50%;
-  transform-origin: center;
-  animation: firework-pulse 0.8s ease-out forwards;
-}
-
-/* Modal backdrop blur effect */
-.modal-backdrop {
-  -webkit-backdrop-filter: blur(4px);
-          backdrop-filter: blur(4px);
-  transition: -webkit-backdrop-filter 0.3s ease;
-  transition: backdrop-filter 0.3s ease;
-  transition: backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease;
-}
-
-/* Glow effects for the fireworks */
-.glow-cyan {
-  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
-}
-
-.glow-magenta {
-  filter: drop-shadow(0 0 8px rgba(255, 0, 255, 0.8));
-}
-
-.glow-yellow {
-  filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.8));
-}
-
-.drop-shadow-glow-cyan {
-  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.8));
 }
 
 .hover\:border-arcade-cyan\/80:hover {
@@ -2008,5 +2224,29 @@ video {
   .lg\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+/*!***************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[3]!./src/styles/rive-character.css ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************/
+.rive-character-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  max-width: 500px;
+}
+
+.speech-bubble {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.speech-bubble-arrow {
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.05);
+}
+
+.rive-container {
+  position: relative;
+  z-index: 5;
 }
 

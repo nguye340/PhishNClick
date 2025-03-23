@@ -16,9 +16,32 @@ export function LandingHero() {
   const [isButtonPressed, setIsButtonPressed] = useState(false)
   const [isLoginPressed, setIsLoginPressed] = useState(false)
   const [showAboutModal, setShowAboutModal] = useState(false)
+  const coinSoundRef = React.useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio element
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      coinSoundRef.current = new Audio('/sounds/game-start-6104.mp3');
+      coinSoundRef.current.preload = 'auto';
+    }
+    
+    return () => {
+      if (coinSoundRef.current) {
+        coinSoundRef.current.pause();
+        coinSoundRef.current = null;
+      }
+    };
+  }, []);
 
   const handleInsertCoin = () => {
     setIsButtonPressed(true)
+    
+    // Play coin sound
+    if (coinSoundRef.current) {
+      coinSoundRef.current.currentTime = 0; // Reset sound to start
+      coinSoundRef.current.play().catch(err => console.log('Audio play error:', err));
+    }
+    
     // Navigate after a short delay to allow the animation to play
     setTimeout(() => {
       router.push("/assessment/phishing-test")

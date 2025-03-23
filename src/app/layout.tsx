@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import { Press_Start_2P, VT323, Silkscreen } from "next/font/google"
 import { ClientLayout } from "@/components/client-layout"
 import "./globals.css"
+import '@/styles/rive-character.css'
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 const pressStart2P = Press_Start_2P({

@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
 import { Fish } from "lucide-react"
+import { RiveMainCharacter } from "../../components/rive"
 
 export function AssessmentIntro() {
   useGSAP(() => {
@@ -17,7 +18,7 @@ export function AssessmentIntro() {
   }, [])
 
   return (
-    <section className="min-h-screen flex items-center justify-center px-4">
+    <section className="min-h-screen flex items-center justify-center px-4 relative">
       <div className="max-w-2xl mx-auto text-center">
         <motion.div
           initial={{ scale: 0 }}
@@ -60,6 +61,16 @@ export function AssessmentIntro() {
           START TEST
         </motion.button>
       </div>
+      
+      {/* Character positioned at the left side but shifted right */}
+      <RiveMainCharacter 
+        advice="Welcome to the phishing assessment! I'll guide you through identifying suspicious emails. Ready to test your skills?"
+        position="left"
+        isAbsolute={true}
+        className="left-[20%]" // Move character 20% from the left edge
+      />
     </section>
   )
 }
+
+export default AssessmentIntro;

@@ -16,6 +16,13 @@
   * {
     cursor: none !important;
   }
+  
+  img, svg {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+  }
 }
 
 @layer utilities {
@@ -507,79 +514,175 @@
 
   .swimming-fish {
     filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 4px currentColor);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, filter 0.3s ease;
     will-change: transform;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    position: relative;
   }
   
   .swimming-fish:hover {
-    cursor: pointer;
-    filter: drop-shadow(0 0 12px currentColor) drop-shadow(0 0 6px currentColor) brightness(1.3);
+    filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 8px currentColor) brightness(1.5);
+    transform: scale(1.15) !important;
+    z-index: 100 !important;
   }
   
-  .swimming-fish.flipped {
-    transform: rotateY(180deg);
+  .swimming-fish:active {
+    transform: scale(0.9) !important;
+  }
+  
+  .swimming-fish::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: currentColor;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
     opacity: 0;
-    transition: transform 0.5s ease, opacity 0.5s ease;
+    z-index: -1;
+    transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .swimming-fish:hover::before {
+    width: 80px;
+    height: 80px;
+    opacity: 0.2;
+  }
+  
+  .fish-inner {
+    transition: transform 0.2s ease;
+  }
+  
+  .swimming-fish:hover .fish-inner {
+    animation: wiggle 0.5s infinite alternate ease-in-out;
+  }
+  
+  @keyframes wiggle {
+    0% {
+      transform: rotate(-5deg);
+    }
+    100% {
+      transform: rotate(5deg);
+    }
+  }
+  
+  .fish-image {
+    transition: filter 0.3s ease;
+  }
+  
+  .swimming-fish:hover .fish-image {
+    filter: brightness(1.5) !important;
   }
 
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #121212;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #00FFFF;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #FF00FF;
-}
-
-/* Fireworks effects */
-@keyframes firework-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
   }
-  100% {
-    transform: scale(0);
-    opacity: 0;
+
+  ::-webkit-scrollbar-track {
+    background: #121212;
   }
-}
 
-.firework-particle {
-  position: absolute;
-  border-radius: 50%;
-  transform-origin: center;
-  animation: firework-pulse 0.8s ease-out forwards;
-}
+  ::-webkit-scrollbar-thumb {
+    background: #00FFFF;
+    border-radius: 4px;
+  }
 
-/* Modal backdrop blur effect */
-.modal-backdrop {
-  backdrop-filter: blur(4px);
-  transition: backdrop-filter 0.3s ease;
-}
+  ::-webkit-scrollbar-thumb:hover {
+    background: #FF00FF;
+  }
 
-/* Glow effects for the fireworks */
-.glow-cyan {
-  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
-}
+  /* Fireworks effects */
+  @keyframes firework-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0);
+      opacity: 0;
+    }
+  }
 
-.glow-magenta {
-  filter: drop-shadow(0 0 8px rgba(255, 0, 255, 0.8));
-}
+  .firework-particle {
+    position: absolute;
+    border-radius: 50%;
+    transform-origin: center;
+    animation: firework-pulse 0.8s ease-out forwards;
+  }
 
-.glow-yellow {
-  filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.8));
-}
+  /* Modal backdrop blur effect */
+  .modal-backdrop {
+    backdrop-filter: blur(4px);
+    transition: backdrop-filter 0.3s ease;
+  }
 
-.drop-shadow-glow-cyan {
-  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.8));
+  /* Glow effects for the fireworks */
+  .glow-cyan {
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+  }
+
+  .glow-magenta {
+    filter: drop-shadow(0 0 8px rgba(255, 0, 255, 0.8));
+  }
+
+  .glow-yellow {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.8));
+  }
+
+  .drop-shadow-glow-cyan {
+    filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.8));
+  }
+
+  /* Custom cursor enhancements */
+  .custom-cursor {
+    width: 24px;
+    height: 24px;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .custom-cursor.hover-fish {
+    width: 32px;
+    height: 32px;
+  }
+
+  .custom-cursor.hover-fish::before {
+    background: #FF00FF;
+    width: 12px;
+    height: 12px;
+    box-shadow: 0 0 15px #FF00FF;
+  }
+
+  .custom-cursor.hover-fish::after {
+    border-color: #FF00FF;
+    width: 36px;
+    height: 36px;
+    animation: pulse 1s ease-out infinite;
+  }
+
+  /* Blinking text animation */
+  .blinking-text {
+    animation: blink-text 1.5s infinite;
+    text-shadow: 0 0 8px currentColor;
+  }
+
+  @keyframes blink-text {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
 }
