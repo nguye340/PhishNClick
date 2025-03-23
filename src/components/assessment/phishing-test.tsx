@@ -3,32 +3,52 @@
 import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
+import { RiveMainCharacter } from "../../components/rive"
 
-const questions = [
+interface Option {
+  id: string;
+  text: string;
+}
+
+interface Question {
+  id: string;
+  question: string;
+  options: Option[];
+  correctAnswer: string;
+  explanation: string;
+}
+
+interface PhishingTestProps {
+  questions?: Question[];
+}
+
+const questions: Question[] = [
   {
-    id: 1,
+    id: "1",
     question: "Which of these is a sign of a phishing email?",
     options: [
       { id: "A", text: "Comes from a known colleague" },
-      { id: "B", text: "Urgent request for personal information" },
+      { id: "B", text: "Creates a sense of urgency" },
       { id: "C", text: "Contains your correct name" },
       { id: "D", text: "Has the company logo" }
     ],
-    correctAnswer: "B"
+    correctAnswer: "B",
+    explanation: "Phishing emails often create a sense of urgency to prompt the recipient into taking action without thinking."
   },
   {
-    id: 2,
+    id: "2",
     question: "What should you do if you receive a suspicious email?",
     options: [
       { id: "A", text: "Forward it to all colleagues" },
-      { id: "B", text: "Click links to investigate" },
+      { id: "B", text: "Click links to check them" },
       { id: "C", text: "Report to IT security" },
       { id: "D", text: "Reply asking for verification" }
     ],
-    correctAnswer: "C"
+    correctAnswer: "C",
+    explanation: "Reporting suspicious emails to IT security helps prevent potential attacks and ensures the email is handled properly."
   },
   {
-    id: 3,
+    id: "3",
     question: "Which URL is most likely to be legitimate?",
     options: [
       { id: "A", text: "paypal-secure.net" },
@@ -36,26 +56,29 @@ const questions = [
       { id: "C", text: "paypal.security-check.com" },
       { id: "D", text: "secure-paypal-login.com" }
     ],
-    correctAnswer: "B"
+    correctAnswer: "B",
+    explanation: "Legitimate URLs typically do not contain extra words or characters. Paypal's official URL is paypal.com."
   }
 ]
 
-export function PhishingTest() {
+export function PhishingTest({ questions: providedQuestions }: PhishingTestProps) {
   const router = useRouter()
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState("")
   const [score, setScore] = useState(0)
   const [showResult, setShowResult] = useState(false)
 
+  const questionsToUse = providedQuestions || questions;
+
   const handleAnswer = (answerId: string) => {
     setSelectedAnswer(answerId)
     
-    if (answerId === questions[currentQuestion].correctAnswer) {
+    if (answerId === questionsToUse[currentQuestion].correctAnswer) {
       setScore(score + 1)
     }
 
     setTimeout(() => {
-      if (currentQuestion < questions.length - 1) {
+      if (currentQuestion < questionsToUse.length - 1) {
         setCurrentQuestion(currentQuestion + 1)
         setSelectedAnswer("")
       } else {
@@ -67,6 +90,16 @@ export function PhishingTest() {
   const handleContinue = () => {
     router.push("/dashboard")
   }
+
+  const getCharacterAdvice = () => {
+    if (currentQuestion === 0) {
+      return "Let's start! Look carefully at each email and decide if it's legitimate or a phishing attempt.";
+    } else if (currentQuestion < questionsToUse.length - 1) {
+      return selectedAnswer === questionsToUse[currentQuestion].correctAnswer ? "Great job! You're getting good at this!" : "Don't worry, phishing can be tricky. Let's learn from this!";
+    } else {
+      return "You've completed all the questions! Let's see how you did.";
+    }
+  };
 
   if (showResult) {
     return (
@@ -82,7 +115,7 @@ export function PhishingTest() {
             </h2>
             
             <p className="text-2xl mb-6 text-arcade-yellow">
-              FINAL SCORE: {score}/{questions.length}
+              FINAL SCORE: {score}/{questionsToUse.length}
             </p>
 
             <p className="text-gray-300 mb-8">
@@ -104,9 +137,9 @@ export function PhishingTest() {
   }
 
   return (
-    <section className="phishing-test min-h-screen flex items-center justify-center px-4">
-      <div className="max-w-2xl w-full">
-        <div className="bg-arcade-bg/80 backdrop-blur-sm p-8 rounded-lg border-2 border-arcade-cyan neon-border">
+    <section className="phishing-test min-h-screen flex items-center justify-center px-4 relative">
+      <div className="max-w-xl w-full z-20 relative">
+        <div className="bg-arcade-bg/80 backdrop-blur-sm p-6 rounded-lg border-2 border-arcade-cyan neon-border">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
               <span className="font-arcade text-arcade-cyan">PHISHY</span>
@@ -126,16 +159,16 @@ export function PhishingTest() {
             >
               <div className="space-y-4">
                 <h3 className="font-arcade text-lg text-arcade-green">
-                  LEVEL 1-{currentQuestion + 1}: {questions[currentQuestion].question}
+                  LEVEL 1-{currentQuestion + 1}: {questionsToUse[currentQuestion].question}
                 </h3>
 
                 <div className="grid gap-4">
-                  {questions[currentQuestion].options.map((option) => (
+                  {questionsToUse[currentQuestion].options.map((option: Option) => (
                     <motion.button
                       key={option.id}
                       className={`w-full text-left p-4 rounded-lg border-2 transition-colors
                         ${selectedAnswer === option.id
-                          ? selectedAnswer === questions[currentQuestion].correctAnswer
+                          ? selectedAnswer === questionsToUse[currentQuestion].correctAnswer
                             ? "border-arcade-green bg-arcade-green/20 text-arcade-green"
                             : "border-arcade-red bg-arcade-red/20 text-arcade-red"
                           : "border-arcade-cyan hover:border-arcade-cyan/80"
@@ -168,6 +201,16 @@ export function PhishingTest() {
           </AnimatePresence>
         </div>
       </div>
+      
+      {/* Character positioned at the right corner */}
+      <RiveMainCharacter 
+        advice={getCharacterAdvice()}
+        position="right"
+        isAbsolute={true}
+        className="right-0" // Position at the right edge
+      />
     </section>
   )
 }
+
+export default PhishingTest;

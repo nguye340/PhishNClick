@@ -1,0 +1,559 @@
+"use client"
+
+import React, { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
+import { Fireworks } from '../effects/fireworks'
+import { AboutUsModal } from '../modals/about-us-modal'
+import { motion, AnimatePresence } from 'framer-motion'
+
+// Fish colors
+const FISH_COLORS = [
+  '#00FFFF', // Cyan
+  '#FF00FF', // Magenta
+  '#FFFF00', // Yellow
+  '#00FF00', // Green
+  '#FF0000', // Red
+  '#0088FF', // Blue
+];
+
+// Fish type definition
+interface Fish {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  rotation: number;
+  scale: number;
+  color: string;
+  isClicked: boolean;
+  opacity: number;
+  clickRotation: number;
+  clickScale: number;
+  glowIntensity: number;
+  fadeInProgress?: boolean;
+  fadeOutProgress?: boolean;
+  movementPattern?: 'zigzag' | 'circular' | 'straight';
+  patternTimer?: number;
+}
+
+export function SwimmingFish() {
+  const [fishes, setFishes] = useState<Fish[]>([]);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHoveringFish, setIsHoveringFish] = useState(false);
+  const [clickedCount, setClickedCount] = useState(0);
+  const [showFireworks, setShowFireworks] = useState(false);
+  const [showAboutUsModal, setShowAboutUsModal] = useState(false);
+  const [showScorePopup, setShowScorePopup] = useState(false);
+  const [scorePopupPosition, setScorePopupPosition] = useState({ x: 0, y: 0 });
+  const [scorePopupColor, setScorePopupColor] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number>();
+  const lastUpdateTimeRef = useRef<number>(0);
+  const targetFPSRef = useRef<number>(60);
+  const frameIntervalRef = useRef<number>(1000 / 60);
+  const catchSoundRef = useRef<HTMLAudioElement | null>(null);
+  const completeSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio elements
+  useEffect(() => {
+    catchSoundRef.current = new Audio('/sounds/catch.mp3');
+    completeSoundRef.current = new Audio('/sounds/complete.mp3');
+
+    return () => {
+      if (catchSoundRef.current) {
+        catchSoundRef.current.pause();
+        catchSoundRef.current = null;
+      }
+      if (completeSoundRef.current) {
+        completeSoundRef.current.pause();
+        completeSoundRef.current = null;
+      }
+    };
+  }, []);
+
+  // Initialize fish
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const container = containerRef.current;
+    const containerRect = container.getBoundingClientRect();
+
+    // Movement patterns
+    const patterns = ['zigzag', 'circular', 'straight'];
+
+    // Create fish with random positions and properties
+    const newFishes: Fish[] = Array.from({ length: 12 }).map((_, index) => ({
+      id: index,
+      x: Math.random() * (containerRect.width - 100),
+      y: Math.random() * (containerRect.height - 100),
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      rotation: Math.random() * 360,
+      scale: 1.2 + Math.random() * 1.3, // Scale between 1.2x and 2.5x
+      color: FISH_COLORS[index % FISH_COLORS.length],
+      isClicked: false,
+      opacity: 1,
+      clickRotation: 0,
+      clickScale: 1,
+      glowIntensity: 0,
+      movementPattern: patterns[Math.floor(Math.random() * patterns.length)] as 'zigzag' | 'circular' | 'straight',
+      patternTimer: 0
+    }));
+
+    setFishes(newFishes);
+
+    // Track mouse position
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  // Handle fish click
+  const handleFishClick = (id: number) => {
+    // Find the fish to get its position and color for the score popup
+    const clickedFish = fishes.find(fish => fish.id === id);
+
+    if (clickedFish && !clickedFish.isClicked) {
+      // Play catch sound
+      if (catchSoundRef.current) {
+        catchSoundRef.current.currentTime = 0;
+        catchSoundRef.current.play().catch(err => console.log('Audio play error:', err));
+      }
+
+      // Show score popup
+      setScorePopupPosition({ x: clickedFish.x, y: clickedFish.y });
+      setScorePopupColor(clickedFish.color);
+      setShowScorePopup(true);
+
+      // Hide score popup after animation
+      setTimeout(() => {
+        setShowScorePopup(false);
+      }, 1000);
+    }
+
+    setFishes(prevFishes => {
+      return prevFishes.map(fish => {
+        if (fish.id === id && !fish.isClicked) {
+          return {
+            ...fish,
+            isClicked: true,
+            clickRotation: 0,
+            clickScale: 1
+          };
+        }
+        return fish;
+      });
+    });
+
+    // Increment clicked count
+    setClickedCount(prev => {
+      const newCount = prev + 1;
+
+      // If all fish are clicked, show fireworks and modal
+      if (newCount === fishes.length) {
+        // Play completion sound
+        if (completeSoundRef.current) {
+          completeSoundRef.current.play().catch(err => console.log('Audio play error:', err));
+        }
+
+        setShowFireworks(true);
+        setTimeout(() => {
+          setShowAboutUsModal(true);
+        }, 2000);
+      }
+
+      return newCount;
+    });
+  };
+
+  // Reset fish when modal is closed
+  const handleModalClose = () => {
+    setShowAboutUsModal(false);
+    setShowFireworks(false);
+
+    // Reset all fish
+    if (containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+
+      setFishes(prevFishes => {
+        return prevFishes.map(fish => ({
+          ...fish,
+          x: Math.random() * (containerRect.width - 100),
+          y: Math.random() * (containerRect.height - 100),
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 2,
+          rotation: Math.random() * 360,
+          isClicked: false,
+          opacity: 1,
+          clickRotation: 0,
+          clickScale: 1,
+          glowIntensity: 0
+        }));
+      });
+    }
+
+    setClickedCount(0);
+  };
+
+  // Update fish positions with FPS limiting
+  useEffect(() => {
+    let animationFrameId: number | null = null;
+
+    const updateFishPositions = () => {
+      if (!containerRef.current) return;
+
+      const container = containerRef.current;
+      const containerRect = container.getBoundingClientRect();
+
+      setFishes(prevFishes => {
+        // Check if any fish is being hovered
+        const hoveredFish = prevFishes.some(fish => {
+          const fishCenterX = fish.x + 30;
+          const fishCenterY = fish.y + 15;
+          const dx = fishCenterX - mousePosition.x;
+          const dy = fishCenterY - mousePosition.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          return distance < 50 && !fish.isClicked;
+        });
+
+        setIsHoveringFish(hoveredFish);
+
+        return prevFishes.map(fish => {
+          if (fish.isClicked) {
+            // If fish is clicked, continue the fade out animation
+            const newOpacity = fish.opacity - 0.05;
+            if (newOpacity <= 0) {
+              // Reset fish when fully faded
+              return {
+                ...fish,
+                x: Math.random() * (containerRect.width - 100),
+                y: Math.random() * (containerRect.height - 100),
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                rotation: Math.random() * 360,
+                isClicked: false,
+                opacity: 0,
+                clickRotation: 0,
+                clickScale: 1,
+                fadeInProgress: true
+              };
+            }
+            return {
+              ...fish,
+              opacity: newOpacity,
+              clickRotation: fish.clickRotation + 10,
+              clickScale: fish.clickScale - 0.02
+            };
+          }
+
+          // Fade in animation for respawned fish
+          if (fish.fadeInProgress) {
+            const newOpacity = fish.opacity + 0.05;
+            if (newOpacity >= 1) {
+              return {
+                ...fish,
+                opacity: 1,
+                fadeInProgress: false
+              };
+            }
+            return {
+              ...fish,
+              opacity: newOpacity
+            };
+          }
+
+          // Calculate distance to mouse
+          const dx = fish.x - mousePosition.x;
+          const dy = fish.y - mousePosition.y;
+          const distanceToMouse = Math.sqrt(dx * dx + dy * dy);
+
+          // Avoid mouse if too close
+          let vx = fish.vx;
+          let vy = fish.vy;
+
+          if (distanceToMouse < 250) {
+            const avoidFactor = 1 - distanceToMouse / 250;
+            vx -= dx * avoidFactor * 0.05;
+            vy -= dy * avoidFactor * 0.05;
+          }
+
+          // Apply movement pattern
+          const patternTimer = (fish.patternTimer || 0) + 1;
+
+          if (fish.movementPattern === 'zigzag') {
+            // Zigzag pattern - change direction periodically
+            if (patternTimer % 60 === 0) {
+              vx = -vx + (Math.random() - 0.5) * 0.5;
+              vy = -vy + (Math.random() - 0.5) * 0.5;
+            }
+          } else if (fish.movementPattern === 'circular') {
+            // Circular pattern - apply circular force
+            const angle = patternTimer * 0.05;
+            const circularForceX = Math.cos(angle) * 0.05;
+            const circularForceY = Math.sin(angle) * 0.05;
+            vx += circularForceX;
+            vy += circularForceY;
+          } else {
+            // Straight pattern with occasional direction changes
+            if (patternTimer % 120 === 0) {
+              // Pick a new direction but maintain speed
+              const speed = Math.sqrt(vx * vx + vy * vy);
+              const angle = Math.random() * Math.PI * 2;
+              vx = Math.cos(angle) * speed;
+              vy = Math.sin(angle) * speed;
+            }
+          }
+
+          // Apply some random movement
+          vx += (Math.random() - 0.5) * 0.1;
+          vy += (Math.random() - 0.5) * 0.1;
+
+          // Limit velocity
+          const speed = Math.sqrt(vx * vx + vy * vy);
+          if (speed > 2) {
+            vx = (vx / speed) * 2;
+            vy = (vy / speed) * 2;
+          }
+
+          // Update position
+          let newX = fish.x + vx;
+          let newY = fish.y + vy;
+
+          // Check if fish is at the top or bottom edge
+          const edgeBuffer = 50; // Buffer to detect edges
+          const atTopEdge = newY < edgeBuffer;
+          const atBottomEdge = newY > containerRect.height - edgeBuffer;
+
+          // If fish is at the top or bottom edge, start fade out
+          if (atTopEdge || atBottomEdge) {
+            return {
+              ...fish,
+              fadeOutProgress: true,
+              opacity: fish.opacity - 0.05
+            };
+          }
+
+          // If fish is fading out due to edge
+          if (fish.fadeOutProgress) {
+            const newOpacity = fish.opacity - 0.05;
+            if (newOpacity <= 0) {
+              // Reset fish position to a random side edge
+              const fromLeft = Math.random() > 0.5;
+              return {
+                ...fish,
+                x: fromLeft ? 0 : containerRect.width,
+                y: Math.random() * (containerRect.height - 100) + 50,
+                vx: fromLeft ? Math.random() * 2 : -Math.random() * 2,
+                vy: (Math.random() - 0.5) * 2,
+                rotation: Math.random() * 360,
+                opacity: 0,
+                fadeOutProgress: false,
+                fadeInProgress: true
+              };
+            }
+            return {
+              ...fish,
+              opacity: newOpacity
+            };
+          }
+
+          // Bounce off walls
+          if (newX < 0 || newX > containerRect.width - 60) {
+            vx = -vx;
+            newX = fish.x + vx;
+          }
+
+          if (newY < 0 || newY > containerRect.height - 30) {
+            vy = -vy;
+            newY = fish.y + vy;
+          }
+
+          // Calculate rotation based on movement direction
+          let targetRotation = Math.atan2(vy, vx) * (180 / Math.PI);
+          if (vx < 0) {
+            targetRotation += 180;
+          }
+
+          // Smooth rotation
+          let rotation = fish.rotation;
+          const rotationDiff = targetRotation - rotation;
+          rotation += rotationDiff * 0.1;
+
+          // Calculate glow intensity based on mouse proximity
+          const glowIntensity = distanceToMouse < 250
+            ? 1 - (distanceToMouse / 250)
+            : 0;
+
+          return {
+            ...fish,
+            x: newX,
+            y: newY,
+            vx,
+            vy,
+            rotation,
+            glowIntensity,
+            patternTimer
+          };
+        });
+      });
+
+    const animate = (timestamp: number) => {
+      if (!lastUpdateTimeRef.current) {
+        lastUpdateTimeRef.current = timestamp;
+      }
+
+      const elapsed = timestamp - lastUpdateTimeRef.current;
+
+      if (elapsed > frameIntervalRef.current) {
+        updateFishPositions();
+        lastUpdateTimeRef.current = timestamp;
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate(0);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [mousePosition]);
+
+  // Update custom cursor when hovering fish
+  useEffect(() => {
+    const cursor = document.querySelector('.custom-cursor');
+    if (cursor) {
+      if (isHoveringFish) {
+        cursor.classList.add('hover-fish');
+      } else {
+        cursor.classList.remove('hover-fish');
+      }
+    }
+  }, [isHoveringFish]);
+
+  return (
+    <>
+      <div
+        ref={containerRef}
+        className="fixed inset-0 pointer-events-none z-10"
+        style={{ overflow: 'hidden' }}
+      >
+        {fishes.map(fish => (
+          <div
+            key={fish.id}
+            className="absolute pointer-events-auto swimming-fish"
+            style={{
+              left: fish.x - 20, // Increase hit box by expanding the area
+              top: fish.y - 20,  // Increase hit box by expanding the area
+              transform: `rotate(${fish.rotation + (fish.isClicked ? fish.clickRotation : 0)}deg) scale(${fish.scale * (fish.isClicked ? fish.clickScale : 1)})`,
+              opacity: fish.opacity,
+              color: fish.color,
+              zIndex: 10,
+              width: '100px',  // Increased from 60px
+              height: '70px',  // Increased from 30px
+              transition: fish.isClicked ? 'none' : 'transform 0.1s ease-out, filter 0.2s ease',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              MozUserSelect: 'none',
+              msUserSelect: 'none',
+              padding: '20px', // Add padding to increase hit area
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={() => handleFishClick(fish.id)}
+          >
+            <div
+              className="fish-inner"
+              style={{
+                filter: `drop-shadow(0 0 ${3 + fish.glowIntensity * 5}px ${fish.color})`,
+                transition: 'filter 0.1s ease-in-out, transform 0.2s ease',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
+                transform: fish.isClicked ? 'scale(0.8) rotate(180deg)' : 'scale(1)'
+              }}
+            >
+              <Image
+                src="/img/catphish_white_centered.svg"
+                alt="Catfish"
+                width={60}
+                height={30}
+                style={{
+                  filter: `brightness(${1 + fish.glowIntensity * 0.5}) hue-rotate(${fish.id * 30}deg)`,
+                }}
+                className="fish-image"
+              />
+            </div>
+          </div>
+        ))}
+
+        {/* Score popup animation */}
+        <AnimatePresence>
+          {showScorePopup && (
+            <motion.div
+              initial={{ opacity: 0, y: 0, scale: 0.5 }}
+              animate={{ opacity: 1, y: -50, scale: 1.2 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.8 }}
+              className="absolute pointer-events-none"
+              style={{
+                left: scorePopupPosition.x + 30,
+                top: scorePopupPosition.y,
+                color: scorePopupColor,
+                zIndex: 20,
+                fontWeight: 'bold',
+                textShadow: `0 0 8px ${scorePopupColor}`
+              }}
+            >
+              <span className="font-arcade text-2xl">+1</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Blinking instruction text */}
+        <div className="fixed bottom-10 left-0 right-0 text-center z-20 pointer-events-none">
+          <p className="font-arcade text-xl text-arcade-cyan blinking-text">
+            Catch all the phish to reveal a surprise!
+          </p>
+        </div>
+
+        {/* Score counter */}
+        <div className="fixed top-5 right-5 z-20 pointer-events-none">
+          <div className="bg-black bg-opacity-50 p-3 rounded-lg border border-arcade-cyan">
+            <p className="font-arcade text-arcade-cyan">
+              Score: <span className="text-arcade-magenta">{clickedCount}</span> / {fishes.length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Fireworks
+        isActive={showFireworks}
+        duration={5}
+      />
+
+      <AboutUsModal
+        isOpen={showAboutUsModal}
+        onClose={handleModalClose}
+      />
+
+      {/* Hidden audio elements for preloading */}
+      <audio src="/sounds/catch.mp3" preload="auto" style={{ display: 'none' }} />
+      <audio src="/sounds/complete.mp3" preload="auto" style={{ display: 'none' }} />
+    </>
+  )
+}

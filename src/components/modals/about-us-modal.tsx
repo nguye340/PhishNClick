@@ -58,7 +58,7 @@ export function AboutUsModal({ isOpen, onClose }: AboutUsModalProps) {
                   
                   <div className="vhs-text font-terminal text-lg text-white space-y-4">
                     <p className="text-arcade-green">
-                      You've caught all the phish!
+                      You've spotted all the (cat)phish!
                     </p>
                     
                     <h3 className="font-arcade text-xl text-arcade-magenta mt-6 mb-2">
