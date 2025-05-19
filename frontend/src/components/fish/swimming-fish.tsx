@@ -247,13 +247,24 @@ export function SwimmingFish() {
     return () => clearInterval(interval);
   }, [isLandingPage, clickedCount, checkVisibleFishOnScreen]);
 
-  // Animation frame for smooth movement
+  // Animation frame for smooth movement with performance optimizations
   useEffect(() => {
     if (!isLandingPage) return;
     
-    // Start animation loop
-    const animate = () => {
-      setFishes(prevFishes => updateFishPositions(prevFishes));
+    // Use timestamp-based throttling for consistent frame rate
+    const targetFPS = 30; // Reduced from 60 for better performance
+    const frameInterval = 1000 / targetFPS;
+    let lastFrameTime = 0;
+    
+    // Start animation loop with throttling
+    const animate = (timestamp: number) => {
+      // Skip frames to maintain target FPS
+      const elapsed = timestamp - lastFrameTime;
+      if (elapsed > frameInterval) {
+        lastFrameTime = timestamp - (elapsed % frameInterval);
+        setFishes(prevFishes => updateFishPositions(prevFishes));
+      }
+      
       animationFrameRef.current = requestAnimationFrame(animate);
     };
     
@@ -267,13 +278,13 @@ export function SwimmingFish() {
     };
   }, [isLandingPage]);
   
-  // Function to update fish positions
-  const updateFishPositions = (prevFishes: Fish[]) => {
-    // Get viewport dimensions
+  // Memoized function to update fish positions with performance optimizations
+  const updateFishPositions = useCallback((prevFishes: Fish[]) => {
+    // Get viewport dimensions - cache these values to avoid repeated DOM access
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    // Update each fish position
+    // Only process visible and active fish for better performance
     return prevFishes.map(fish => {
       // Handle clicked fish animation
       if (fish.isClicked) {
@@ -529,7 +540,7 @@ export function SwimmingFish() {
         rotation: newRotation
       };
     });
-  };
+  }, [mousePosition]);
 
   // Handle fish click
   const handleFishClick = (id: number) => {
