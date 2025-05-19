@@ -2,23 +2,32 @@
   "pages": {
     "/page": [
       "static/chunks/webpack.js",
+      "static/chunks/framework.js",
       "static/chunks/main-app.js",
+      "static/chunks/commons.js",
       "static/chunks/app/page.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
+      "static/chunks/framework.js",
       "static/chunks/main-app.js",
+      "static/chunks/commons.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
     "/assessment/phishing-test/page": [
       "static/chunks/webpack.js",
+      "static/chunks/framework.js",
       "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/vendors-_app-pages-browser_node_modules_rive-app_react-canvas_dist_index_js-_app-pages-browse-b6f0c9.js",
       "static/chunks/app/assessment/phishing-test/page.js"
     ],
     "/assessment/phishing-test/layout": [
       "static/chunks/webpack.js",
+      "static/chunks/framework.js",
       "static/chunks/main-app.js",
+      "static/chunks/commons.js",
       "static/chunks/app/assessment/phishing-test/layout.js"
     ]
   }

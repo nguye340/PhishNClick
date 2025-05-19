@@ -1,35 +1,47 @@
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const path = require('path');
-require('dotenv').config();
+import { connectDB } from './config/db.js';
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import dotenv from 'dotenv';
+
+// ES Module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables
+dotenv.config();
+
+// Verify environment variables are loaded
+console.log('Environment variables loaded:', process.env.MONGO_URI ? 'MONGO_URI found' : 'MONGO_URI missing');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-
-// MongoDB Connection (uncomment when ready to connect to a database)
-// mongoose.connect(process.env.MONGODB_URI)
-//   .then(() => console.log('MongoDB connection established'))
-//   .catch(err => console.log('MongoDB connection error:', err));
+//app.use(cors());
+//app.use(express.json());
 
 // API Routes
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'PhishNClick API is running' });
+app.get("/scenarios", (req, res) => {
+  res.json({ message: "Scenarios endpoint" });
 });
 
-// Serve static assets if in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
+// app.get('/api/health', (req, res) => {
+//   res.json({ status: 'ok', message: 'PhishNClick API is running' });
+// });
+
+// // Serve static assets if in production
+// if (process.env.NODE_ENV === 'production') {
+//   app.use(express.static(path.join(__dirname, '../frontend/build')));
   
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
-  });
-}
+//   app.get('*', (req, res) => {
+//     res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
+//   });
+// }
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  connectDB();
 });

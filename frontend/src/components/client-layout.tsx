@@ -1,27 +1,36 @@
 "use client"
 
 import { useEffect } from "react"
-import gsap from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { CursorProvider } from "@/components/cursor/cursor-provider"
 import { SwimmingFish } from "@/components/fish/swimming-fish"
 
+// Dynamically import GSAP to prevent chunk loading errors
+let gsap: any;
+let ScrollTrigger: any;
+
 interface ClientLayoutProps {
   children: React.ReactNode
-  inter: any
-  pressStart2P: any
-  vt323: any
-  silkscreen: any
 }
 
-export function ClientLayout({ children, inter, pressStart2P, vt323, silkscreen }: ClientLayoutProps) {
+export function ClientLayout({ children }: ClientLayoutProps) {
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger)
+    // Dynamically import GSAP only on the client side
+    const loadGsap = async () => {
+      try {
+        gsap = (await import('gsap')).default;
+        ScrollTrigger = (await import('gsap/ScrollTrigger')).ScrollTrigger;
+        gsap.registerPlugin(ScrollTrigger);
+      } catch (error) {
+        console.error('Failed to load GSAP:', error);
+      }
+    };
+    
+    loadGsap();
   }, [])
 
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${pressStart2P.variable} ${vt323.variable} ${silkscreen.variable} font-sans bg-arcade-bg text-foreground antialiased`}>
+      <body className="font-sans bg-arcade-bg text-foreground antialiased">
         <CursorProvider>
           <div className="relative min-h-screen">
             <SwimmingFish />

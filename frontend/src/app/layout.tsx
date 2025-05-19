@@ -1,26 +1,7 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import { Press_Start_2P, VT323, Silkscreen } from "next/font/google"
-import { ClientLayout } from "@/components/client-layout"
 import "./globals.css"
 import '@/styles/rive-character.css'
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
-const pressStart2P = Press_Start_2P({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-arcade",
-})
-const vt323 = VT323({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-terminal",
-})
-const silkscreen = Silkscreen({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-pixel",
-})
+import { ClientLayout } from "@/components/client-layout"
 
 export const metadata: Metadata = {
   title: "PhishNClick",
@@ -33,12 +14,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClientLayout 
-      inter={inter} 
-      pressStart2P={pressStart2P}
-      vt323={vt323}
-      silkscreen={silkscreen}
-    >
+    <ClientLayout>
       {children}
     </ClientLayout>
   )
