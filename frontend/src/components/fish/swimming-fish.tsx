@@ -827,7 +827,7 @@ export function SwimmingFish() {
             }`}
           >
             <p className="font-arcade text-lg text-arcade-cyan blinking-text">
-              Catch all the phish and find out...
+              {/* Catch all the phish and find out... */}
             </p>
           </div>
         </div>

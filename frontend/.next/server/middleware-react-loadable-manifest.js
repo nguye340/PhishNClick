@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST="{\"components\\\\client-layout.tsx -> gsap\":{\"id\":\"components\\\\client-layout.tsx -> gsap\",\"files\":[]},\"components\\\\client-layout.tsx -> gsap/ScrollTrigger\":{\"id\":\"components\\\\client-layout.tsx -> gsap/ScrollTrigger\",\"files\":[\"static/chunks/vendors-_app-pages-browser_node_modules_gsap_ScrollTrigger_js.js\"]}}"

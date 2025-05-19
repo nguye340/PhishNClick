@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -153,19 +157,22 @@
   .neon-text-cyan {
     text-shadow: 0 0 10px rgba(0, 255, 255, 0.7),
                  0 0 20px rgba(0, 255, 255, 0.5),
-                 0 0 30px rgba(0, 255, 255, 0.3);
+                 0 0 30px rgba(0, 255, 255, 0.3) !important;
+    color: #00ffff !important;
   }
 
   .neon-text-magenta {
     text-shadow: 0 0 10px rgba(255, 0, 255, 0.7),
                  0 0 20px rgba(255, 0, 255, 0.5),
-                 0 0 30px rgba(255, 0, 255, 0.3);
+                 0 0 30px rgba(255, 0, 255, 0.3) !important;
+    color: #ff00ff !important;
   }
 
   .neon-text-green {
     text-shadow: 0 0 10px rgba(0, 255, 0, 0.7),
                  0 0 20px rgba(0, 255, 0, 0.5),
-                 0 0 30px rgba(0, 255, 0, 0.3);
+                 0 0 30px rgba(0, 255, 0, 0.3) !important;
+    color: #00ff00 !important;
   }
 
   .vhs-text {
@@ -262,71 +269,22 @@
 
   .coin-button::before {
     content: '';
-    position: absolute;
-    width: 30px;
-    height: 200%;
-    top: -50%;
-    left: -100px;
-    background: rgba(255, 255, 255, 0.4);
-    transform: rotate(35deg);
-    transition: all 0.5s ease;
-    animation: shine-large 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 2;
+    width: 8px;
+    height: 8px;
+    background: #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ffff;
   }
 
   .coin-button::after {
     content: '';
     position: absolute;
-    width: 15px;
-    height: 200%;
-    top: -50%;
-    left: -80px;
-    background: rgba(255, 255, 255, 0.6);
-    transform: rotate(35deg);
-    transition: all 0.5s ease;
-    animation: shine-medium 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 2;
-  }
-
-  .coin-button > .vhs-glitch::before {
-    content: '';
-    position: absolute;
-    width: 5px;
-    height: 200%;
-    top: -50%;
-    left: -60px;
-    background: rgba(255, 255, 255, 0.9);
-    transform: rotate(35deg);
-    transition: all 0.5s ease;
-    animation: shine-small 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 2;
-  }
-
-  .coin-button:hover::before {
-    animation: shine-large 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .coin-button:hover::after {
-    animation: shine-medium 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .coin-button:hover > .vhs-glitch::before {
-    animation: shine-small 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  @keyframes shine-large {
-    0% { left: -100px; }
-    40%, 100% { left: 400px; }
-  }
-
-  @keyframes shine-medium {
-    0% { left: -80px; }
-    45%, 100% { left: 420px; }
-  }
-
-  @keyframes shine-small {
-    0% { left: -60px; }
-    50%, 100% { left: 440px; }
+    width: 24px;
+    height: 24px;
+    border: 2px solid #00ffff;
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: pulse 1.5s ease-out infinite;
   }
 
   .login-button {
@@ -741,6 +699,56 @@
     50% {
       opacity: 0.3;
     }
+  }
+
+  .font-arcade {
+    font-family: 'Press Start 2P', cursive !important;
+  }
+
+  .font-terminal {
+    font-family: 'VT323', monospace !important;
+  }
+
+  .font-pixel {
+    font-family: 'Silkscreen', cursive !important;
+  }
+
+  .text-arcade-cyan {
+    color: #00ffff !important;
+  }
+
+  .text-arcade-magenta {
+    color: #ff00ff !important;
+  }
+
+  .text-arcade-yellow {
+    color: #ffff00 !important;
+  }
+
+  .text-arcade-green {
+    color: #00ff00 !important;
+  }
+
+  .text-arcade-red {
+    color: #ff0000 !important;
+  }
+
+  .bg-arcade-bg {
+    background-color: #000000;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Press Start 2P', cursive !important;
+  }
+
+  .neon-text-yellow {
+    color: #ffff00 !important;
+    text-shadow: 0 0 5px #ffff00, 0 0 10px #ffff00, 0 0 15px #ffff00 !important;
+  }
+
+  .neon-text-red {
+    color: #ff0000 !important;
+    text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000, 0 0 15px #ff0000 !important;
   }
 }
 
