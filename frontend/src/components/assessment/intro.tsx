@@ -64,10 +64,10 @@ export function AssessmentIntro() {
       
       {/* Character positioned at the left side but shifted right */}
       <RiveMainCharacter 
-        advice="Welcome to the phishing assessment! I'll guide you through identifying suspicious emails. Ready to test your skills?"
         position="left"
         isAbsolute={true}
         className="left-[20%]" // Move character 20% from the left edge
+        isTalking={false} // Character is not talking in the intro screen
       />
     </section>
   )
