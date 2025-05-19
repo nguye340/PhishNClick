@@ -14,21 +14,32 @@ const CharacterAdvice: React.FC<CharacterAdviceProps> = ({
   currentAdvice = defaultAdvice
 }) => {
   const [advice, setAdvice] = useState(currentAdvice);
+  const [isTyping, setIsTyping] = useState(false);
   
   useEffect(() => {
     setAdvice(currentAdvice);
   }, [currentAdvice]);
 
+  // Handle dialogue typing status
+  const handleTypingStatusChange = (typingStatus: boolean) => {
+    setIsTyping(typingStatus);
+  };
+
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
       {/* Speech bubble positioned on the left side - allow pointer events */}
       <div className="pointer-events-auto">
-        <SpeechBubble text={advice} />
+        <SpeechBubble 
+          text={advice} 
+          onTypingStatusChange={handleTypingStatusChange}
+        />
       </div>
       
       {/* Character positioned on the right side - allow pointer events */}
       <div className="pointer-events-auto">
-        <RiveMainCharacter />
+        <RiveMainCharacter 
+          isTalking={isTyping}
+        />
       </div>
     </div>
   );

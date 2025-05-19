@@ -11,6 +11,7 @@ export interface RiveMainCharacterProps {
   position?: 'left' | 'right';
   isAbsolute?: boolean;
   flipHorizontal?: boolean;
+  isTalking?: boolean;
 }
 
 // Create the component with explicit type annotation
@@ -20,12 +21,13 @@ const RiveMainCharacter: React.FC<RiveMainCharacterProps> = ({
   className = "",
   position = 'right',
   isAbsolute = false,
-  flipHorizontal = false
+  flipHorizontal = false,
+  isTalking = false
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { rive, RiveComponent } = useRive({
-    src: "/rivAnim/capBig_4K.riv",
+    src: "/rivAnim/capBig_4K2.riv",
     autoplay: true,
     stateMachines: "StateMachine_Idle_Blink"
   });
@@ -34,8 +36,35 @@ const RiveMainCharacter: React.FC<RiveMainCharacterProps> = ({
     if (rive) {
       console.log("Rive instance loaded:", rive);
       console.log("Available state machines:", rive.stateMachineNames);
+      
+      // Set up inputs if they exist
+      const inputs = rive.stateMachineInputs("StateMachine_Idle_Blink");
+      if (inputs) {
+        const talkingInput = inputs.find(input => input.name === "isTalking");
+        if (talkingInput) {
+          console.log("Found isTalking input");
+        }
+      }
     }
   }, [rive]);
+  
+  // Update the isTalking input whenever the prop changes
+  useEffect(() => {
+    if (rive) {
+      try {
+        const inputs = rive.stateMachineInputs("StateMachine_Idle_Blink");
+        if (inputs) {
+          const talkingInput = inputs.find(input => input.name === "isTalking");
+          if (talkingInput) {
+            console.log(`Updating isTalking state machine input to ${isTalking} (current value: ${talkingInput.value})`);
+            talkingInput.value = isTalking;
+          }
+        }
+      } catch (error) {
+        console.error("Error setting isTalking input:", error);
+      }
+    }
+  }, [rive, isTalking]);
   
   return (
     <div 
@@ -66,8 +95,8 @@ const RiveMainCharacter: React.FC<RiveMainCharacterProps> = ({
               position: 'absolute',
               width: '1300px', 
               height: '1300px',
-              right: -150,
-              bottom: '-1200px', // Push the artboard down much further
+              right: -450,//-150 with 4K
+              bottom: '-1300px', //-1200 with 4K/ Push the artboard down much further
               transform: 'scale(4.4)',
               transformOrigin: 'bottom right',
               cursor: 'pointer'

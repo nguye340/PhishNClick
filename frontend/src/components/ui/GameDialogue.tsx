@@ -8,6 +8,7 @@ interface GameDialogueProps {
   className?: string;
   style?: React.CSSProperties;
   onComplete?: () => void;
+  onTypingStatusChange?: (isTyping: boolean) => void;
 }
 
 const GameDialogue: React.FC<GameDialogueProps> = ({
@@ -15,7 +16,8 @@ const GameDialogue: React.FC<GameDialogueProps> = ({
   typingSpeed = 30, // ms per character
   className = '',
   style = {},
-  onComplete
+  onComplete,
+  onTypingStatusChange
 }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
@@ -25,17 +27,32 @@ const GameDialogue: React.FC<GameDialogueProps> = ({
 
   // Reset animation when text changes
   useEffect(() => {
-    console.log("Text changed to:", text);
-    fullTextRef.current = text;
-    charIndexRef.current = 0;
-    setDisplayedText('');
-    setIsTyping(true);
-    setIsCompleted(false);
-  }, [text]);
+    // Prevent duplicate animations by checking if the text has actually changed
+    if (fullTextRef.current !== " " + text) {
+      console.log("Text changed to:", text);
+      // Add a space at the beginning of the text to prevent first letter cutoff
+      fullTextRef.current = " " + text;
+      charIndexRef.current = 0;
+      setDisplayedText('');
+      setIsTyping(true);
+      setIsCompleted(false);
+      
+      // Notify parent component that typing has started
+      if (onTypingStatusChange) {
+        onTypingStatusChange(true);
+      }
+    }
+  }, [text, onTypingStatusChange]);
 
   // Typing animation effect
   useEffect(() => {
-    if (!isTyping) return;
+    if (!isTyping) {
+      // Notify parent component that typing has stopped
+      if (onTypingStatusChange) {
+        onTypingStatusChange(false);
+      }
+      return;
+    }
     
     const interval = setInterval(() => {
       if (charIndexRef.current < fullTextRef.current.length) {
@@ -44,11 +61,16 @@ const GameDialogue: React.FC<GameDialogueProps> = ({
       } else {
         setIsTyping(false);
         clearInterval(interval);
+        
+        // Notify parent component that typing has stopped
+        if (onTypingStatusChange) {
+          onTypingStatusChange(false);
+        }
       }
     }, typingSpeed);
     
     return () => clearInterval(interval);
-  }, [isTyping, typingSpeed]);
+  }, [isTyping, typingSpeed, onTypingStatusChange]);
 
   // Handle click to complete text immediately or proceed
   const handleClick = () => {
@@ -56,6 +78,11 @@ const GameDialogue: React.FC<GameDialogueProps> = ({
       // If still typing, show all text immediately
       setDisplayedText(fullTextRef.current);
       setIsTyping(false);
+      
+      // Notify parent component that typing has stopped
+      if (onTypingStatusChange) {
+        onTypingStatusChange(false);
+      }
     } else if (!isCompleted) {
       // If typing is done but not yet marked as completed
       console.log("Dialogue clicked after typing finished");
