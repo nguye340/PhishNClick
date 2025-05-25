@@ -9,11 +9,6 @@
 @layer base {
   html, body {
     @apply bg-arcade-bg text-foreground;
-    cursor: none !important;
-  }
-
-  * {
-    cursor: none !important;
   }
   
   img, svg {
@@ -524,6 +519,28 @@
     100% {
       text-shadow: 0 0 5px rgba(255, 0, 255, 0.5),
                    0 0 10px rgba(255, 0, 255, 0.3);
+    }
+  }
+
+  .glow-heading-yellow {
+    text-shadow: 0 0 5px rgba(255, 255, 0, 0.5),
+                 0 0 10px rgba(255, 255, 0, 0.3);
+    animation: glow-pulse-yellow 2s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse-yellow {
+    0% {
+      text-shadow: 0 0 5px rgba(255, 255, 0, 0.5),
+                   0 0 10px rgba(255, 255, 0, 0.3);
+    }
+    50% {
+      text-shadow: 0 0 8px rgba(255, 255, 0, 0.7),
+                   0 0 15px rgba(255, 255, 0, 0.5),
+                   0 0 20px rgba(255, 255, 0, 0.3);
+    }
+    100% {
+      text-shadow: 0 0 5px rgba(255, 255, 0, 0.5),
+                   0 0 10px rgba(255, 255, 0, 0.3);
     }
   }
 

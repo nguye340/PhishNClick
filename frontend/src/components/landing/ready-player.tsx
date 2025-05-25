@@ -47,7 +47,7 @@ export function ReadyPlayer() {
           transition={{ type: "spring", stiffness: 400 }}
         >
           <Link
-            href="/assessment"
+            href="/assessment/phishing-test"
             className="inline-block font-arcade text-lg px-12 py-6 bg-arcade-magenta text-black rounded-lg hover:bg-opacity-90 transition-colors"
           >
             PRESS START

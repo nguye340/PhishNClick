@@ -14,8 +14,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClientLayout>
-      {children}
-    </ClientLayout>
+    <html lang="en" className="dark">
+      <body className="font-sans bg-arcade-bg text-foreground antialiased">
+        <div className="relative min-h-screen">
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </div>
+      </body>
+    </html>
   )
 }

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>!You have been PHISHED!</title>
+
+  <!-- Arcade-style font for headers and buttons -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- Load game scripts in the correct order -->
+  <script src="player.js"></script>
+  <script src="ground.js"></script>
+  <script src="obstacle.js"></script>
+  <script src="obstacleController.js"></script>
+  <script src="game.js"></script>
+</head>
+<body style="background-color: black; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100vh; width: 100vw; margin: 0; padding: 0; overflow: hidden; font-family: Verdana, sans-serif; user-select: none; touch-action: none; outline: none; -webkit-tap-highlight-color: rgba(255, 255, 255, 0);">
+  <div style="position: relative; width: 100vw; height: auto; max-height: 80vh;">
+    <canvas id="game" style="border: none; width: 100%; height: auto; max-height: 80vh; object-fit: contain;"></canvas>
+    
+    <!-- Lives display -->
+    <div id="livesContainer" style="position: absolute; top: 10px; left: 10px; display: flex; gap: 5px; z-index: 100;">
+      <img id="heart1" src="/games/phish404/img/heart-filled.png" style="width: 30px; height: 30px;">
+      <img id="heart2" src="/games/phish404/img/heart-filled.png" style="width: 30px; height: 30px;">
+      <img id="heart3" src="/games/phish404/img/heart-filled.png" style="width: 30px; height: 30px;">
+    </div>
+    <div id="audioControls" style="position: absolute; top: 10px; right: 10px; background-color: rgba(0, 0, 0, 0.5); padding: 8px; border-radius: 5px; display: flex; align-items: center; z-index: 100;">
+      <button id="musicToggleButton" style="background: none; border: none; cursor: pointer; margin-right: 8px; color: white; font-size: 16px; font-weight: bold;">
+        🎵
+      </button>
+      <button id="muteButton" style="background: none; border: none; cursor: pointer; margin-right: 8px; color: white; font-size: 16px; font-weight: bold;">
+        🔊
+      </button>
+      <input type="range" id="volumeSlider" min="0" max="100" value="100" style="width: 80px; cursor: pointer;">
+    </div>
+    
+    <!-- Background music -->
+    <audio id="backgroundMusic" loop>
+      <source src="/games/phish404/audio/background.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <!-- Email phishing popup -->
+  <div id="emailPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #e0f7fa; line-height: 2; font-family: Verdana, sans-serif; font-size: 14px; padding: 20px; border: 2px solid black; z-index: 9999; width: 90%; max-width: 600px;">
+    <h3 style="font-family: 'Press Start 2P', Verdana, sans-serif; font-size: 12px;">MeowLook</h3>
+    <p>From: tabbycar@secur-bank.co</p>
+    <p>Subject: Immidiate Action Required</p>
+    <p>-----------------------------------</p>
+    <p>Hello,</p>
+    <p>We have detected <strong>unusal</strong> activity on your account.</p>
+    <p>For your safety, <strong>your acount has been temporarly suspended</strong>. Please <strong>click bellow</strong> to <strong>re-activate</strong> your account immidately.</p>
+    <p><a href="#" id="phishingLink" style="color: #FF5722; font-weight: bold; text-decoration: underline;">Verify Now</a></p>
+    <p><strong>Failure to act now may result in permanent account closure.</strong></p>
+    <p>Thank you,<br/>Meowy Bank</p>
+    <div style="text-align: center;">
+      <button id="emailClean" style="margin: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Clean</button>
+      <button id="emailMalicious" style="margin: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Report</button>
+    </div>
+  </div>
+
+  <!-- Phone phishing popup -->
+  <div id="phonePopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #e0f7fa; line-height: 2; font-family: Verdana, sans-serif; font-size: 14px; padding: 20px; border: 2px solid black; z-index: 9999; width: 90%; max-width: 600px;">
+    <h3 style="font-family: 'Press Start 2P', Verdana, sans-serif; font-size: 12px;">Incoming Call</h3>
+    <p>---------------------------</p>
+    <p>Calling from FeetBook</p>
+    <div style="text-align: center;">
+      <button id="phoneDoIt" style="margin: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Do what it says</button>
+      <button id="phoneSkip" style="margin: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Skip</button>
+    </div>
+  </div>
+
+  <!-- Educational Result Popup -->
+  <div id="resultPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: #e0f7fa; width: 90%; max-width: 600px; padding: 20px; border: 2px solid black; z-index: 9999; line-height: 1.6; font-family: Verdana, sans-serif; font-size: 14px; text-align: left;">
+    <h3 style="font-family: 'Press Start 2P', cursive; font-size: 16px; margin-top: 0;"><span id="resultTitle" style="color: #FF5555;">You have been PHISHED!</span></h3>
+    <p>That was a <strong>phishing email</strong>. Here's how to spot them:</p>
+    <ul style="padding-left: 20px;">
+      <li>Check the sender's email address for misspellings.</li>
+      <li>Hover over links before clicking to see the real URL.</li>
+      <li>Be suspicious of urgent requests or threats.</li>
+      <li>Look for generic greetings like "Dear Customer" instead of your name.</li>
+      <li>If it feels off, it probably is - <strong>trust your instincts!</strong></li>
+    </ul>
+    <p><strong>Stay alert. Stop. Think twice before you click!</strong></p>
+    <div style="text-align: center;">
+      <button onclick="resumeGame();" style="margin-top: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+    </div>
+  </div>
+
+  <!-- Educational Vishing Result Popup -->
+  <div id="vishingResultPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: #e0f7fa; width: 90%; max-width: 600px; padding: 20px; border: 2px solid black; z-index: 9999; line-height: 1.6; font-family: Verdana, sans-serif; font-size: 14px; text-align: left;">
+    <h3 style="font-family: 'Press Start 2P', cursive; font-size: 16px; margin-top: 0;"><span id="vishingResultTitle" style="color: #FF5555;">You have been VISHED!</span></h3>
+    <p>That was a <strong>vishing call</strong>. Here's how to spot them:</p>
+    <ul style="padding-left: 20px;">
+      <li>Never share personal information over the phone with unknown callers.</li>
+      <li>Be suspicious of callers creating urgency or fear.</li>
+      <li>Hang up and call the official number of the company to verify legitimacy.</li>
+      <li>Don't trust caller ID - it can be spoofed.</li>
+      <li>Remember that legitimate organizations won't ask for sensitive information over the phone.</li>
+    </ul>
+    <p><strong>Stay alert. Stop. Think twice before sharing!</strong></p>
+    <div style="text-align: center;">
+      <button onclick="resumeGame();" style="margin-top: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+    </div>
+  </div>
+
+  <!-- Audio elements -->
+  <audio id="meowSound" src="audio/meow.mp3" preload="auto"></audio>
+  <audio id="correctSound" src="audio/correct.mp3" preload="auto"></audio>
+  <audio id="wrongSound" src="audio/wrong.mp3" preload="auto"></audio>
+  <audio id="vishingSound" src="audio/vishing.mp3" preload="auto"></audio>
+  <audio id="backgroundMusic" src="audio/background.mp3" preload="auto" loop></audio>
+</body>
+</html>

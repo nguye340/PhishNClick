@@ -42,18 +42,51 @@ export function LandingHero() {
       coinSoundRef.current.play().catch(err => console.log('Audio play error:', err));
     }
     
+    // Clean up cursor before navigation to prevent double cursor
+    const cleanupCursor = () => {
+      // Remove any existing animation frames
+      const rafIds: number[] = [];
+      let rafId = requestAnimationFrame(function cleanup() {
+        const nextRafId = requestAnimationFrame(cleanup);
+        rafIds.push(nextRafId);
+      });
+      rafIds.push(rafId);
+      
+      // Cancel all animation frames after a short delay
+      setTimeout(() => {
+        rafIds.forEach(id => cancelAnimationFrame(id));
+        // Navigate to the next page
+        router.push("/assessment/phishing-test");
+      }, 50);
+    };
+    
     // Navigate after a short delay to allow the animation to play
-    setTimeout(() => {
-      router.push("/assessment/phishing-test")
-    }, 1000)
+    setTimeout(cleanupCursor, 950);
   }
 
   const handleLogin = () => {
     setIsLoginPressed(true)
+    
+    // Clean up cursor before navigation to prevent double cursor
+    const cleanupCursor = () => {
+      // Remove any existing animation frames
+      const rafIds: number[] = [];
+      let rafId = requestAnimationFrame(function cleanup() {
+        const nextRafId = requestAnimationFrame(cleanup);
+        rafIds.push(nextRafId);
+      });
+      rafIds.push(rafId);
+      
+      // Cancel all animation frames after a short delay
+      setTimeout(() => {
+        rafIds.forEach(id => cancelAnimationFrame(id));
+        // Navigate to the next page
+        router.push("/auth/login");
+      }, 50);
+    };
+    
     // Navigate after a short delay to allow the animation to play
-    setTimeout(() => {
-      router.push("/auth/login")
-    }, 1000)
+    setTimeout(cleanupCursor, 950);
   }
 
   useGSAP(() => {

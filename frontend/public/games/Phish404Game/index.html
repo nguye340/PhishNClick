@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>!You have been PHISHED!</title>
+
+  <!-- Arcade-style font for headers and buttons -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <script src="index.js" defer type="module"></script>
+</head>
+<body style="background-color: black; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100vh; font-family: Verdana, sans-serif; user-select: none; touch-action: none; outline: none; -webkit-tap-highlight-color: rgba(255, 255, 255, 0);">
+  <canvas id="game" style="border: 2px solid rgb(0, 183, 255);"></canvas>
+
+  <!-- Email phishing popup -->
+  <div id="emailPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #e0f7fa; line-height: 2; font-family: Verdana, sans-serif; font-size: 14px; padding: 20px; border: 2px solid black; z-index: 9999; width: 90%; max-width: 600px;">
+    <h3 style="font-family: 'Press Start 2P', Verdana, sans-serif; font-size: 12px;">MeowLook</h3>
+    <p>From: tabbycar@secur-bank.co</p>
+    <p>Subject: Immidiate Action Required</p>
+    <p>-----------------------------------</p>
+    <p>Hello,</p>
+    <p>We have detected <strong>unusal</strong> activity on your account.</p>
+    <p>For your safety, <strong>your acount has been temporarly suspended</strong>. Please <strong>click bellow</strong> to <strong>re-activate</strong> your account immidately.</p>
+    <p><a href="http://www.sheridancollege.ca">Verify Now</a></p>
+    <p><strong>Failure to act now may result in permanent account closure.</strong></p>
+    <p>Thank you,<br/>Meowy Bank</p>
+    <div style="text-align: center;">
+      <button id="emailClean" style="margin: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Clean</button>
+      <button id="emailMalicious" style="margin: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Report</button>
+    </div>
+  </div>
+
+  <!-- Phone phishing popup -->
+  <div id="phonePopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #e0f7fa; line-height: 2; font-family: Verdana, sans-serif; font-size: 14px; padding: 20px; border: 2px solid black; z-index: 9999; width: 90%; max-width: 600px;">
+    <h3 style="font-family: 'Press Start 2P', Verdana, sans-serif; font-size: 12px;">Incoming Call</h3>
+    <p>---------------------------</p>
+    <p>Calling from FeetBook</p>
+    <div style="text-align: center;">
+      <button id="phoneDoIt" style="margin: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Do what it says</button>
+      <button id="phoneSkip" style="margin: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Skip</button>
+    </div>
+  </div>
+
+  <!-- Educational Result Popup -->
+  <div id="resultPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #e0f7fa; line-height: 2; font-family: Verdana, sans-serif; font-size: 14px; padding: 20px; border: 2px solid black; z-index: 9999; width: 90%; max-width: 600px;">
+    <h3 id="resultTitle" style="font-family: 'Press Start 2P', Verdana, sans-serif; font-size: 12px;"></h3>
+    <p id="resultMessage"></p>
+    <p><strong>Tips to Recognize Phishing:</strong></p>
+    <ul>
+      <li>Check the sender's email domain carefully.</li>
+      <li>Be cautious if the email demands urgent action or threatens consequences.</li>
+      <li>Watch for unusual attachments or file types.</li>
+      <li>Avoid entering sensitive information via email links; instead, go to the official site directly.</li>
+      <li>Check for grammar errors or awkward language in professional emails.</li>
+      <li>Do not trust logos or official-looking designs at face value.</li>
+      <li>Always verify suspicious emails with your IT team or the company’s support centre.</li>
+      <li>Look for generic greetings like "Dear Customer" instead of your name.</li>
+      <li>If it feels off, it probably is - <strong>trust your instincts!</strong></li>
+    </ul>
+    <p><strong>Stay alert. Stop. Think twice before you click!</strong></p>
+    <div style="text-align: center;">
+      <button id="resultCloseBtn" onclick="closeResultPopup()" style="margin-top: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Close</button>
+    </div>
+  </div>
+
+  <!-- Educational Vishing Result Popup -->
+  <div id="vishingResultPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #e0f7fa; line-height: 2; font-family: Verdana, sans-serif; font-size: 14px; padding: 20px; border: 2px solid black; z-index: 9999; width: 90%; max-width: 600px;">
+    <h3 id="vishingResultTitle" style="font-family: 'Press Start 2P', Verdana, sans-serif; font-size: 12px;"></h3>
+    <p id="vishingResultMessage"></p>
+    <p><strong>Tips to Avoid Vishing:</strong></p>
+    <ul>
+      <li>Never share PINs, passwords, or one-time codes over the phone.</li>
+      <li>Do not trust caller ID - phone numbers can be spoofed.</li>
+      <li>If they claim to be from your bank or work, <strong>hang up</strong> and call back using the official number.</li>
+      <li>Be skeptical of urgent threats (like “your account will be locked”).</li>
+      <li>Ask the caller to send a written request if you are unsure.</li>
+      <li>Don't be rushed - real services won't push you to act immediately.</li>
+      <li>Never give out personal information to unsolicited callers.</li>
+      <li>If you're feeling pressured, simply end the call.</li>
+      <li>Discuss suspicious calls with someone you trust.</li>
+      <li>Keep your phone software up to date for security.</li>
+    </ul>
+    <p><strong>Stay alert. Stop. Think twice before sharing!</strong></p>
+    <div style="text-align: center;">
+      <button id="vishingCloseBtn" onclick="closeVishingResultPopup()" style="margin-top: 10px; padding: 8px 12px; font-family: 'Press Start 2P', cursive;">Close</button>
+    </div>
+  </div>
+
+  <!-- Optional background music -->
+  <!-- <audio id="bgMusic" src="audio/background.mp3" autoplay loop></audio> -->
+</body>
+</html>

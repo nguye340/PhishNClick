@@ -1,0 +1,1310 @@
+[
+    {
+      "title": "Microsoft Account Security Alert",
+      "message": "Your Microsoft 365 account has been accessed from an unusual location. Click here to secure your account immediately.",
+      "type": "malicious",
+      "category": "brand_impersonation",
+      "subtype": "microsoft_office365",
+      "ui_template": "brand_login",
+      
+      "brand_elements": {
+        "logo_url": "/logos/microsoft-fake.png",
+        "brand_colors": ["#0078d4", "#ffffff"],
+        "fonts": ["Segoe UI", "Arial"],
+        "impersonated_brand": "Microsoft"
+      },
+      
+      "buttons": [
+        {
+          "text": "Secure Account Now",
+        "action": "malicious_link",
+          "is_correct_choice": false
+        },
+        {
+          "text": "Not Now",
+          "action": "fake_close",
+          "is_correct_choice": false
+        }
+      ],
+      
+      "correct_action": "close_legitimate",
+      
+      "available_close_methods": [
+        {
+          "method": "click_x_button",
+          "is_safe": true,
+          "leads_to_malicious": false
+        },
+        {
+          "method": "click_outside",
+          "is_safe": true,
+          "leads_to_malicious": false
+        },
+        {
+          "method": "escape_key",
+          "is_safe": true,
+          "leads_to_malicious": false
+        }
+      ],
+      
+      "indicators_of_compromise": [
+        {
+          "element": "sender_domain",
+          "ioc_type": "mismatched_domain",
+          "description": "URL shows 'microsft-security.com' instead of 'microsoft.com'",
+          "severity": "high"
+        },
+        {
+          "element": "message_text",
+          "ioc_type": "urgency_language",
+          "description": "Uses urgent language 'immediately' to pressure quick action",
+          "severity": "medium"
+        }
+      ],
+      
+      "difficulty_level": "beginner",
+      
+      "time_pressure": {
+        "has_timer": false,
+        "time_limit_ms": 0,
+        "countdown_visible": false
+      },
+      
+      "explanation": {
+        "why_malicious": "Microsoft will never ask you to 'secure your account' through a popup. Legitimate security alerts come through official channels.",
+        "what_to_look_for": ["Misspelled domain names", "Urgent action requests", "Generic greetings"],
+        "real_world_impact": "Credential theft leading to account takeover and data loss",
+        "prevention_tips": ["Always type URLs manually", "Check sender domains carefully", "Use official apps for account management"]
+      },
+      
+      "mitre_technique": {
+        "technique_id": "T1566.002",
+        "technique_name": "Spearphishing Link",
+        "tactic": "Initial Access"
+      },
+      
+      "tags": ["brand_impersonation", "microsoft", "credential_theft", "beginner"]
+    },
+  
+    {
+      "title": "⚠️ CRITICAL SECURITY ALERT ⚠️",
+      "message": "VIRUS DETECTED! Your computer is infected with 47 malware threats. Click SCAN NOW to remove viruses immediately or your files will be permanently damaged!",
+      "type": "malicious",
+      "category": "security_warning",
+      "subtype": "fake_antivirus",
+      "ui_template": "security_scan",
+      
+      "brand_elements": {
+        "logo_url": "/logos/fake-antivirus.png",
+        "brand_colors": ["#ff0000", "#ffffff", "#ffff00"],
+        "fonts": ["Arial Black", "Impact"],
+        "impersonated_brand": "Windows Defender"
+      },
+      
+      "buttons": [
+        {
+          "text": "SCAN NOW",
+          "action": "malicious_link",
+          "is_correct_choice": false
+        },
+        {
+          "text": "Remove All Threats ($39.99)",
+          "action": "malicious_link",
+          "is_correct_choice": false
+        }
+      ],
+      
+      "correct_action": "close_legitimate",
+      
+      "available_close_methods": [
+        {
+          "method": "click_x_button",
+          "is_safe": true,
+          "leads_to_malicious": false
+        },
+        {
+          "method": "task_manager",
+          "is_safe": true,
+          "leads_to_malicious": false
+        },
+        {
+          "method": "alt_f4",
+          "is_safe": true,
+          "leads_to_malicious": false
+        }
+      ],
+      
+      "indicators_of_compromise": [
+        {
+          "element": "visual_design",
+          "ioc_type": "urgency_language",
+          "description": "Excessive use of capital letters and exclamation marks",
+          "severity": "high"
+        },
+        {
+          "element": "threat_count",
+          "ioc_type": "too_good_to_be_true",
+          "description": "Specific number '47 threats' is unrealistic for legitimate scans",
+          "severity": "medium"
+        },
+        {
+          "element": "payment_request",
+          "ioc_type": "threats",
+          "description": "Legitimate antivirus doesn't demand immediate payment",
+          "severity": "high"
+        }
+      ],
+      
+      "difficulty_level": "beginner",
+      
+      "time_pressure": {
+        "has_timer": true,
+        "time_limit_ms": 15000,
+        "countdown_visible": true
+      },
+      
+      "explanation": {
+        "why_malicious": "Real antivirus software doesn't use scare tactics or demand immediate payment. This is scareware designed to trick users into downloading malware or paying for fake services.",
+        "what_to_look_for": ["Excessive urgency", "Specific threat counts", "Payment demands", "Poor visual design"],
+        "real_world_impact": "Can lead to malware installation, financial fraud, or system compromise",
+        "prevention_tips": ["Use reputable antivirus software", "Never click on popup security alerts", "Run manual scans through your actual antivirus"]
+      },
+      
+      "mitre_technique": {
+        "technique_id": "T1566.002",
+        "technique_name": "Spearphishing Link",
+        "tactic": "Initial Access"
+      },
+      
+      "tags": ["fake_antivirus", "scareware", "security_warning", "beginner"]
+    },
+  
+    {
+      "title": "Urgent: Wire Transfer Authorization Required",
+      "message": "Hi [Employee Name], This is CEO Sarah Johnson. I'm in a critical meeting with potential investors and need you to authorize an immediate wire transfer of $25,000 to secure this deal. Please click here to access the secure authorization portal. Time sensitive - deal expires in 20 minutes. Thanks, Sarah",
+      "type": "malicious",
+      "category": "ai_enhanced",
+      "subtype": "deepfake_executive",
+      "ui_template": "email_preview",
+      
+      "brand_elements": {
+        "logo_url": "/logos/company-logo.png",
+        "brand_colors": ["#1f4e79", "#ffffff"],
+        "fonts": ["Calibri", "Arial"],
+        "impersonated_brand": "Internal Company Communications"
+      },
+      
+      "buttons": [
+        {
+          "text": "Access Authorization Portal",
+          "action": "credential_prompt",
+          "is_correct_choice": false
+        },
+        {
+          "text": "Call Sarah to Verify",
+          "action": "legitimate_close",
+          "is_correct_choice": true
+        }
+      ],
+      
+      "correct_action": "verify_separately",
+      
+      "available_close_methods": [
+        {
+          "method": "click_x_button",
+          "is_safe": true,
+          "leads_to_malicious": false
+        },
+        {
+          "method": "click_outside",
+          "is_safe": true,
+          "leads_to_malicious": false
+        }
+      ],
+      
+      "indicators_of_compromise": [
+        {
+          "element": "urgency_timing",
+          "ioc_type": "urgency_language",
+          "description": "Creates artificial time pressure with 20-minute deadline",
+          "severity": "high"
+        },
+        {
+          "element": "request_type",
+          "ioc_type": "suspicious_url",
+          "description": "Unusual request for wire transfer via popup/email",
+          "severity": "high"
+        },
+        {
+          "element": "communication_method",
+          "ioc_type": "generic_greeting",
+          "description": "CEO using popup instead of direct call for urgent financial matter",
+          "severity": "medium"
+        }
+      ],
+      
+      "difficulty_level": "advanced",
+      
+      "time_pressure": {
+        "has_timer": true,
+        "time_limit_ms": 20000,
+        "countdown_visible": true
+      },
+      
+      "explanation": {
+        "why_malicious": "This is a Business Email Compromise (BEC) attack using AI to mimic executive communication style. Real executives don't authorize large transfers through popups.",
+        "what_to_look_for": ["Unusual communication channels", "Financial requests", "Artificial urgency", "Lack of proper authorization procedures"],
+        "real_world_impact": "Average BEC loss is $150,000. Can lead to significant financial fraud and regulatory issues.",
+        "prevention_tips": ["Always verify financial requests through separate channels", "Establish clear approval procedures", "Be suspicious of urgent financial requests"]
+      },
+      
+      "mitre_technique": {
+        "technique_id": "T1566.003",
+        "technique_name": "Spearphishing via Service",
+        "tactic": "Initial Access"
+      },
+      
+      "tags": ["bec", "executive_impersonation", "ai_enhanced", "financial_fraud", "advanced"]
+    },
+  
+    {
+      "title": "Software Update Available",
+      "message": "Chrome version 127.0.6533.89 is available. This update includes important security fixes. Would you like to install now or later?",
+      "type": "benign",
+      "category": "software_update",
+      "subtype": "browser_update",
+      "ui_template": "browser_notification",
+      
+      "brand_elements": {
+        "logo_url": "/logos/chrome-official.png",
+        "brand_colors": ["#4285f4", "#ffffff"],
+        "fonts": ["Roboto", "Arial"],
+        "impersonated_brand": "Google Chrome"
+      },
+      
+      "buttons": [
+        {
+          "text": "Install Now",
+          "action": "legitimate_close",
+          "is_correct_choice": true
+        },
+        {
+          "text": "Install Later",
+          "action": "legitimate_close",
+          "is_correct_choice": true
+        }
+      ],
+      
+      "correct_action": "close_legitimate",
+      
+      "available_close_methods": [
+        {
+          "method": "click_x_button",
+          "is_safe": true,
+          "leads_to_malicious": false
+        },
+        {
+          "method": "click_close_button",
+          "is_safe": true,
+          "leads_to_malicious": false
+        }
+      ],
+      
+      "indicators_of_compromise": [],
+      
+      "difficulty_level": "beginner",
+      
+      "time_pressure": {
+        "has_timer": false,
+        "time_limit_ms": 0,
+        "countdown_visible": false
+      },
+      
+      "explanation": {
+        "why_malicious": "This is legitimate. Chrome updates come through the browser itself with specific version numbers and no urgent pressure.",
+        "what_to_look_for": ["Official source", "Specific version numbers", "No urgency or threats", "Professional presentation"],
+        "real_world_impact": "Legitimate updates improve security and functionality",
+        "prevention_tips": ["Accept updates from official sources", "Check that popups come from the actual application"]
+      },
+      
+      "mitre_technique": {
+        "technique_id": null,
+        "technique_name": null,
+        "tactic": null
+      },
+      
+      "tags": ["benign", "legitimate_update", "chrome", "beginner"]
+    },
+    {
+        "title": "Google Account Security",
+        "message": "We've detected suspicious activity on your Gmail account. Verify your identity now to prevent account suspension.",
+        "type": "malicious",
+        "category": "brand_impersonation",
+        "subtype": "google_gmail",
+        "ui_template": "brand_login",
+        
+        "brand_elements": {
+          "logo_url": "/logos/google-fake.png",
+          "brand_colors": ["#4285f4", "#ea4335", "#fbbc05", "#34a853"],
+          "fonts": ["Product Sans", "Arial"],
+          "impersonated_brand": "Google"
+        },
+        
+        "buttons": [
+          {
+            "text": "Verify Account",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          },
+          {
+            "text": "Dismiss",
+            "action": "fake_close",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "escape_key", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "url",
+            "ioc_type": "mismatched_domain",
+            "description": "URL shows 'googIe-security.com' with capital 'i' instead of 'l'",
+            "severity": "high"
+          },
+          {
+            "element": "greeting",
+            "ioc_type": "generic_greeting",
+            "description": "No personalized greeting or account details",
+            "severity": "medium"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "Google sends security alerts through your account dashboard, not popup windows. The misspelled domain is a clear red flag.",
+          "what_to_look_for": ["Domain name spelling", "Official communication channels", "Generic messages"],
+          "real_world_impact": "Gmail credential theft can lead to identity theft and access to other accounts",
+          "prevention_tips": ["Always check URLs carefully", "Access Gmail directly through your browser", "Enable 2FA on your Google account"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["brand_impersonation", "google", "gmail", "beginner"]
+      },
+    
+      {
+        "title": "Amazon Account Alert",
+        "message": "Your Amazon account has been temporarily locked due to unusual payment activity. Click here to unlock your account and review recent orders.",
+        "type": "malicious",
+        "category": "brand_impersonation",
+        "subtype": "amazon",
+        "ui_template": "brand_login",
+        
+        "brand_elements": {
+          "logo_url": "/logos/amazon-fake.png",
+          "brand_colors": ["#ff9900", "#232f3e"],
+          "fonts": ["Amazon Ember", "Arial"],
+          "impersonated_brand": "Amazon"
+        },
+        
+        "buttons": [
+          {
+            "text": "Unlock Account",
+            "action": "credential_prompt",
+            "is_correct_choice": false
+          },
+          {
+            "text": "Review Orders",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "click_outside", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "domain",
+            "ioc_type": "mismatched_domain",
+            "description": "Email comes from 'amazon-security.net' instead of 'amazon.com'",
+            "severity": "high"
+          },
+          {
+            "element": "language",
+            "ioc_type": "urgency_language",
+            "description": "Creates urgency with 'temporarily locked' language",
+            "severity": "medium"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "Amazon sends account notifications through email and your account dashboard, not popup alerts. The domain mismatch is suspicious.",
+          "what_to_look_for": ["Incorrect sender domains", "Popup alerts for account issues", "Requests to click links for account problems"],
+          "real_world_impact": "Can lead to Amazon account takeover and unauthorized purchases",
+          "prevention_tips": ["Log into Amazon directly", "Check account status through official app", "Never click links in suspicious popups"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["brand_impersonation", "amazon", "account_takeover", "beginner"]
+      },
+    
+      {
+        "title": "Bank Security Alert",
+        "message": "URGENT: Suspicious transaction detected on your account. Your card has been temporarily blocked. Click here to verify your identity and restore access.",
+        "type": "malicious",
+        "category": "brand_impersonation",
+        "subtype": "banking_generic",
+        "ui_template": "system_alert",
+        
+        "brand_elements": {
+          "logo_url": "/logos/generic-bank.png",
+          "brand_colors": ["#003366", "#ffffff"],
+          "fonts": ["Arial", "Helvetica"],
+          "impersonated_brand": "First National Bank"
+        },
+        
+        "buttons": [
+          {
+            "text": "Verify Identity",
+            "action": "credential_prompt",
+            "is_correct_choice": false
+          },
+          {
+            "text": "View Transaction",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "alt_f4", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "communication_method",
+            "ioc_type": "suspicious_url",
+            "description": "Banks don't send security alerts through browser popups",
+            "severity": "high"
+          },
+          {
+            "element": "urgency",
+            "ioc_type": "urgency_language",
+            "description": "Uses 'URGENT' and immediate action language",
+            "severity": "high"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "Banks never send security alerts through browser popups. They use SMS, phone calls, or secure messages in your banking app.",
+          "what_to_look_for": ["Unusual communication channels", "Generic bank names", "Urgent language", "Requests for immediate action"],
+          "real_world_impact": "Banking credential theft can lead to financial fraud and identity theft",
+          "prevention_tips": ["Contact your bank directly", "Use official banking apps", "Never click links in suspicious banking alerts"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["brand_impersonation", "banking", "financial_fraud", "beginner"]
+      },
+    
+      {
+        "title": "Apple Support",
+        "message": "Your Apple ID has been disabled due to security concerns. To restore access to your account and prevent data loss, please verify your information immediately.",
+        "type": "malicious",
+        "category": "brand_impersonation",
+        "subtype": "apple_support",
+        "ui_template": "system_alert",
+        
+        "brand_elements": {
+          "logo_url": "/logos/apple-fake.png",
+          "brand_colors": ["#007aff", "#ffffff"],
+          "fonts": ["SF Pro Display", "Arial"],
+          "impersonated_brand": "Apple"
+        },
+        
+        "buttons": [
+          {
+            "text": "Verify Information",
+            "action": "credential_prompt",
+            "is_correct_choice": false
+          },
+          {
+            "text": "Contact Support",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "escape_key", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "popup_source",
+            "ioc_type": "suspicious_url",
+            "description": "Apple doesn't send account alerts through browser popups",
+            "severity": "high"
+          },
+          {
+            "element": "threat_language",
+            "ioc_type": "threats",
+            "description": "Threatens data loss to create urgency",
+            "severity": "medium"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "Apple sends account notifications through email and the Settings app, not browser popups. The threat of data loss is a red flag.",
+          "what_to_look_for": ["Browser popups claiming to be from Apple", "Threats of data loss", "Immediate verification requests"],
+          "real_world_impact": "Apple ID theft can compromise all Apple services and personal data",
+          "prevention_tips": ["Check Apple ID status in Settings", "Use official Apple Support app", "Never respond to popup Apple alerts"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["brand_impersonation", "apple", "account_takeover", "beginner"]
+      },
+    
+
+      {
+        "title": "IRS Tax Notice",
+        "message": "You have an outstanding tax debt of $3,247.83. Immediate payment is required to avoid legal action. Click here to pay now and avoid penalties.",
+        "type": "malicious",
+        "category": "brand_impersonation",
+        "subtype": "government_irs",
+        "ui_template": "system_alert",
+        
+        "brand_elements": {
+          "logo_url": "/logos/irs-fake.png",
+          "brand_colors": ["#003366", "#ffffff"],
+          "fonts": ["Times New Roman", "Arial"],
+          "impersonated_brand": "Internal Revenue Service"
+        },
+        
+        "buttons": [
+          {
+            "text": "Pay Now",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          },
+          {
+            "text": "View Notice Details",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "click_outside", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "communication_method",
+            "ioc_type": "suspicious_url",
+            "description": "IRS communicates through mail, not browser popups",
+            "severity": "high"
+          },
+          {
+            "element": "payment_demand",
+            "ioc_type": "threats",
+            "description": "Threatens legal action for immediate payment",
+            "severity": "high"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "The IRS never sends tax notices through browser popups and doesn't demand immediate online payments. All official IRS communication comes through postal mail.",
+          "what_to_look_for": ["Browser popups from government agencies", "Immediate payment demands", "Threats of legal action"],
+          "real_world_impact": "Can lead to financial fraud and identity theft",
+          "prevention_tips": ["IRS only communicates by mail", "Verify any tax issues through IRS.gov", "Never pay taxes through popup links"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["brand_impersonation", "government", "irs", "financial_fraud", "beginner"]
+      },
+    
+    
+      {
+        "title": "Account Suspension Warning",
+        "message": "Your email account will be suspended in 24 hours due to suspicious activity. Click here to verify your account and prevent suspension.",
+        "type": "malicious",
+        "category": "security_warning",
+        "subtype": "account_suspension",
+        "ui_template": "system_alert",
+        
+        "brand_elements": {
+          "logo_url": "/logos/email-warning.png",
+          "brand_colors": ["#ff6b35", "#ffffff"],
+          "fonts": ["Arial", "Helvetica"],
+          "impersonated_brand": "Email Security Center"
+        },
+        
+        "buttons": [
+          {
+            "text": "Verify Account",
+            "action": "credential_prompt",
+            "is_correct_choice": false
+          },
+          {
+            "text": "Learn More",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "escape_key", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "timeframe",
+            "ioc_type": "urgency_language",
+            "description": "Creates false urgency with 24-hour deadline",
+            "severity": "high"
+          },
+          {
+            "element": "generic_source",
+            "ioc_type": "generic_greeting",
+            "description": "Vague 'Email Security Center' instead of specific provider",
+            "severity": "medium"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "Legitimate email providers send suspension warnings through official channels, not browser popups. The generic 'Email Security Center' is suspicious.",
+          "what_to_look_for": ["Generic security center names", "24-hour ultimatums", "Browser popup warnings"],
+          "real_world_impact": "Email credential theft can compromise all online accounts",
+          "prevention_tips": ["Check account status directly with your email provider", "Ignore popup security warnings", "Use official apps for account management"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["security_warning", "account_suspension", "email_phishing", "beginner"]
+      },
+    
+      {
+        "title": "Credit Card Fraud Alert",
+        "message": "Fraudulent charges detected on your credit card ending in 4756. Click here to review and dispute these charges before they are processed.",
+        "type": "malicious",
+        "category": "security_warning",
+        "subtype": "credit_fraud",
+        "ui_template": "system_alert",
+        
+        "brand_elements": {
+          "logo_url": "/logos/credit-alert.png",
+          "brand_colors": ["#d32f2f", "#ffffff"],
+          "fonts": ["Arial", "Helvetica"],
+          "impersonated_brand": "Credit Monitoring Service"
+        },
+        
+        "buttons": [
+          {
+            "text": "Review Charges",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          },
+          {
+            "text": "Dispute Now",
+            "action": "credential_prompt",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "alt_f4", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "card_reference",
+            "ioc_type": "too_good_to_be_true",
+            "description": "References specific card digits without knowing your actual card",
+            "severity": "high"
+          },
+          {
+            "element": "urgency",
+            "ioc_type": "urgency_language",
+            "description": "Pressure to act before charges are 'processed'",
+            "severity": "medium"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "Credit card companies send fraud alerts through SMS or phone calls, not browser popups. The specific card digits are likely guessed.",
+          "what_to_look_for": ["Browser popups about credit fraud", "Specific card numbers in unsolicited alerts", "Generic monitoring service names"],
+          "real_world_impact": "Can lead to credit card theft and financial fraud",
+          "prevention_tips": ["Contact your credit card company directly", "Check statements through official banking apps", "Never click fraud alert popups"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["security_warning", "credit_fraud", "financial_phishing", "beginner"]
+      },
+    
+      {
+        "title": "Data Breach Notification",
+        "message": "Your personal information may have been compromised in a recent data breach. Click here to check if your data was affected and secure your accounts.",
+        "type": "malicious",
+        "category": "security_warning",
+        "subtype": "data_breach",
+        "ui_template": "system_alert",
+        
+        "brand_elements": {
+          "logo_url": "/logos/security-breach.png",
+          "brand_colors": ["#ff5722", "#ffffff"],
+          "fonts": ["Arial", "Helvetica"],
+          "impersonated_brand": "Data Security Alert Center"
+        },
+        
+        "buttons": [
+          {
+            "text": "Check My Data",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          },
+          {
+            "text": "Secure Accounts",
+            "action": "credential_prompt",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "click_outside", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "vague_breach",
+            "ioc_type": "generic_greeting",
+            "description": "No specific company or breach mentioned",
+            "severity": "high"
+          },
+          {
+            "element": "popup_medium",
+            "ioc_type": "suspicious_url",
+            "description": "Real breach notifications come from affected companies directly",
+            "severity": "high"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "Legitimate data breach notifications come directly from the affected companies, not generic 'alert centers' through browser popups.",
+          "what_to_look_for": ["Generic security center names", "Vague breach details", "Browser popup notifications"],
+          "real_world_impact": "Can lead to identity theft and account compromise",
+          "prevention_tips": ["Check breach notifications on official company websites", "Use services like HaveIBeenPwned.com", "Ignore popup breach alerts"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["security_warning", "data_breach", "identity_theft", "beginner"]
+      },
+        
+      {
+        "title": "🎉 Congratulations! You've Won! 🎉",
+        "message": "You are today's lucky winner of a $500 Amazon Gift Card! Click here to claim your prize before it expires. Only 3 winners selected daily!",
+        "type": "malicious",
+        "category": "prize_reward",
+        "subtype": "contest_winner",
+        "ui_template": "browser_notification",
+        
+        "brand_elements": {
+          "logo_url": "/logos/prize-winner.png",
+          "brand_colors": ["#ffd700", "#ff6b35", "#ffffff"],
+          "fonts": ["Arial Black", "Impact"],
+          "impersonated_brand": "Daily Prize Center"
+        },
+        
+        "buttons": [
+          {
+            "text": "Claim Prize Now!",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          },
+          {
+            "text": "See Prize Details",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "escape_key", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "unsolicited_prize",
+            "ioc_type": "too_good_to_be_true",
+            "description": "Winning a contest you never entered",
+            "severity": "high"
+          },
+          {
+            "element": "urgency",
+            "ioc_type": "urgency_language",
+            "description": "Prize expires soon, creating false urgency",
+            "severity": "medium"
+          },
+          {
+            "element": "emojis",
+            "ioc_type": "poor_grammar",
+            "description": "Excessive use of emojis and exclamation marks",
+            "severity": "low"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "You cannot win contests you never entered. This is a classic scam to collect personal information or install malware.",
+          "what_to_look_for": ["Unsolicited prize notifications", "Urgent expiration times", "Generic prize center names"],
+          "real_world_impact": "Can lead to personal information theft and malware installation",
+          "prevention_tips": ["Never click on unexpected prize notifications", "Remember: if you didn't enter, you can't win", "Delete popup prize alerts"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["prize_reward", "contest_winner", "too_good_to_be_true", "beginner"]
+      },
+    
+      {
+        "title": "Free $100 Gift Card!",
+        "message": "Complete this quick 2-minute survey about shopping habits and receive a FREE $100 Walmart gift card! Limited time offer - only 50 gift cards available!",
+        "type": "malicious",
+        "category": "prize_reward",
+        "subtype": "gift_card",
+        "ui_template": "browser_notification",
+        
+        "brand_elements": {
+          "logo_url": "/logos/gift-card.png",
+          "brand_colors": ["#0071ce", "#ffc220"],
+          "fonts": ["Arial", "Helvetica"],
+          "impersonated_brand": "Walmart Survey Rewards"
+        },
+        
+        "buttons": [
+          {
+            "text": "Start Survey",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          },
+          {
+            "text": "Claim Gift Card",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "click_outside", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "free_offer",
+            "ioc_type": "too_good_to_be_true",
+            "description": "$100 for a 2-minute survey is unrealistic",
+            "severity": "high"
+          },
+          {
+            "element": "limited_quantity",
+            "ioc_type": "urgency_language",
+            "description": "Creates scarcity with 'only 50 available'",
+            "severity": "medium"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "Legitimate companies don't give away $100 gift cards for 2-minute surveys. This is designed to collect personal information for fraud.",
+          "what_to_look_for": ["Unrealistic rewards for minimal effort", "Limited quantity claims", "Unsolicited survey offers"],
+          "real_world_impact": "Personal information harvesting for identity theft and marketing fraud",
+          "prevention_tips": ["Be skeptical of free high-value offers", "Real surveys offer small rewards", "Ignore popup survey offers"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["prize_reward", "gift_card", "survey_scam", "beginner"]
+      },
+    
+      {
+        "title": "Earn $25 Cash Reward",
+        "message": "You've been selected to participate in a market research survey. Answer 5 quick questions and earn $25 instantly deposited to your PayPal account!",
+        "type": "malicious",
+        "category": "prize_reward",
+        "subtype": "survey_reward",
+        "ui_template": "browser_notification",
+        
+        "brand_elements": {
+          "logo_url": "/logos/survey-reward.png",
+          "brand_colors": ["#00457c", "#009cde"],
+          "fonts": ["Arial", "Helvetica"],
+          "impersonated_brand": "Market Research Plus"
+        },
+        
+        "buttons": [
+          {
+            "text": "Start Survey",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          },
+          {
+            "text": "Claim $25",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          }
+        ],
+        
+        "correct_action": "close_legitimate",
+        
+        "available_close_methods": [
+          { "method": "click_x_button", "is_safe": true, "leads_to_malicious": false },
+          { "method": "escape_key", "is_safe": true, "leads_to_malicious": false }
+        ],
+        
+        "indicators_of_compromise": [
+          {
+            "element": "instant_payment",
+            "ioc_type": "too_good_to_be_true",
+            "description": "Instant $25 for 5 questions is unrealistic",
+            "severity": "high"
+          },
+          {
+            "element": "selection_claim",
+            "ioc_type": "generic_greeting",
+            "description": "Claims you were 'selected' without explanation",
+            "severity": "medium"
+          }
+        ],
+        
+        "difficulty_level": "beginner",
+        "time_pressure": { "has_timer": false, "time_limit_ms": 0, "countdown_visible": false },
+        
+        "explanation": {
+          "why_malicious": "Legitimate market research companies don't pay $25 for 5-question surveys or offer instant PayPal deposits through browser popups.",
+          "what_to_look_for": ["Unrealistic payment amounts", "Instant payment promises", "Claims of being 'selected'"],
+          "real_world_impact": "Data harvesting for marketing fraud and potential PayPal account compromise",
+          "prevention_tips": ["Join legitimate survey sites directly", "Expect small payments for real surveys", "Ignore popup survey invitations"]
+        },
+        
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        
+        "tags": ["prize_reward", "survey_reward", "paypal_scam", "beginner"]
+      },
+    
+      {
+        "title": "Critical Security Patch Required",
+        "message": "Your browser is out of date and vulnerable. Click below to update now.",
+        "type": "malicious",
+        "category": "software_update",
+        "subtype": "browser_update",
+        "ui_template": "browser_notification",
+        "brand_elements": {
+          "logo_url": "https://example.com/fake-chrome-logo.png",
+          "brand_colors": [
+            "#4285F4",
+            "#EA4335",
+            "#FBBC05"
+          ],
+          "fonts": [
+            "Arial"
+          ],
+          "impersonated_brand": "Google Chrome"
+        },
+        "buttons": [
+          {
+            "text": "Update Now",
+            "action": "malicious_link",
+            "is_correct_choice": false
+          }
+        ],
+        "correct_action": "report_phishing",
+        "available_close_methods": [
+          {
+            "method": "click_close_button",
+            "is_safe": false,
+            "leads_to_malicious": true
+          }
+        ],
+        "indicators_of_compromise": [
+          {
+            "element": "button",
+            "ioc_type": "suspicious_url",
+            "description": "URL redirects to non-Google domain",
+            "severity": "high"
+          },
+          {
+            "element": "text",
+            "ioc_type": "urgency_language",
+            "description": "Pushes urgency to install immediately",
+            "severity": "medium"
+          }
+        ],
+        "difficulty_level": "beginner",
+        "time_pressure": {
+          "has_timer": true,
+          "time_limit_ms": 20000,
+          "countdown_visible": true
+        },
+        "explanation": {
+          "why_malicious": "This popup impersonates a browser update to trick users into downloading malware.",
+          "what_to_look_for": [
+            "Urgency language",
+            "Non-official domain URL",
+            "Low-res brand logo"
+          ],
+          "real_world_impact": "Can lead to trojan infection and browser hijacking.",
+          "prevention_tips": [
+            "Always update via official browser settings",
+            "Avoid clicking unknown popups"
+          ]
+        },
+        "mitre_technique": {
+          "technique_id": "T1566.002",
+          "technique_name": "Spearphishing Link",
+          "tactic": "Initial Access"
+        },
+        "created_date": "2025-06-02T08:25:29.613994",
+        "difficulty_rating": 2,
+        "success_rate": 0.35,
+        "tags": [
+          "browser",
+          "phishing",
+          "software_update"
+        ]
+      },
+      {
+        "title": "New Features Available",
+        "message": "Your browser has been successfully updated to the latest version.",
+        "type": "benign",
+        "category": "software_update",
+        "subtype": "browser_update",
+        "ui_template": "browser_notification",
+        "brand_elements": {
+          "logo_url": "https://example.com/official-chrome-logo.png",
+          "brand_colors": [
+            "#4285F4",
+            "#EA4335",
+            "#FBBC05"
+          ],
+          "fonts": [
+            "Roboto"
+          ],
+          "impersonated_brand": "Google Chrome"
+        },
+        "buttons": [
+          {
+            "text": "Got it!",
+            "action": "legitimate_close",
+            "is_correct_choice": true
+          }
+        ],
+        "correct_action": "close_legitimate",
+        "available_close_methods": [
+          {
+            "method": "click_close_button",
+            "is_safe": true,
+            "leads_to_malicious": false
+          }
+        ],
+        "indicators_of_compromise": [],
+        "difficulty_level": "beginner",
+        "time_pressure": {
+          "has_timer": false,
+          "countdown_visible": false
+        },
+        "explanation": {
+          "why_malicious": "",
+          "what_to_look_for": [],
+          "real_world_impact": "",
+          "prevention_tips": []
+        },
+        "mitre_technique": {
+          "technique_id": null,
+          "technique_name": null,
+          "tactic": null
+        },
+        "created_date": "2025-06-02T08:25:29.614007",
+        "difficulty_rating": 1,
+        "success_rate": 0.9,
+        "tags": [
+          "safe",
+          "update",
+          "notification"
+        ]
+      },
+      {
+        "title": "Optional Plugin Update Available",
+        "message": "An optional update for your media plugin is ready. You can ignore this if not using related features.",
+        "type": "neutral",
+        "category": "software_update",
+        "subtype": "plugin_install",
+        "ui_template": "system_alert",
+        "brand_elements": {
+          "logo_url": "https://example.com/plugin-logo.png",
+          "brand_colors": [
+            "#cccccc"
+          ],
+          "fonts": [
+            "Tahoma"
+          ],
+          "impersonated_brand": "Generic Plugin"
+        },
+        "buttons": [
+          {
+            "text": "Ignore",
+            "action": "legitimate_close",
+            "is_correct_choice": true
+          }
+        ],
+        "correct_action": "ignore_completely",
+        "available_close_methods": [
+          {
+            "method": "click_x_button",
+            "is_safe": true,
+            "leads_to_malicious": false
+          }
+        ],
+        "indicators_of_compromise": [],
+        "difficulty_level": "beginner",
+        "time_pressure": {
+          "has_timer": false,
+          "countdown_visible": false
+        },
+        "explanation": {
+          "why_malicious": "",
+          "what_to_look_for": [
+            "Not all popups are threats \u2014 some are unnecessary but harmless"
+          ],
+          "real_world_impact": "Ignoring non-critical popups reduces noise and risk of false positives.",
+          "prevention_tips": [
+            "Understand the purpose of the software/plugin before updating"
+          ]
+        },
+        "mitre_technique": {
+          "technique_id": null,
+          "technique_name": null,
+          "tactic": null
+        },
+        "created_date": "2025-06-02T08:25:29.614012",
+        "difficulty_rating": 1,
+        "success_rate": 0.8,
+        "tags": [
+          "plugin",
+          "neutral",
+          "user_discretion"
+        ]
+      }
+
+      
+]
