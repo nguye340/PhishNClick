@@ -3,7 +3,6 @@
 import { useEffect } from "react"
 import { CursorProvider } from "@/components/cursor/cursor-provider"
 import { SwimmingFish } from "@/components/fish/swimming-fish"
-import "@/styles/optimized-cursor.css"
 
 // Dynamically import GSAP to prevent chunk loading errors
 let gsap: any;

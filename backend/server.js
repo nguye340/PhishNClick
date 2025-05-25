@@ -5,6 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import dotenv from 'dotenv';
+import popupRoutes from './routes/popup.route.js';
+import popupEventRoutes from './routes/popupEvent.route.js'; // popupEventRoutes and popupRoutes are just aliases for the routes files, can view it as variable names as well
 
 // ES Module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -20,26 +22,12 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-//app.use(cors());
-//app.use(express.json());
+app.use(cors());
+app.use(express.json());
 
 // API Routes
-app.get("/scenarios", (req, res) => {
-  res.json({ message: "Scenarios endpoint" });
-});
-
-// app.get('/api/health', (req, res) => {
-//   res.json({ status: 'ok', message: 'PhishNClick API is running' });
-// });
-
-// // Serve static assets if in production
-// if (process.env.NODE_ENV === 'production') {
-//   app.use(express.static(path.join(__dirname, '../frontend/build')));
-  
-//   app.get('*', (req, res) => {
-//     res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
-//   });
-// }
+app.use('/api/popup', popupRoutes);
+app.use('/api/popupEvent', popupEventRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
