@@ -11,7 +11,7 @@ class Ground {
     this.y = this.canvas.height - this.height;
 
     this.image = new Image();
-    this.image.src = "/games/phish404/img/ground.png";
+    this.image.src = "/games/phish404/img/ground2.png";
   }
 
   update(gameSpeed, frameTimeDelta) {
