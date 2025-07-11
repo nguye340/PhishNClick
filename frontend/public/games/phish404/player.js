@@ -17,11 +17,17 @@ class Player {
     this.jumpPressed = false;
     this.jumpInProgress = false;
     this.falling = false;
-    this.jumpSpeed = 3.0; // Increased for snappier jumping
-    this.fallSpeed = 2.5; // Increased for snappier falling
+    this.baseJumpSpeed = 3.0; // Base jump speed at full energy
+    this.baseFallSpeed = 2.0; // Base fall speed at full energy
+    this.jumpSpeed = this.baseJumpSpeed; // Current jump speed (will be adjusted by energy)
+    this.fallSpeed = this.baseFallSpeed; // Current fall speed (will be adjusted by energy)
     this.jumpStartTime = 0; // Track when jump started
     this.jumpHoldDuration = 0; // Track how long jump was held
     this.maxJumpHoldTime = 300; // Max time in ms to hold for highest jump
+    
+    // Energy-based speed properties
+    this.energyLevel = 100; // Default to full energy
+    this.minSpeedFactor = 0.4; // At 0 energy, speed is 40% of normal
 
     // Player states
     this.STANDING = 0;
@@ -35,6 +41,10 @@ class Player {
     this.fps = 20;
     this.frameTimer = 0;
     this.frameInterval = 1000/this.fps;
+    
+    // Invincibility properties for damage feedback
+    this.isInvincible = false;
+    this.isVisible = true;
 
     // Load sprites for animation
     this.images = [];
@@ -107,9 +117,27 @@ class Player {
     this.jumpPressed = false;
   }
 
-  update(gameSpeed, frameTimeDelta) {
+  update(gameSpeed, frameTimeDelta, energyLevel) {
+    // Update speed based on current energy level
+    this.updateSpeedBasedOnEnergy(energyLevel);
+    
     this.handleJump();
     this.handlePlayerFrame(frameTimeDelta);
+  }
+  
+  updateSpeedBasedOnEnergy(energyLevel) {
+    // Store the current energy level
+    this.energyLevel = energyLevel;
+    
+    // Calculate speed factor based on energy (linear scale from minSpeedFactor to 1.0)
+    const speedFactor = this.minSpeedFactor + ((1.0 - this.minSpeedFactor) * (energyLevel / 100));
+    
+    // Update jump and fall speeds based on energy level
+    this.jumpSpeed = this.baseJumpSpeed * speedFactor;
+    this.fallSpeed = this.baseFallSpeed * speedFactor;
+    
+    // Also adjust animation speed based on energy
+    this.animationInterval = 200 / speedFactor; // Slower animation when low energy
   }
 
   handleJump() {
@@ -186,6 +214,9 @@ class Player {
   }
 
   draw() {
+    // Skip drawing if not visible (for invincibility flashing effect)
+    if (!this.isVisible) return;
+    
     // Use the current cat image from the animation sequence
     const currentCatImage = this.images[this.currentImage];
     
@@ -196,5 +227,93 @@ class Player {
       this.width,
       this.height
     );
+  }
+  
+  takeDamage(amount) {
+    console.log('takeDamage called with amount:', amount);
+    console.log('Current invincibility state:', this.isInvincible);
+    
+    // Don't take damage if currently invincible
+    if (this.isInvincible) {
+      console.log('Player is invincible, no damage taken');
+      return false;
+    }
+    
+    console.log(`Player took ${amount} damage!`);
+    
+    // Call the global game.loseLife function which will handle invincibility
+    console.log('Attempting to call loseLife...');
+    
+    if (window.game && typeof window.game.loseLife === 'function') {
+      console.log('Calling game.loseLife()');
+      try {
+        window.game.loseLife();
+        console.log('Successfully called game.loseLife()');
+      } catch (e) {
+        console.error('Error calling game.loseLife():', e);
+      }
+    } else if (typeof loseLife === 'function') {
+      console.log('Falling back to global loseLife()');
+      try {
+        loseLife();
+        console.log('Successfully called global loseLife()');
+      } catch (e) {
+        console.error('Error calling global loseLife():', e);
+      }
+    } else {
+      console.error('No loseLife function available!');
+    }
+    
+    return true;
+  }
+  
+  flash(duration) {
+    const flashInterval = 100; // Flash every 100ms
+    const flashes = duration / (flashInterval * 2);
+    let flashCount = 0;
+    
+    const flash = () => {
+      if (flashCount >= flashes * 2) {
+        // Ensure player is visible at the end
+        this.isVisible = true;
+        return;
+      }
+      
+      // Toggle visibility
+      this.isVisible = !this.isVisible;
+      flashCount++;
+      
+      // Schedule next flash
+      setTimeout(flash, flashInterval);
+    };
+    
+    // Start flashing
+    flash();
+  }
+  
+  // Reset player to initial state
+  reset() {
+    // Reset position
+    this.y = this.groundY;
+    
+    // Reset jump state
+    this.jumpPressed = false;
+    this.jumpInProgress = false;
+    this.falling = false;
+    this.jumpStartTime = 0;
+    this.jumpHoldDuration = 0;
+    
+    // Reset animation state
+    this.state = this.RUNNING;
+    this.frameX = 0;
+    this.frameTimer = 0;
+    this.animationTimer = 0;
+    this.currentImage = 0;
+    
+    // Reset visibility
+    this.isInvincible = false;
+    this.isVisible = true;
+    
+    console.log('Player reset complete');
   }
 }

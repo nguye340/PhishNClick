@@ -12,6 +12,9 @@ class ObstacleController {
     this.minSpawnTime = 1000;
     this.maxSpawnTime = 3000;
     this.nextSpawnTime = this.minSpawnTime;
+    
+    // Flag to pause obstacle spawning during boss battles
+    this.pauseSpawning = false;
   }
   
   resetTimer() {
@@ -28,7 +31,23 @@ class ObstacleController {
     const obstacleImage = this.obstacleImages[index];
     
     const x = this.canvas.width;
-    const y = this.canvas.height - obstacleImage.height - 1.5 * this.scaleRatio;
+    
+    // Define three distinct height levels (low, mid, high)
+    // Low: ground level (0 height variation)
+    // Mid: medium height (40px scaled)
+    // High: highest position (80px scaled)
+    const heightLevels = [
+      0,                         // Low level (ground)
+      40 * this.scaleRatio,      // Mid level
+      80 * this.scaleRatio       // High level
+    ];
+    
+    // Randomly select one of the three height levels
+    const levelIndex = Math.floor(Math.random() * heightLevels.length);
+    const heightVariation = heightLevels[levelIndex];
+    
+    // Base position (ground level) minus the selected height level
+    const y = this.canvas.height - obstacleImage.height - 1.5 * this.scaleRatio - heightVariation;
     
     const obstacle = new Obstacle(
       this.ctx,
@@ -39,15 +58,26 @@ class ObstacleController {
       obstacleImage.image
     );
     
+    // Add type property based on the image path
+    const imagePath = obstacleImage.image.src.toLowerCase();
+    if (imagePath.includes('email')) {
+      obstacle.type = 'email';
+    } else if (imagePath.includes('phone')) {
+      obstacle.type = 'phone';
+    }
+    
     this.obstacle.push(obstacle);
   }
   
   update(gameSpeed, frameTimeDelta) {
-    this.timerRandomSpawn += frameTimeDelta;
-    
-    if (this.timerRandomSpawn >= this.nextSpawnTime) {
-      this.createObstacle();
-      this.resetTimer();
+    // Only spawn new obstacles if not paused
+    if (!this.pauseSpawning) {
+      this.timerRandomSpawn += frameTimeDelta;
+      
+      if (this.timerRandomSpawn >= this.nextSpawnTime) {
+        this.createObstacle();
+        this.resetTimer();
+      }
     }
     
     this.obstacle.forEach((obstacle) => {
@@ -64,6 +94,29 @@ class ObstacleController {
   }
   
   collideWith(sprite) {
-    return this.obstacle.some(obstacle => obstacle.collideWith(sprite));
+    for (let i = 0; i < this.obstacle.length; i++) {
+      // Skip obstacles that have already been collided with
+      if (this.obstacle[i].hasCollided) {
+        continue;
+      }
+      
+      if (this.obstacle[i].collideWith(sprite)) {
+        // Mark this obstacle as collided so we don't detect it again
+        this.obstacle[i].hasCollided = true;
+        return this.obstacle[i];
+      }
+    }
+    return null;
+  }
+  
+  reset() {
+    console.log('Resetting obstacle controller');
+    // Clear all obstacles
+    this.obstacle = [];
+    // Reset spawn timer
+    this.timerRandomSpawn = 0;
+    this.nextSpawnTime = this.getRandomSpawnTime();
+    // Reset pause flag
+    this.pauseSpawning = false;
   }
 }
