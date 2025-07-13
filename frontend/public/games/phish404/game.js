@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let playerLevel = 1;
   
   // Lives system
-  let lives = 3;
+  let lives = 6; // Increased from 3 to 6 for better player experience
   
   // Energy system
   let energy = 100;
@@ -97,12 +97,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
   let player = null;
   let ground = null;
+  // Define controllers as local variables first
   let obstacleController = null;
   let coinController = null;
   let milkController = null;
   let burgerController = null;
   let skullController = null;
   let hackerController = null;
+  
+  // Also expose controllers to window object for access by other components
+  window.obstacleController = null;
+  window.coinController = null;
+  window.milkController = null;
+  window.burgerController = null;
+  window.skullController = null;
+  window.hackerController = null;
+  
+  // Global flag to track when hacker is in loading mode
+  // This is used to prevent drawing viruses and obstacles during loading
+  window.hackerIsLoading = false;
 
   let scaleRatio = null;
   let previousTime = null;
@@ -111,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let waitingToStart = true;
   let popupVisible = false; // Track if any popup is currently visible
   let gameLoopRunning = false; // Track if game loop is running
+  let hackerIsLoading = false; // Global flag to track if hacker is in loading mode
 
   function createSprite() {
     const playerWidthInGame = PLAYER_WIDTH * scaleRatio;
@@ -136,21 +150,27 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     obstacleController = new ObstacleController(ctx, scaledObstacleImages, GROUND_AND_OBSTACLE_SPEED, scaleRatio);
+    window.obstacleController = obstacleController;
     
     // Create coin controller
     coinController = new CoinController(canvas.width, canvas.height, scaleRatio);
+    window.coinController = coinController;
     
     // Create milk controller
     milkController = new MilkController(ctx, canvas.width, canvas.height, scaleRatio);
+    window.milkController = milkController;
     
     // Create burger controller
     burgerController = new BurgerController(canvas.width, canvas.height, scaleRatio);
+    window.burgerController = burgerController;
     
     // Create skull controller
     skullController = new SkullController(ctx, canvas.width, canvas.height, GROUND_AND_OBSTACLE_SPEED, scaleRatio);
+    window.skullController = skullController;
     
     // Create hacker controller with reference to obstacle controller for pausing obstacles during boss battles
     hackerController = new HackerController(ctx, canvas.width, canvas.height, GROUND_AND_OBSTACLE_SPEED, scaleRatio, obstacleController);
+    window.hackerController = hackerController;
   }
 
   function setScreen() {
@@ -214,51 +234,56 @@ document.addEventListener('DOMContentLoaded', function() {
       player.handlePlayerFrame(deltaTime);
     }
     
+    // Setup text rendering
     const fontSize = 15 * scaleRatio;
     ctx.font = `${fontSize}px "Press Start 2P", "Courier New", monospace`;
-    const x = canvas.width / 4; // Adjusted for wider arcade font
-    const y = canvas.height / 4;
+    ctx.textAlign = 'center';
+    const centerX = canvas.width / 2;
+    const startY = canvas.height / 4;
+    const lineHeight = fontSize * 1.5;
     
-    // First part of text
-    ctx.fillStyle = 'darkblue';
-    ctx.fillText("Press ", x, y);
-    
-    // Highlight the word "SPACE" with flashing effect
-    const pressText = "Press ";
-    const spaceText = "SPACE";
-    const pressWidth = ctx.measureText(pressText).width;
-    
-    // Create flashing effect using timestamp
+    // Draw title with flashing SPACE text
     const flashSpeed = 300; // milliseconds per flash cycle
     const isFlashing = Math.floor(Date.now() / flashSpeed) % 2 === 0;
     
-    ctx.fillStyle = isFlashing ? '#00FFFF' : '#0066CC'; // Alternate between cyan and blue
-    ctx.fillText(spaceText, x + pressWidth, y);
-    
-    // Rest of the first line
-    const spaceWidth = ctx.measureText(spaceText).width;
+    // First draw the regular text in dark blue
     ctx.fillStyle = 'darkblue';
-    ctx.fillText(" to start", x + pressWidth + spaceWidth, y);
+    ctx.fillText("Press      to start", centerX, startY);
+    
+    // Then overlay the flashing SPACE text
+    ctx.fillStyle = isFlashing ? '#00FFFF' : '#0066CC'; // Alternate between cyan and blue
+    
+    // Calculate the position to place SPACE
+    ctx.textAlign = 'left';
+    const pressWidth = ctx.measureText("Press ").width;
+    const fullText = "Press SPACE to start";
+    const fullWidth = ctx.measureText(fullText).width;
+    const startX = centerX - (fullWidth / 2) + pressWidth;
+    
+    ctx.fillText("SPACE", startX, startY);
+    
+    // Reset to center alignment for remaining text
+    ctx.textAlign = 'center';
     
     // Second line
-    ctx.fillText("Try your best to help this CAR* survive!", x, y + fontSize * 1.5);
+    ctx.fillStyle = 'darkblue';
+    ctx.fillText("Try your best to help this CAR* survive!", centerX, startY + lineHeight);
     
-    // Game instructions
-    const lineHeight = fontSize * 1.5;
-    let currentY = y + lineHeight * 3;
+    // Add some vertical spacing before instructions
+    let currentY = startY + lineHeight * 3;
     
     // Email/call instructions
     ctx.fillStyle = '#0066CC'; // Blue for normal obstacles
-    ctx.fillText("• Answer emails and calls for COINS", x, currentY);
+    ctx.fillText("ANSWER EMAILS or CALLS for $$$", centerX, currentY);
     currentY += lineHeight;
-    ctx.fillText("  (only wrong ones cost lives)", x, currentY);
+    ctx.fillText("+10$ +1LV (right) or -1 life (wrong)", centerX, currentY);
     currentY += lineHeight * 1.5;
     
     // Skull/hacker warning
-    ctx.fillStyle = '#AD0709'; // Red for dangerous obstacles
-    ctx.fillText("• AVOID skull virus and hackers!", x, currentY);
+    ctx.fillStyle = '#AD0710'; // Red for dangerous obstacles
+    ctx.fillText("AVOID the hacker's VIRUSES!", centerX, currentY);
     currentY += lineHeight;
-    ctx.fillText("  They will cost you 1 life!", x, currentY);
+    ctx.fillText("-1 life", centerX, currentY);
     
     gameOver = false;
     
@@ -296,8 +321,8 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateLivesDisplay() {
     console.log('Updating lives display. Current lives:', lives);
     
-    // Update heart images
-    for (let i = 1; i <= 3; i++) {
+    // Update heart images for all 6 hearts
+    for (let i = 1; i <= 6; i++) {
       const heartElement = document.getElementById(`heart${i}`);
       if (heartElement) {
         heartElement.src = i <= lives ? "/games/phish404/img/heart.gif" : "/games/phish404/img/heart-deplete.png";
@@ -547,23 +572,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Draw player
     player.draw();
     
-    // Draw obstacles
-    obstacleController.draw();
+    // Only draw obstacles if hacker is not in loading mode
+    if (!window.hackerIsLoading) {
+      // Draw obstacles
+      obstacleController.draw();
+      
+      // Draw coins
+      coinController.draw(ctx);
+      
+      // Draw milk bottles with deltaTime for notification animation
+      milkController.draw(deltaTime);
+      
+      // Draw burger collectibles with deltaTime for notification animation
+      burgerController.draw(ctx, deltaTime);
+      
+      // Draw skull obstacles
+      skullController.draw();
+    } else {
+      // If hacker is loading, log that we're skipping obstacle drawing
+      console.log('Skipping obstacle drawing during hacker loading phase');
+    }
     
-    // Draw coins
-    coinController.draw(ctx);
-    
-    // Draw milk bottles with deltaTime for notification animation
-    milkController.draw(deltaTime);
-    
-    // Draw burger collectibles with deltaTime for notification animation
-    burgerController.draw(ctx, deltaTime);
-    
-    // Draw skull obstacles
-    skullController.draw();
-    
-    // Draw hacker obstacles
-    hackerController.draw(deltaTime);
+    // Draw hacker obstacles - always draw the hacker itself, but conditionally draw projectiles
+    // The draw method will handle this internally based on the loading state
+    hackerController.draw(deltaTime, window.hackerIsLoading);
     
     // Check for coin collisions
     coinController.checkCollision(player);
@@ -584,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Burger collected - special power-up effect
       
       // 1. Restore one life if not at max
-      if (lives < 3) {
+      if (lives < 6) { // Updated to match new maximum of 6 lives
         lives++;
         updateLivesDisplay();
       }
@@ -608,24 +640,28 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 500);
     }
     
-    // Check for skull collisions
-    const skullCollision = skullController.checkCollision(player);
-    if (skullCollision) {
-      // Lose a life when hitting a skull
-      if (typeof window.loseLife === 'function') {
-        window.loseLife();
-      } else if (window.game && typeof window.game.loseLife === 'function') {
-        window.game.loseLife();
-      } else {
-        console.error('loseLife function not found!');
+    // Check for skull collisions - only if hacker is not loading
+    if (!window.hackerIsLoading) {
+      const skullCollision = skullController.checkCollision(player);
+      if (skullCollision) {
+        // Lose a life when hitting a skull
+        if (typeof window.loseLife === 'function') {
+          window.loseLife();
+        } else if (window.game && typeof window.game.loseLife === 'function') {
+          window.game.loseLife();
+        } else {
+          console.error('loseLife function not found!');
+        }
+        
+        // Play cat hit sound
+        const catHitSound = new Audio('/games/phish404/audio/cat-hit.mp3');
+        catHitSound.volume = gameVolume;
+        if (!isMuted) {
+          catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
+        }
       }
-      
-      // Play cat hit sound
-      const catHitSound = new Audio('/games/phish404/audio/cat-hit.mp3');
-      catHitSound.volume = gameVolume;
-      if (!isMuted) {
-        catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
-      }
+    } else {
+      console.log('Skipping skull collision detection during hacker loading phase');
     }
     
     // Check for hacker collisions
@@ -1468,7 +1504,7 @@ document.addEventListener('DOMContentLoaded', function() {
     gameOver = false;
     waitingToStart = true;
     popupVisible = false;
-    lives = 3; // Reset lives to starting value
+    lives = 6; // Reset lives to starting value of 6
     playerLevel = 1; // Reset level to 1
     
     // Reset player
@@ -1601,6 +1637,8 @@ document.addEventListener('DOMContentLoaded', function() {
           letter-spacing: 3px;
           position: relative;
           z-index: 1;
+          text-align: center;
+          width: 100%;
         ">GAME OVER</h1>
         
         <p style="
@@ -1610,27 +1648,32 @@ document.addEventListener('DOMContentLoaded', function() {
           color: #f0f0f0;
           position: relative;
           z-index: 1;
+          text-align: center;
+          width: 100%;
         ">You've been phished! Better luck next time!</p>
         
-        <button id="restartButton" style="
-          background: linear-gradient(180deg, #4a6cf7 0%, #3a5bd9 100%);
-          color: white;
-          border: none;
-          border-radius: 4px;
-          padding: 12px 24px;
-          font-size: 1rem;
-          font-family: 'Press Start 2P', cursive, Arial, sans-serif;
-          cursor: pointer;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          position: relative;
-          overflow: hidden;
-          z-index: 1;
-          box-shadow: 0 4px 0 #2d46b9, 0 6px 0 #1e3a8a;
-          transition: all 0.1s ease;
-          outline: none;
-        ">
-          <span style="position: relative; z-index: 2;">PLAY AGAIN</span>
+        <div style="width: 100%; text-align: center; margin: 0 auto;">
+          <button id="restartButton" style="
+            background: linear-gradient(180deg, #4a6cf7 0%, #3a5bd9 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-family: 'Press Start 2P', cursive, Arial, sans-serif;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            box-shadow: 0 4px 0 #2d46b9, 0 6px 0 #1e3a8a;
+            transition: all 0.1s ease;
+            outline: none;
+            display: inline-block;
+            margin: 0 auto;
+          ">
+            <span style="position: relative; z-index: 2;">PLAY AGAIN</span>
           <!-- Pixel art glass effect -->
           <div style="
             position: absolute;
@@ -1648,6 +1691,7 @@ document.addEventListener('DOMContentLoaded', function() {
             pointer-events: none;
           "></div>
         </button>
+        </div>
       </div>
       
       <style>

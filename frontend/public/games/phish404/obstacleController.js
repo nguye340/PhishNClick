@@ -22,6 +22,13 @@ class ObstacleController {
     this.nextSpawnTime = this.getRandomSpawnTime();
   }
   
+  // Reset method to clear all obstacles
+  reset() {
+    console.log('Clearing all obstacles from ObstacleController');
+    this.obstacle = [];
+    this.resetTimer();
+  }
+  
   getRandomSpawnTime() {
     return Math.floor(Math.random() * (this.maxSpawnTime - this.minSpawnTime + 1) + this.minSpawnTime);
   }

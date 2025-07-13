@@ -302,6 +302,22 @@ class Player {
     this.falling = false;
     this.jumpStartTime = 0;
     this.jumpHoldDuration = 0;
+  }
+  
+  // Make player invincible for a specified duration
+  makeInvincible(duration = 2000) {
+    // Set invincibility
+    this.isInvincible = true;
+    console.log(`Player is now invincible for ${duration}ms`);
+    
+    // Flash effect to show invincibility
+    this.flash(duration);
+    
+    // Set timeout to remove invincibility
+    setTimeout(() => {
+      this.isInvincible = false;
+      console.log('Player invincibility ended');
+    }, duration);
     
     // Reset animation state
     this.state = this.RUNNING;

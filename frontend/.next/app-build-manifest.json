@@ -21,14 +21,6 @@
       "static/chunks/commons.js",
       "static/chunks/app/page.js"
     ],
-    "/games/popup-manic/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/vendors-_app-pages-browser_node_modules_next-auth_react_index_js-_app-pages-browser_node_modu-ce8ea3.js",
-      "static/chunks/app/games/popup-manic/page.js"
-    ],
     "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",

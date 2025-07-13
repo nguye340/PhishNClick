@@ -33,6 +33,14 @@ class BurgerController {
     return Math.random() * (this.maxSpawnInterval - this.minSpawnInterval) + this.minSpawnInterval;
   }
   
+  // Reset method to clear all burgers
+  reset() {
+    console.log('Clearing all burgers from BurgerController');
+    this.burgers = [];
+    this.spawnTimer = 0;
+    this.spawnInterval = this.getRandomSpawnInterval();
+  }
+  
   update(deltaTime) {
     // Update spawn timer
     this.spawnTimer += deltaTime;

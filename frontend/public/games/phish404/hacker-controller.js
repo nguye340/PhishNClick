@@ -57,6 +57,15 @@ class HackerController {
     this.evilLaughSound = new Audio('/games/phish404/audio/evil_laugh_02.ogg');
     this.catHitSound = new Audio('/games/phish404/audio/cat-hit.mp3');
     this.eraseSound = new Audio('/games/phish404/audio/erase.wav');
+    // Use an existing sound for loading phase
+    this.loadingSound = new Audio('/games/phish404/audio/Catsong.mp3'); // Using Catsong for virus loading
+    this.loadingSound.loop = true; // Loop the song during the entire loading phase
+    // Use erase sound for clearing viruses
+    this.clearSound = this.eraseSound; // Reuse the erase sound for virus clearing effect
+    // Sound for player attacking the hacker
+    this.attackSound = new Audio('/games/phish404/audio/attack.mp3');
+    // Victory sound when hacker is defeated
+    this.victorySound = new Audio('/games/phish404/audio/victory.mp3');
     
     // Music
     this.bossBattleMusic = new Audio('/games/phish404/audio/boss-battle.WAV');
@@ -141,9 +150,21 @@ class HackerController {
       }
     }
     
+    // Check for any other popups that might have different IDs but are visible
+    const allVisiblePopups = document.querySelectorAll('.popup, [id*="popup"], [id*="Popup"], [class*="popup"], [class*="Popup"]');
+    for (const popup of allVisiblePopups) {
+      if (popup.style.display === 'block' || popup.style.visibility === 'visible') {
+        popup.style.display = 'none';
+        popup.style.visibility = 'hidden';
+        anyPopupWasActive = true;
+        console.log(`Closed additional popup: ${popup.id || 'unnamed'}`);
+      }
+    }
+    
     // If any popup was closed, wait a moment before continuing
     if (anyPopupWasActive) {
-      await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+      console.log('Waiting for popups to fully clear...');
+      await new Promise(resolve => setTimeout(resolve, 800)); // 800ms delay to ensure animations complete
     }
     
     return anyPopupWasActive;
@@ -203,23 +224,31 @@ class HackerController {
     // Increment boss appearance count
     this.bossAppearanceCount++;
     
-    // Scale difficulty with each appearance
+    // Scale difficulty with each appearance - easier for new players
     if (this.bossAppearanceCount === 1) {
-      // First boss: 1 slow projectile
+      // First boss: 1 very slow projectile
+      this.projectileCount = 1;
+      this.bossSpeed = 0.6; // Slower speed for first encounter
+    } else if (this.bossAppearanceCount === 2) {
+      // Second boss: 1 slightly faster projectile
       this.projectileCount = 1;
       this.bossSpeed = 0.8;
-    } else if (this.bossAppearanceCount === 2) {
-      // Second boss: 2 slightly faster projectiles
+    } else if (this.bossAppearanceCount === 3) {
+      // Third boss: 2 projectiles at moderate speed
+      this.projectileCount = 2;
+      this.bossSpeed = 0.9;
+    } else if (this.bossAppearanceCount === 4) {
+      // Fourth boss: 2 projectiles at normal speed
       this.projectileCount = 2;
       this.bossSpeed = 1.0;
-    } else if (this.bossAppearanceCount === 3) {
-      // Third boss: 3 projectiles at normal speed
+    } else if (this.bossAppearanceCount === 5) {
+      // Fifth boss: 3 projectiles at normal speed
       this.projectileCount = 3;
-      this.bossSpeed = 1.2;
+      this.bossSpeed = 1.0;
     } else {
-      // Subsequent bosses: increase difficulty more slowly
-      this.projectileCount = Math.min(3 + Math.floor(this.bossAppearanceCount / 2), 8); // Cap at 8 projectiles
-      this.bossSpeed = 1.0 + (this.bossAppearanceCount * 0.15); // Increase speed by 15% each time
+      // Subsequent bosses: increase difficulty more gradually
+      this.projectileCount = Math.min(3 + Math.floor((this.bossAppearanceCount - 5) / 2), 6); // Cap at 6 projectiles
+      this.bossSpeed = 1.0 + (this.bossAppearanceCount * 0.1); // Increase speed by 10% each time
     }
     
     console.log(`Boss appearance #${this.bossAppearanceCount}: Speed ${this.bossSpeed.toFixed(1)}x, Projectiles: ${this.projectileCount}`);
@@ -232,6 +261,9 @@ class HackerController {
       this.hackerWidth * this.scaleRatio,
       this.hackerHeight * this.scaleRatio
     );
+    
+    // Ensure hacker lives are reset to maximum
+    this.hacker.resetLives();
     
     // Activate the hacker
     this.hacker.activate();
@@ -265,48 +297,58 @@ class HackerController {
     this.startBossEndTimer();
   }
   
-  startBossSequence() {
+  async startBossSequence() {
     if (this.showingCaution || this.hacker) return;
     
     console.log('Starting boss sequence...');
     
-    // First, close any open popups and wait for them to clear
-    this.closeAllPopups().then(hadPopups => {
+    try {
+      // Clear all obstacles when the warning appears for a fair boss battle
+      if (this.obstacleController) {
+        // Clear all existing obstacles
+        this.obstacleController.obstacles = [];
+        console.log('Cleared all obstacles for boss battle');
+        
+        // Pause obstacle spawning immediately when warning appears
+        this.obstacleController.pauseSpawning = true;
+        this.obstacleController.pauseEmailPhone = true;
+        console.log('Paused obstacle spawning for boss battle warning');
+      }
+      
+      // First, close any open popups and wait for them to clear
+      const hadPopups = await this.closeAllPopups();
+      
       // If there were popups, wait a moment for them to animate out
       if (hadPopups) {
-        setTimeout(() => {
-          // Now show the caution
-          this.showingCaution = true;
-          this.cautionStartTime = Date.now();
-          
-          // Show notification if we haven't shown too many
-          if (this.notificationCount < this.maxNotifications) {
-            this.showNotification = true;
-            this.notificationOpacity = 1;
-            this.notificationTimer = 0;
-            this.notificationCount++;
-          }
-          
-          // Start the boss appear timer
-          this.startBossAppearTimer();
-        }, 300);
-      } else {
-        // Now show the caution
-        this.showingCaution = true;
-        this.cautionStartTime = Date.now();
-        
-        // Show notification if we haven't shown too many
-        if (this.notificationCount < this.maxNotifications) {
-          this.showNotification = true;
-          this.notificationOpacity = 1;
-          this.notificationTimer = 0;
-          this.notificationCount++;
-        }
-        
-        // Start the boss appear timer
-        this.startBossAppearTimer();
+        console.log('Popups were closed, waiting before showing warning...');
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
-    });
+      
+      // Play a warning sound to alert the player
+      if (this.evilLaughSound) {
+        this.evilLaughSound.currentTime = 0;
+        this.evilLaughSound.play().catch(e => console.log("Error playing warning sound:", e));
+      }
+      
+      // Now show the caution
+      this.showingCaution = true;
+      this.cautionStartTime = Date.now();
+      
+      // Show notification if we haven't shown too many
+      if (this.notificationCount < this.maxNotifications) {
+        this.showNotification = true;
+        this.notificationOpacity = 1;
+        this.notificationTimer = 0;
+        this.notificationCount++;
+      }
+      
+      // Start the boss appear timer
+      this.startBossAppearTimer();
+      
+      console.log('Warning sign activated!');
+    } catch (error) {
+      console.error('Error in boss sequence:', error);
+    }
   }
   
   startBossAppearTimer() {
@@ -326,28 +368,13 @@ class HackerController {
       clearTimeout(this.bossEndTimer);
     }
     
-    // Start the boss end timer
+    // Record the start time but don't set a timer to end the battle
+    // The hacker will only leave when defeated by the player
     this.bossStartTime = Date.now();
-    this.bossEndTimer = setTimeout(() => {
-      if (this.hacker) {
-        console.log('Boss battle time is up!');
-        this.hacker.deactivate();
-        this.hacker = null;
-        
-        // Resume normal music
-        if (this.normalBackgroundMusic) {
-          this.normalBackgroundMusic.play().catch(e => console.log("Error resuming background music:", e));
-        }
-        this.bossBattleMusic.pause();
-        
-        // Resume obstacle spawning
-        if (this.obstacleController) {
-          this.obstacleController.pauseSpawning = false;
-          this.obstacleController.pauseEmailPhone = false;
-          console.log('Resumed obstacle spawning after boss battle');
-        }
-      }
-    }, this.stayDuration);
+    console.log('Boss battle started - hacker will remain until defeated');
+    
+    // Note: We're not setting this.bossEndTimer anymore
+    // The hacker will only be removed when all lives are depleted
   }
   
   pauseBossTimer() {
@@ -455,10 +482,8 @@ class HackerController {
       this.pauseBossTimer();
     }
     
-    // Handle boss spawning if caution is showing and no popup is active
-    if (this.showingCaution && !popupActive) {
-      this.spawnBoss();
-    }
+    // DO NOT automatically spawn the boss here - this was causing the warning to be skipped
+    // The boss will be spawned by the timer after the warning duration
     
     // Pause boss battle if popup is active during the battle
     if (popupActive && this.hacker) {
@@ -482,7 +507,123 @@ class HackerController {
     
     // Update hacker if active and not paused
     if (this.hacker && !this.bossPaused) {
+      // Store previous loading state to detect transitions
+      const wasLoading = this.hacker.isLoading;
+      
+      // Update hacker
       this.hacker.update(frameTimeDelta, gameSpeed);
+      
+      // Check if hacker just started loading
+      if (!wasLoading && this.hacker.isLoading) {
+        console.log('Hacker entered loading mode - clearing all viruses and obstacles');
+        
+        // Set global flag to indicate hacker is loading
+        window.hackerIsLoading = true;
+        
+        // Switch music: pause boss battle music and play Catsong
+        if (this.bossBattleMusic) {
+          this.bossBattleMusic.pause();
+          this.bossBattleMusic.currentTime = 0;
+        }
+        
+        // Play the Catsong during loading phase
+        if (this.loadingSound) {
+          this.loadingSound.currentTime = 0;
+          this.loadingSound.play().catch(e => console.log("Error playing Catsong during loading:", e));
+        }
+        
+        // Log the state of all controllers before clearing
+        console.log('Current game state before clearing:');
+        console.log('- Skull projectiles:', this.skullProjectiles.length);
+        if (window.obstacleController) console.log('- Obstacles:', window.obstacleController.obstacles ? window.obstacleController.obstacles.length : 'N/A');
+        if (window.skullController) console.log('- Skulls:', window.skullController.skulls ? window.skullController.skulls.length : 'N/A');
+        if (window.coinController) console.log('- Coins:', window.coinController.coins ? window.coinController.coins.length : 'N/A');
+        if (window.milkController) console.log('- Milk bottles:', window.milkController.milkBottles ? window.milkController.milkBottles.length : 'N/A');
+        if (window.burgerController) console.log('- Burgers:', window.burgerController.burgers ? window.burgerController.burgers.length : 'N/A');
+        
+        // Loading sound is already playing from earlier code
+        // No need to play it again
+        
+        // Clear all viruses (projectiles) from the screen
+        if (this.skullProjectiles.length > 0) {
+          console.log(`Clearing ${this.skullProjectiles.length} viruses from screen`);
+          // Play erase sound if available
+          if (this.eraseSound) {
+            this.eraseSound.currentTime = 0;
+            this.eraseSound.play().catch(e => console.log("Error playing erase sound:", e));
+          }
+          // Clear all projectiles
+          this.skullProjectiles = [];
+        }
+        
+        // Clear all other obstacles from the screen
+        if (this.obstacleController && typeof this.obstacleController.reset === 'function') {
+          console.log('Clearing all obstacles from screen during loading phase');
+          this.obstacleController.reset();
+        }
+        
+        // Access game controllers directly
+        // First, make sure obstacleController is reset (we already have a reference)
+        if (this.obstacleController && typeof this.obstacleController.reset === 'function') {
+          console.log('Clearing obstacles from obstacleController during loading phase');
+          this.obstacleController.reset();
+        }
+        
+        // Access other controllers through the parent scope
+        // These controllers are defined in game.js and should be accessible
+        if (window.skullController && typeof window.skullController.reset === 'function') {
+          console.log('Clearing skulls from skullController during loading phase');
+          window.skullController.reset();
+        }
+        
+        if (window.coinController && typeof window.coinController.reset === 'function') {
+          console.log('Clearing coins from coinController during loading phase');
+          window.coinController.reset();
+        }
+        
+        if (window.milkController && typeof window.milkController.reset === 'function') {
+          console.log('Clearing milk bottles from milkController during loading phase');
+          window.milkController.reset();
+        }
+        
+        if (window.burgerController && typeof window.burgerController.reset === 'function') {
+          console.log('Clearing burgers from burgerController during loading phase');
+          window.burgerController.reset();
+        }
+        
+        // Create a visual effect for clearing obstacles
+        this.createClearEffect();
+        
+        // Log the state of all controllers after clearing to verify they were cleared
+        console.log('Game state after clearing all obstacles:');
+        console.log('- Skull projectiles:', this.skullProjectiles.length);
+        if (window.obstacleController) console.log('- Obstacles:', window.obstacleController.obstacles ? window.obstacleController.obstacles.length : 'N/A');
+        if (window.skullController) console.log('- Skulls:', window.skullController.skulls ? window.skullController.skulls.length : 'N/A');
+        if (window.coinController) console.log('- Coins:', window.coinController.coins ? window.coinController.coins.length : 'N/A');
+        if (window.milkController) console.log('- Milk bottles:', window.milkController.milkBottles ? window.milkController.milkBottles.length : 'N/A');
+        if (window.burgerController) console.log('- Burgers:', window.burgerController.burgers ? window.burgerController.burgers.length : 'N/A');
+      }
+      
+      // Check if hacker just finished loading
+      if (wasLoading && !this.hacker.isLoading) {
+        console.log('Hacker finished loading mode');
+        
+        // Reset global flag to indicate hacker is no longer loading
+        window.hackerIsLoading = false;
+        
+        // Stop the loading sound
+        if (this.loadingSound) {
+          this.loadingSound.pause();
+          this.loadingSound.currentTime = 0;
+          console.log('Stopped loading sound');
+        }
+        
+        // Resume boss battle music
+        if (this.bossBattleMusic && this.bossBattleMusic.paused) {
+          this.bossBattleMusic.play().catch(e => console.log("Error resuming boss music:", e));
+          console.log('Resumed boss music after loading phase');
+        }
+      }
       
       // Check if hacker can shoot
       if (this.hacker.canShoot()) {
@@ -533,9 +674,9 @@ class HackerController {
     // We need to find the player object to aim at it
     const player = window.gamePlayer; // This assumes the player is stored in a global variable
     
-    // Base speed for projectiles - increases with boss appearance count
-    // Make it start slower but increase more with each appearance
-    const baseSpeed = 1.5 + (this.bossAppearanceCount * 0.8); // Starts at 1.5, increases by 0.8 each time
+    // Base speed for projectiles - reduced for easier gameplay
+    // Make it start slower and increase more gradually with each appearance
+    const baseSpeed = 1.2 + (this.bossAppearanceCount * 0.5); // Starts at 1.2, increases by 0.5 each time
     
     // PART 1: PLAYER-TARGETING PROJECTILES
     // Always shoot 3 skulls that aim at the player's current position
@@ -720,54 +861,6 @@ class HackerController {
     }
     
     console.log(`Checking projectile collisions. Player at (${player.x}, ${player.y}), ${this.skullProjectiles.length} projectiles active`);
-    
-    // Check if any projectile collides with the player
-    for (let i = 0; i < this.skullProjectiles.length; i++) {
-      const projectile = this.skullProjectiles[i];
-      
-      // Debug: Log projectile position
-      console.log(`Projectile ${i} at (${projectile.x}, ${projectile.y})`);
-      
-      // Check for collision with player
-      if (this.checkCollision(player, projectile)) {
-        console.log(`COLLISION DETECTED with projectile ${i}!`);
-        
-        // Remove the projectile that hit the player
-        this.skullProjectiles.splice(i, 1);
-        
-        // Play cat hit sound when player is hit
-        this.catHitSound.currentTime = 0;
-        this.catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
-        
-        // Play evil laugh when player is hit
-        this.evilLaughSound.currentTime = 0;
-        this.evilLaughSound.play().catch(e => console.log("Error playing evil laugh sound:", e));
-        
-        return true; // Collision detected
-      }
-    }
-    
-    return false; // No collision
-  }
-  
-  draw(frameTimeDelta) {
-    // Draw caution animation if showing
-    if (this.showingCaution) {
-      this.drawCaution();
-    }
-    
-    // Draw hacker if active
-    if (this.hacker) {
-      this.hacker.draw();
-    }
-    
-    // Draw all projectiles
-    this.skullProjectiles.forEach(projectile => {
-      projectile.draw();
-    });
-    
-    // Draw notification if active
-    this.drawNotification();
   }
   
   drawCaution() {
@@ -775,40 +868,75 @@ class HackerController {
     
     this.ctx.save();
     
+    // Semi-transparent red overlay across the entire screen for dramatic effect
+    this.ctx.fillStyle = 'rgba(255, 0, 0, 0.15)';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
     // Calculate dimensions - make it bigger
     const boxWidth = this.canvas.width * 0.9;
-    const boxHeight = this.canvas.height * 0.4;
+    const boxHeight = this.canvas.height * 0.5; // Make taller
     const x = (this.canvas.width - boxWidth) / 2;
     const y = (this.canvas.height - boxHeight) / 2;
     
-    // Update blink timer
+    // Update blink timer - faster blinking
     this.cautionBlinkTimer += 16; // Assuming ~60fps
     if (this.cautionBlinkTimer >= this.cautionBlinkInterval) {
       this.cautionBlinkTimer = 0;
       this.cautionBlinkState = !this.cautionBlinkState;
     }
     
-    // Update glitch timer
+    // Update glitch timer - more frequent glitches
     this.cautionGlitchTimer += 16;
     if (this.cautionGlitchTimer >= this.cautionGlitchInterval) {
       this.cautionGlitchTimer = 0;
-      this.cautionGlitchState = Math.random() < 0.4; // 40% chance of glitch
+      this.cautionGlitchState = Math.random() < 0.6; // 60% chance of glitch
       if (this.cautionGlitchState) {
-        this.cautionGlitchOffset = (Math.random() * 15 - 7.5) * this.scaleRatio;
+        // More extreme glitch effect
+        this.cautionGlitchOffset = (Math.random() * 25 - 12.5) * this.scaleRatio;
       } else {
         this.cautionGlitchOffset = 0;
       }
     }
     
-    // Draw background with pulsing red
-    const pulse = (Math.sin(Date.now() / 200) * 0.5 + 0.5) * 0.7 + 0.3;
-    this.ctx.fillStyle = `rgba(100, 0, 0, ${0.9 * pulse})`;
-    this.ctx.fillRect(x, y, boxWidth, boxHeight);
+    // Draw background with pulsing red - more intense
+    const pulse = (Math.sin(Date.now() / 150) * 0.5 + 0.5) * 0.8 + 0.2;
+    const gradientY = y + boxHeight * pulse * 0.2;
     
-    // Draw warning triangle
-    const triangleSize = Math.min(boxWidth, boxHeight) * 0.4;
+    // Create gradient for more dramatic effect
+    const gradient = this.ctx.createLinearGradient(x, y, x, y + boxHeight);
+    gradient.addColorStop(0, `rgba(180, 0, 0, ${0.95 * pulse})`);
+    gradient.addColorStop(0.5, `rgba(120, 0, 0, ${0.9 * pulse})`);
+    gradient.addColorStop(1, `rgba(80, 0, 0, ${0.95 * pulse})`);
+    
+    this.ctx.fillStyle = gradient;
+    
+    // Apply glitch effect to the background box
+    if (this.cautionGlitchState && Math.random() < 0.3) {
+      // Split the box into 3-5 horizontal slices with slight offsets
+      const slices = Math.floor(Math.random() * 3) + 3;
+      const sliceHeight = boxHeight / slices;
+      
+      for (let i = 0; i < slices; i++) {
+        const sliceOffset = Math.random() * 10 - 5;
+        this.ctx.fillRect(
+          x + sliceOffset * this.scaleRatio, 
+          y + i * sliceHeight, 
+          boxWidth - sliceOffset * this.scaleRatio, 
+          sliceHeight
+        );
+      }
+    } else {
+      this.ctx.fillRect(x, y, boxWidth, boxHeight);
+    }
+    
+    // Draw warning triangle - larger and with glow
+    const triangleSize = Math.min(boxWidth, boxHeight) * 0.45;
     const triangleX = this.canvas.width / 2 + (this.cautionGlitchState ? this.cautionGlitchOffset : 0);
-    const triangleY = y + triangleSize * 0.8;
+    const triangleY = y + triangleSize * 0.7;
+    
+    // Add glow effect
+    this.ctx.shadowColor = '#ffcc00';
+    this.ctx.shadowBlur = 15 * this.scaleRatio;
     
     this.ctx.fillStyle = '#ffcc00';
     this.ctx.beginPath();
@@ -818,6 +946,9 @@ class HackerController {
     this.ctx.closePath();
     this.ctx.fill();
     
+    // Reset shadow for other elements
+    this.ctx.shadowBlur = 0;
+    
     // Draw exclamation mark in triangle
     this.ctx.fillStyle = 'black';
     this.ctx.textAlign = 'center';
@@ -825,71 +956,121 @@ class HackerController {
     this.ctx.font = `bold ${triangleSize * 0.6}px Arial`;
     this.ctx.fillText('!', triangleX, triangleY + triangleSize * 0.1);
     
-    // Draw warning text with glitch effect
-    const glitchOffset = this.cautionGlitchState ? this.cautionGlitchOffset * 0.5 : 0;
+    // Draw warning text with enhanced glitch effect
+    const glitchOffset = this.cautionGlitchState ? this.cautionGlitchOffset : 0;
     
     // Main warning text
     this.ctx.fillStyle = '#ffffff';
     this.ctx.strokeStyle = '#000000';
-    this.ctx.lineWidth = 6 * this.scaleRatio;
+    this.ctx.lineWidth = 8 * this.scaleRatio;
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
     
+    // Apply text shadow for glow effect
+    this.ctx.shadowColor = '#ff0000';
+    this.ctx.shadowBlur = 10 * this.scaleRatio;
+    this.ctx.shadowOffsetX = 0;
+    this.ctx.shadowOffsetY = 0;
+    
     // Draw text with outline for better visibility
-    this.ctx.font = `bold ${32 * this.scaleRatio}px 'Press Start 2P', monospace`;
+    this.ctx.font = `bold ${38 * this.scaleRatio}px 'Press Start 2P', monospace`;
     
-    // Text outline
-    this.ctx.strokeText('WARNING', this.canvas.width / 2 + glitchOffset, y + 80 * this.scaleRatio);
+    // Apply random color shift for glitch effect
+    if (this.cautionGlitchState && Math.random() < 0.3) {
+      this.ctx.fillStyle = Math.random() < 0.5 ? '#ff00ff' : '#00ffff';
+    } else {
+      this.ctx.fillStyle = '#ff0000';
+    }
     
-    // Main text
-    this.ctx.fillStyle = '#ff0000';
-    this.ctx.fillText('WARNING', this.canvas.width / 2 + glitchOffset, y + 80 * this.scaleRatio);
+    // Text with glitch effect - sometimes split into parts
+    if (this.cautionGlitchState && Math.random() < 0.2) {
+      // Split text effect
+      const text = 'WARNING';
+      const charWidth = 30 * this.scaleRatio;
+      
+      for (let i = 0; i < text.length; i++) {
+        const charOffset = Math.random() * 10 - 5;
+        const xPos = this.canvas.width / 2 - (text.length * charWidth / 2) + (i * charWidth) + glitchOffset;
+        this.ctx.fillText(text[i], xPos, y + 80 * this.scaleRatio + charOffset);
+      }
+    } else {
+      // Normal text with outline
+      this.ctx.strokeText('WARNING', this.canvas.width / 2 + glitchOffset, y + 80 * this.scaleRatio);
+      this.ctx.fillText('WARNING', this.canvas.width / 2 + glitchOffset, y + 80 * this.scaleRatio);
+    }
+    
+    // Reset shadow
+    this.ctx.shadowBlur = 0;
     
     // Secondary text
-    this.ctx.font = `bold ${24 * this.scaleRatio}px 'Press Start 2P', monospace`;
+    this.ctx.font = `bold ${28 * this.scaleRatio}px 'Press Start 2P', monospace`;
+    
+    // Apply shadow for secondary text
+    this.ctx.shadowColor = '#ff0000';
+    this.ctx.shadowBlur = 8 * this.scaleRatio;
     
     // Text outline for secondary text
-    this.ctx.strokeText('HACKER DETECTED!', this.canvas.width / 2 + glitchOffset, y + 130 * this.scaleRatio);
+    this.ctx.strokeText('HACKER DETECTED!', this.canvas.width / 2 + glitchOffset, y + 140 * this.scaleRatio);
     
     // Main text for secondary
     this.ctx.fillStyle = '#ffffff';
-    this.ctx.fillText('HACKER DETECTED!', this.canvas.width / 2 + glitchOffset, y + 130 * this.scaleRatio);
+    this.ctx.fillText('HACKER DETECTED!', this.canvas.width / 2 + glitchOffset, y + 140 * this.scaleRatio);
     
-    // Draw countdown timer with pulsing effect
+    // Reset shadow
+    this.ctx.shadowBlur = 0;
+    
+    // Draw countdown timer with enhanced pulsing effect
     const timeLeft = Math.ceil((this.cautionDuration - (Date.now() - this.cautionStartTime)) / 1000);
     if (timeLeft > 0) {
-      const pulseSize = 1 + (Math.sin(Date.now() / 200) * 0.1);
+      // More dramatic pulse
+      const pulseSize = 1 + (Math.sin(Date.now() / 150) * 0.2);
       this.ctx.save();
-      this.ctx.translate(this.canvas.width / 2, y + 180 * this.scaleRatio);
+      this.ctx.translate(this.canvas.width / 2, y + 200 * this.scaleRatio);
       this.ctx.scale(pulseSize, pulseSize);
-      this.ctx.translate(-this.canvas.width / 2, -(y + 180 * this.scaleRatio));
+      this.ctx.translate(-this.canvas.width / 2, -(y + 200 * this.scaleRatio));
       
-      this.ctx.font = `bold ${28 * this.scaleRatio}px 'Press Start 2P', monospace`;
-      this.ctx.fillStyle = '#ffff00';
+      // Apply shadow for countdown
+      this.ctx.shadowColor = '#ffff00';
+      this.ctx.shadowBlur = 10 * this.scaleRatio;
+      
+      this.ctx.font = `bold ${32 * this.scaleRatio}px 'Press Start 2P', monospace`;
+      this.ctx.fillStyle = this.cautionBlinkState ? '#ffff00' : '#ff9900'; // Blinking color
       this.ctx.textAlign = 'center';
-      this.ctx.fillText(`PREPARE IN ${timeLeft}...`, this.canvas.width / 2, y + 180 * this.scaleRatio);
+      this.ctx.fillText(`PREPARE IN ${timeLeft}...`, this.canvas.width / 2, y + 200 * this.scaleRatio);
       this.ctx.restore();
     }
     
-    // Add digital noise/static for effect
-    const noisePoints = 200;
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    // Add enhanced digital noise/static for effect
+    const noisePoints = 300; // More noise points
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
     for (let i = 0; i < noisePoints; i++) {
       const noiseX = x + Math.random() * boxWidth;
       const noiseY = y + Math.random() * boxHeight;
-      const noiseSize = Math.random() * 3 * this.scaleRatio;
+      const noiseSize = Math.random() * 4 * this.scaleRatio; // Larger noise particles
       this.ctx.fillRect(noiseX, noiseY, noiseSize, noiseSize);
     }
     
-    // Add pulsing border effect
+    // Add scan lines effect
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    for (let i = 0; i < boxHeight; i += 4) {
+      this.ctx.fillRect(x, y + i, boxWidth, 1);
+    }
+    
+    // Add pulsing border effect - thicker and more dramatic
     if (this.cautionBlinkState) {
-      this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-      this.ctx.lineWidth = 20 * this.scaleRatio;
+      // Create gradient for border
+      const borderGradient = this.ctx.createLinearGradient(x, y, x, y + boxHeight);
+      borderGradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
+      borderGradient.addColorStop(0.5, 'rgba(255, 255, 0, 0.8)');
+      borderGradient.addColorStop(1, 'rgba(255, 0, 0, 0.8)');
+      
+      this.ctx.strokeStyle = borderGradient;
+      this.ctx.lineWidth = 25 * this.scaleRatio;
       this.ctx.strokeRect(
-        x - 5 * this.scaleRatio, 
-        y - 5 * this.scaleRatio, 
-        boxWidth + 10 * this.scaleRatio, 
-        boxHeight + 10 * this.scaleRatio
+        x - 8 * this.scaleRatio, 
+        y - 8 * this.scaleRatio, 
+        boxWidth + 16 * this.scaleRatio, 
+        boxHeight + 16 * this.scaleRatio
       );
     }
     
@@ -936,7 +1117,7 @@ class HackerController {
       };
       
       const hackerHitbox = {
-        x: this.hacker.x + this.hacker.width * 0.2,
+        x: this.hacker.fixedX + this.hacker.width * 0.2, // Use fixedX for correct position
         y: this.hacker.y + this.hacker.height * 0.2,
         width: this.hacker.width * 0.6,
         height: this.hacker.height * 0.6
@@ -952,15 +1133,69 @@ class HackerController {
       if (isColliding) {
         console.log('Player collided with hacker boss!');
         
-        // Play hit sound
-        this.catHitSound.currentTime = 0;
-        this.catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
-        
-        // Play evil laugh when player is hit
-        this.evilLaughSound.currentTime = 0;
-        this.evilLaughSound.play().catch(e => console.log("Error playing evil laugh sound:", e));
-        
-        return this.hacker; // Return the hacker that was hit
+        // Different behavior based on loading state
+        if (this.hacker.isLoading) {
+          // During loading phase, player can attack the hacker
+          console.log('Player attacked the hacker during loading phase!');
+          
+          // Play attack sound
+          this.attackSound = this.attackSound || new Audio('/games/phish404/audio/attack.mp3');
+          this.attackSound.currentTime = 0;
+          this.attackSound.play().catch(e => console.log("Error playing attack sound:", e));
+          
+          // Damage the hacker
+          const hackerDefeated = this.hacker.takeDamage();
+          
+          if (hackerDefeated) {
+            console.log('Hacker defeated! Loading phase ended.');
+            
+            // Play victory sound
+            this.victorySound = this.victorySound || new Audio('/games/phish404/audio/victory.mp3');
+            this.victorySound.currentTime = 0;
+            this.victorySound.play().catch(e => console.log("Error playing victory sound:", e));
+            
+            // End loading phase
+            window.hackerIsLoading = false;
+            
+            // Stop the loading sound (Catsong)
+            if (this.loadingSound) {
+              this.loadingSound.pause();
+              this.loadingSound.currentTime = 0;
+            }
+            
+            // Resume normal background music
+            if (this.normalBackgroundMusic) {
+              this.normalBackgroundMusic.play().catch(e => console.log("Error resuming background music:", e));
+            }
+            
+            // Resume obstacle spawning
+            if (this.obstacleController) {
+              this.obstacleController.pauseSpawning = false;
+              this.obstacleController.pauseEmailPhone = false;
+              console.log('Resumed obstacle spawning after boss defeat');
+            }
+            
+            // Remove the hacker
+            this.hacker.deactivate();
+            this.hacker = null;
+          }
+          
+          // Make player briefly invincible to prevent multiple rapid hits
+          player.makeInvincible(1000);
+          
+          return null; // No damage to player during loading phase
+        } else {
+          // Normal phase - player gets damaged
+          // Play hit sound
+          this.catHitSound.currentTime = 0;
+          this.catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
+          
+          // Play evil laugh when player is hit
+          this.evilLaughSound.currentTime = 0;
+          this.evilLaughSound.play().catch(e => console.log("Error playing evil laugh sound:", e));
+          
+          return this.hacker; // Return the hacker that was hit
+        }
       }
     }
     
@@ -968,8 +1203,14 @@ class HackerController {
   }
   
   checkProjectileCollisions(player) {
-    if (!player || !this.skullProjectiles || this.skullProjectiles.length === 0) {
+    // Skip collision detection if hacker is loading or if there are no projectiles
+    if (!player || !this.skullProjectiles || this.skullProjectiles.length === 0 || window.hackerIsLoading || this.hacker?.isLoading) {
       return false;
+    }
+    
+    // Log skipping collision detection during loading
+    if (window.hackerIsLoading || this.hacker?.isLoading) {
+      console.log('Skipping projectile collision detection during loading phase');
     }
     
     let hit = false;
@@ -1021,5 +1262,119 @@ class HackerController {
     }
     
     return hit;
+  }
+  
+  // Draw the hacker and conditionally draw projectiles
+  draw(frameTimeDelta, isLoading) {
+    // Draw caution animation if showing
+    if (this.showingCaution) {
+      this.drawCaution();
+    }
+    
+    // Draw hacker if active
+    if (this.hacker) {
+      this.hacker.draw();
+    }
+    
+    // Only draw projectiles if not in loading mode
+    if (!isLoading && !this.hacker?.isLoading) {
+      // Draw all projectiles
+      this.skullProjectiles.forEach(projectile => {
+        projectile.draw();
+      });
+    } else if (this.skullProjectiles.length > 0) {
+      console.log(`Skipping drawing of ${this.skullProjectiles.length} projectiles during loading phase`);
+    }
+    
+    // Draw notification if active
+    this.drawNotification();
+  }
+  
+  // Create a visual effect when clearing obstacles
+  createClearEffect() {
+    console.log('Creating visual clear effect for virus removal');
+    // Get canvas dimensions
+    const canvasWidth = this.canvas.width;
+    const canvasHeight = this.canvas.height;
+    
+    // Create a dramatic multi-stage clearing effect
+    this.createPulseWaveEffect(canvasWidth, canvasHeight);
+    
+    // Play a digital clearing sound if available
+    if (this.clearSound) {
+      this.clearSound.currentTime = 0;
+      this.clearSound.play().catch(e => console.log("Error playing clear sound:", e));
+    }
+  }
+  
+  // Create a pulse wave effect that expands outward
+  createPulseWaveEffect(canvasWidth, canvasHeight) {
+    // Initial flash
+    this.ctx.save();
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    this.ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    this.ctx.restore();
+    
+    // Create expanding pulse waves
+    let radius = 0;
+    const maxRadius = Math.max(canvasWidth, canvasHeight);
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
+    
+    // Animation frames for the expanding wave
+    const animateWave = () => {
+      // Clear the canvas for this animation frame
+      this.ctx.save();
+      
+      // Draw expanding circle
+      this.ctx.beginPath();
+      this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      this.ctx.strokeStyle = 'rgba(0, 183, 255, 0.8)';
+      this.ctx.lineWidth = 15;
+      this.ctx.stroke();
+      
+      // Draw second wave with offset
+      if (radius > 50) {
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, radius - 50, 0, Math.PI * 2);
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        this.ctx.lineWidth = 10;
+        this.ctx.stroke();
+      }
+      
+      // Draw third wave with larger offset
+      if (radius > 100) {
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, radius - 100, 0, Math.PI * 2);
+        this.ctx.strokeStyle = 'rgba(0, 255, 200, 0.5)';
+        this.ctx.lineWidth = 5;
+        this.ctx.stroke();
+      }
+      
+      this.ctx.restore();
+      
+      // Increase radius for next frame
+      radius += 15;
+      
+      // Continue animation until wave covers screen
+      if (radius < maxRadius) {
+        requestAnimationFrame(animateWave);
+      } else {
+        // Final flash when animation completes
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(0, 183, 255, 0.3)';
+        this.ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        this.ctx.restore();
+      }
+    };
+    
+    // Start the animation
+    requestAnimationFrame(animateWave);
+    
+    // Create disappearing animation for the effect
+    setTimeout(() => {
+      // Clear the effect by redrawing the game
+      // This relies on the game loop to clear and redraw everything
+    }, 300);
   }
 }

@@ -27,6 +27,13 @@ class SkullController {
     this.skullSound = new Audio('/games/phish404/audio/skull-sound.mp3');
   }
   
+  // Reset method to clear all skulls
+  reset() {
+    console.log('Clearing all skulls from SkullController');
+    this.skulls = [];
+    this.spawnTimer = 0;
+  }
+  
   update(gameSpeed, frameTimeDelta) {
     // Update existing skulls
     this.skulls.forEach(skull => {
