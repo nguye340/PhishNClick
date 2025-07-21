@@ -45,6 +45,17 @@ class Player {
     // Invincibility properties for damage feedback
     this.isInvincible = false;
     this.isVisible = true;
+    
+    // Shield properties
+    this.shieldFrames = [];
+    this.shieldFrameIndex = 0;
+    this.shieldFrameTimer = 0;
+    this.shieldFrameInterval = 50; // Faster animation (was 100ms)
+    this.shieldHits = 0; // Number of hits the shield can absorb
+    
+    // Load shield frames immediately
+    this.loadShieldFrames();
+    console.log('Shield frames loaded:', this.shieldFrames.length);
 
     // Load sprites for animation
     this.images = [];
@@ -123,6 +134,9 @@ class Player {
     
     this.handleJump();
     this.handlePlayerFrame(frameTimeDelta);
+    
+    // Update shield animation
+    this.updateShieldAnimation(frameTimeDelta);
   }
   
   updateSpeedBasedOnEnergy(energyLevel) {
@@ -144,7 +158,9 @@ class Player {
     // Start jump if jump pressed and not already jumping
     if (this.jumpPressed && !this.jumpInProgress) {
       this.jumpInProgress = true;
-      this.jumpSound.play().catch(error => console.log("Error playing jump sound:", error));
+      if (this.jumpSound && !window.isMuted) {
+        this.jumpSound.play().catch(error => console.log("Error playing jump sound:", error));
+      }
       this.state = this.JUMPING;
       this.frameX = 0;
     }
@@ -212,24 +228,96 @@ class Player {
       this.falling = true;
     }
   }
-
-  draw() {
-    // Skip drawing if not visible (for invincibility flashing effect)
-    if (!this.isVisible) return;
+  
+  // Load shield animation frames
+  loadShieldFrames() {
+    console.log('Loading shield frames...');
+    this.shieldFrames = []; // Clear existing frames
     
-    // Use the current cat image from the animation sequence
-    const currentCatImage = this.images[this.currentImage];
+    for (let i = 1; i <= 22; i++) {
+      const img = new Image();
+      img.src = `/games/phish404/img/shield/shield${i}.png`;
+      console.log(`Loading shield frame ${i}:`, img.src);
+      
+      // Add onload handler to verify image loading
+      img.onload = () => {
+        console.log(`Shield frame ${i} loaded successfully`);
+      };
+      
+      img.onerror = () => {
+        console.error(`Failed to load shield frame ${i}:`, img.src);
+      };
+      
+      this.shieldFrames.push(img);
+    }
     
-    this.ctx.drawImage(
-      currentCatImage,
-      this.x,
-      this.y,
-      this.width,
-      this.height
-    );
+    console.log(`Initialized ${this.shieldFrames.length} shield frames`);
   }
   
+  // Activate shield with specified number of hits
+  activateShield(hits) {
+    this.shieldHits = hits;
+    console.log(`Shield activated with ${hits} hits remaining`);
+    
+    // Reset animation frame to start
+    this.shieldFrameIndex = 0;
+    this.shieldFrameTimer = 0;
+    
+    // Update shield counter UI
+    this.updateShieldCounterUI();
+    
+    // Play shield sound if available
+    if (window.shieldSound) {
+      window.shieldSound.currentTime = 0;
+      window.shieldSound.play().catch(e => console.log("Error playing shield sound:", e));
+    }
+  }
+  
+  // Update the shield counter UI
+  updateShieldCounterUI() {
+    const shieldContainer = document.getElementById('shieldCounterContainer');
+    const shieldCounter = document.getElementById('shieldCounter');
+    
+    if (shieldContainer && shieldCounter) {
+      if (this.shieldHits > 0) {
+        // Show shield counter and update the count
+        shieldContainer.style.display = 'flex';
+        shieldCounter.textContent = `x${this.shieldHits}`;
+      } else {
+        // Hide shield counter when no shield
+        shieldContainer.style.display = 'none';
+      }
+    }
+  }
+  
+  // Called when player takes damage
   takeDamage(amount) {
+    // If player has a shield, use it instead of taking damage
+    if (this.shieldHits > 0) {
+      this.shieldHits--;
+      console.log(`Shield hit! ${this.shieldHits} hits remaining`);
+      
+      // Update shield counter UI
+      this.updateShieldCounterUI();
+      
+      // Play shield guard sound when shield blocks damage
+      if (window.shieldGuardSound) {
+        window.shieldGuardSound.currentTime = 0;
+        window.shieldGuardSound.play().catch(e => console.log("Error playing shield guard sound:", e));
+      }
+      
+      // Play shield break sound on last hit
+      if (this.shieldHits === 0 && window.shieldBreakSound) {
+        window.shieldBreakSound.currentTime = 0;
+        window.shieldBreakSound.play().catch(e => console.log("Error playing shield break sound:", e));
+      }
+      
+      // Make player briefly invincible to prevent multiple hits
+      this.makeInvincible(500);
+      return false; // No damage taken
+    }
+    
+    // Take damage if no shield
     console.log('takeDamage called with amount:', amount);
     console.log('Current invincibility state:', this.isInvincible);
     
@@ -265,6 +353,63 @@ class Player {
     }
     
     return true;
+  }
+  
+  updateShieldAnimation(deltaTime) {
+    if (this.shieldHits > 0) {
+      // Make shield animation faster
+      this.shieldFrameTimer += deltaTime * 1.5;
+      if (this.shieldFrameTimer > this.shieldFrameInterval) {
+        this.shieldFrameTimer = 0;
+        this.shieldFrameIndex = (this.shieldFrameIndex + 1) % this.shieldFrames.length;
+        console.log('Shield animation frame:', this.shieldFrameIndex);
+      }
+    }
+  }
+  
+  draw() {
+    if (!this.isVisible) return;
+    
+    const currentImage = this.images[this.currentImage];
+    
+    // Draw the player
+    this.ctx.drawImage(
+      currentImage,
+      this.x,
+      this.y,
+      this.width,
+      this.height
+    );
+    
+    // Draw shield if active
+    this.drawShield();
+  }
+  
+  drawShield() {
+    if (this.shieldHits > 0 && this.shieldFrames[this.shieldFrameIndex]) {
+      // Make shield much bigger - 2.5x instead of 1.5x
+      const shieldSize = Math.max(this.width, this.height) * 2.5;
+      const offsetX = (this.width - shieldSize) / 2;
+      const offsetY = (this.height - shieldSize) / 2;
+      
+      this.ctx.save();
+      
+      // Add a glowing effect
+      this.ctx.shadowBlur = 15;
+      this.ctx.shadowColor = 'rgba(0, 150, 255, 0.7)';
+      
+      // Make it more visible
+      this.ctx.globalAlpha = 0.9;
+      
+      this.ctx.drawImage(
+        this.shieldFrames[this.shieldFrameIndex],
+        this.x + offsetX,
+        this.y + offsetY,
+        shieldSize,
+        shieldSize
+      );
+      this.ctx.restore();
+    }
   }
   
   flash(duration) {

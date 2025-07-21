@@ -12,6 +12,7 @@ class MilkController {
     this.spawnTimer = 0;
     this.normalSpawnInterval = 15000; // 15 seconds between milk spawns when energy is normal
     this.lowEnergySpawnInterval = 7000; // 7 seconds between milk spawns when energy is low
+    this.hackerLoadingSpawnInterval = 3000; // 3 seconds between milk spawns during hacker loading phase
     this.spawnInterval = this.normalSpawnInterval; // Default to normal interval
     
     // Notification properties
@@ -35,8 +36,11 @@ class MilkController {
   }
   
   update(gameSpeed, deltaTime, energyLevel) {
-    // Update spawn interval based on energy level
-    this.updateSpawnInterval(energyLevel);
+    // Check if hacker is in loading phase
+    const hackerLoading = window.hackerIsLoading || false;
+    
+    // Update spawn interval based on energy level and hacker state
+    this.updateSpawnInterval(energyLevel, hackerLoading);
     
     // Update spawn timer
     this.spawnTimer += deltaTime;
@@ -56,9 +60,13 @@ class MilkController {
     this.milkBottles = this.milkBottles.filter(milk => milk.x > -milk.width);
   }
   
-  updateSpawnInterval(energyLevel) {
-    // Increase spawn rate when energy is low (below 30%)
-    if (energyLevel < 30) {
+  updateSpawnInterval(energyLevel, hackerLoading = false) {
+    if (hackerLoading) {
+      // Fastest spawn rate during hacker loading phase
+      this.spawnInterval = this.hackerLoadingSpawnInterval;
+    } 
+    // If energy is below 30%, use faster spawn interval
+    else if (energyLevel < 30) {
       this.spawnInterval = this.lowEnergySpawnInterval;
     } else {
       this.spawnInterval = this.normalSpawnInterval;
@@ -132,14 +140,20 @@ class MilkController {
   checkCollisions(player) {
     for (let i = 0; i < this.milkBottles.length; i++) {
       if (this.milkBottles[i].collideWith(player)) {
-        // Play sounds
-        this.slurpSound.currentTime = 0;
-        this.slurpSound.play();
-        
-        setTimeout(() => {
-          this.yummySound.currentTime = 0;
-          this.yummySound.play();
-        }, 300);
+        // Play sounds if not muted
+        if (!window.isMuted) {
+          if (this.slurpSound) {
+            this.slurpSound.currentTime = 0;
+            this.slurpSound.play().catch(e => console.log("Error playing slurp sound:", e));
+          }
+          
+          setTimeout(() => {
+            if (this.yummySound) {
+              this.yummySound.currentTime = 0;
+              this.yummySound.play().catch(e => console.log("Error playing yummy sound:", e));
+            }
+          }, 300);
+        }
         
         this.milkCollected++;
         return true; // Return true if milk was collected

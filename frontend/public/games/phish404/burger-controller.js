@@ -9,13 +9,16 @@ class BurgerController {
     
     // Spawn timer and interval
     this.spawnTimer = 0;
-    // Increased spawn rate for burgers (20-40 seconds)
-    this.minSpawnInterval = 20000; // 20 seconds minimum (reduced from 30)
-    this.maxSpawnInterval = 40000; // 40 seconds maximum (reduced from 60)
+    // Normal spawn rate for burgers (20-40 seconds)
+    this.minSpawnInterval = 20000; // 20 seconds minimum
+    this.maxSpawnInterval = 40000; // 40 seconds maximum
+    // Faster spawn rate during hacker loading phase (5-10 seconds)
+    this.hackerMinSpawnInterval = 5000; // 5 seconds minimum during hacker loading
+    this.hackerMaxSpawnInterval = 10000; // 10 seconds maximum during hacker loading
     this.spawnInterval = this.getRandomSpawnInterval();
     
     // Sound effect for burger collection
-    this.burgerSound = new Audio("/games/phish404/audio/powerup.mp3");
+    this.burgerSound = new Audio('/games/phish404/audio/yay-6120.mp3');
     
     // Notification properties
     this.showNotification = false;
@@ -28,9 +31,19 @@ class BurgerController {
     this.maxNotifications = 2; // Maximum number of times to show notification
   }
   
-  // Get a random spawn interval between min and max
+  // Get a random spawn interval based on current game state
   getRandomSpawnInterval() {
-    return Math.random() * (this.maxSpawnInterval - this.minSpawnInterval) + this.minSpawnInterval;
+    const hackerLoading = window.hackerIsLoading || false;
+    
+    // Always use faster spawn rate during hacker loading phase
+    if (hackerLoading) {
+      return Math.random() * (this.hackerMaxSpawnInterval - this.hackerMinSpawnInterval) + 
+             this.hackerMinSpawnInterval;
+    } else {
+      // Normal spawn rate
+      return Math.random() * (this.maxSpawnInterval - this.minSpawnInterval) + 
+             this.minSpawnInterval;
+    }
   }
   
   // Reset method to clear all burgers
@@ -42,8 +55,20 @@ class BurgerController {
   }
   
   update(deltaTime) {
+    // Check if we should spawn burgers (always spawn, but adjust rate based on loading state)
+    const hackerLoading = window.hackerIsLoading || false;
+    
     // Update spawn timer
     this.spawnTimer += deltaTime;
+    
+    // Check if we need to update the spawn interval (in case hacker loading state changed)
+    const currentInterval = this.spawnInterval;
+    const newInterval = this.getRandomSpawnInterval();
+    
+    // If the interval changed significantly (more than 10%), update it
+    if (Math.abs(currentInterval - newInterval) > (currentInterval * 0.1)) {
+      this.spawnInterval = newInterval;
+    }
     
     // Spawn new burger if it's time
     if (this.spawnTimer >= this.spawnInterval) {
@@ -130,7 +155,9 @@ class BurgerController {
         
         // Play burger collection sound
         this.burgerSound.currentTime = 0;
-        this.burgerSound.play().catch(e => console.log("Error playing burger sound:", e));
+        if (this.burgerSound && !window.isMuted) {
+          this.burgerSound.play().catch(e => console.log("Error playing burger sound:", e));
+        }
         
         // Return true to indicate a collision occurred
         return true;

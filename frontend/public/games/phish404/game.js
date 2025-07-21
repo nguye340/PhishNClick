@@ -42,16 +42,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  const correctSound = new Audio('/games/phish404/audio/correct.mp3');
-  const wrongSound = new Audio('/games/phish404/audio/wrong.mp3');
-
-  // Global audio settings
+  // Global audio settings - set to on by default
   let gameVolume = 1.0;
-  let isMuted = false;
-  let musicEnabled = true;
+  let isMuted = false;  // Sound effects on by default
+  let musicEnabled = true;  // Music on by default
+  const gameSounds = []; // Array to store all game sound effects
+  
+  // Initialize sound effects
+  const correctSound = new Audio('/games/phish404/audio/correct.mp3');
+  gameSounds.push(correctSound);
+  const wrongSound = new Audio('/games/phish404/audio/wrong.mp3');
+  gameSounds.push(wrongSound);
+  
+  // Shield sounds
+  const shieldSound = new Audio('/games/phish404/audio/coin-hit.mp3');
+  gameSounds.push(shieldSound);
+  const shieldBreakSound = new Audio('/games/phish404/audio/shield-break.mp3');
+  gameSounds.push(shieldBreakSound);
+  const shieldGuardSound = new Audio('/games/phish404/audio/shield-guard.mp3');
+  gameSounds.push(shieldGuardSound);
+  
+  // Burger powerup sound
+  const burgerSound = new Audio('/games/phish404/audio/yay-6120.mp3');
+  gameSounds.push(burgerSound);
+  
+  // Cat meow sound for low energy
+  const catMeowSound = new Audio('/games/phish404/audio/cat-meow-hungry.mp3');
+  gameSounds.push(catMeowSound);
+  
+  // Cat hit sound
+  const catHitSound = new Audio('/games/phish404/audio/cat-hit.mp3');
+  gameSounds.push(catHitSound);
+  
+  // Set initial volumes and reduce jump sound volume
+  gameSounds.forEach(sound => {
+    if (sound) {
+      // Reduce volume for jump sound specifically
+      if (sound.src.includes('jump.mp3')) {
+        sound.volume = gameVolume * 0.4;
+      } else {
+        sound.volume = gameVolume;
+      }
+    }
+  });
   
   // Load saved audio preferences
   (function loadAudioPreferences() {
+    // Default values if not set in localStorage
     const savedVolume = parseFloat(localStorage.getItem('gameVolume'));
     const savedMuted = localStorage.getItem('isMuted') === 'true';
     const savedMusicEnabled = localStorage.getItem('musicEnabled') !== 'false'; // Default to true if not set
@@ -89,12 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
   let isEnergyWarningShown = false;
   let isEnergyWarningSound = false;
   
-  // Burger powerup sound
-  const burgerSound = new Audio('/games/phish404/audio/powerup.mp3');
-  
-  // Cat meow sound for low energy
-  const catMeowSound = new Audio('/games/phish404/audio/cat-meow-hungry.mp3');
-
   let player = null;
   let ground = null;
   // Define controllers as local variables first
@@ -104,6 +135,8 @@ document.addEventListener('DOMContentLoaded', function() {
   let burgerController = null;
   let skullController = null;
   let hackerController = null;
+  let shieldController = null;
+  let attackPowerupController = null;
   
   // Also expose controllers to window object for access by other components
   window.obstacleController = null;
@@ -112,6 +145,9 @@ document.addEventListener('DOMContentLoaded', function() {
   window.burgerController = null;
   window.skullController = null;
   window.hackerController = null;
+  window.shieldController = null;
+  window.attackPowerupController = null;
+  window.electricBallController = null;
   
   // Global flag to track when hacker is in loading mode
   // This is used to prevent drawing viruses and obstacles during loading
@@ -171,6 +207,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Create hacker controller with reference to obstacle controller for pausing obstacles during boss battles
     hackerController = new HackerController(ctx, canvas.width, canvas.height, GROUND_AND_OBSTACLE_SPEED, scaleRatio, obstacleController);
     window.hackerController = hackerController;
+    
+    // Create shield controller
+    shieldController = new ShieldPowerupController(canvas.width, canvas.height, scaleRatio);
+    shieldController.onlyDuringHackerLoading = true; // Only spawn during hacker loading phase
+    window.shieldController = shieldController;
+    
+    // Create attack powerup controller
+    attackPowerupController = new AttackPowerupController(canvas.width, canvas.height, scaleRatio);
+    window.attackPowerupController = attackPowerupController;
+    
+    // Create electric ball controller
+    electricBallController = new ElectricBallController(canvas.width, canvas.height, scaleRatio);
+    window.electricBallController = electricBallController;
   }
 
   function setScreen() {
@@ -499,6 +548,33 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Game loop stopped, running:', gameLoopRunning);
     }
   }
+  
+  // Pause/resume game function that can be called from other components
+  // Make it available globally
+  let gamePausedReasons = {}; // Track different reasons for pausing
+  
+  function pauseGame(shouldPause, reason = 'default') {
+    if (shouldPause) {
+      // Add this reason to pause reasons
+      gamePausedReasons[reason] = true;
+      console.log(`Game paused for reason: ${reason}`, gamePausedReasons);
+    } else {
+      // Remove this reason from pause reasons
+      delete gamePausedReasons[reason];
+      console.log(`Game resumed for reason: ${reason}`, gamePausedReasons);
+    }
+    
+    // Game is paused if there's at least one reason to pause
+    const isPaused = Object.keys(gamePausedReasons).length > 0;
+    
+    // Update global pause state
+    window.gamePaused = isPaused;
+    
+    return isPaused;
+  }
+  
+  // Make pauseGame available globally
+  window.pauseGame = pauseGame;
 
   function gameLoop(currentTime) {
     // If popup is visible, don't process game logic but continue the animation loop
@@ -511,6 +587,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // If game is over, don't continue processing
     if (gameOver) {
       console.log('Game loop paused due to gameOver state');
+      return;
+    }
+    
+    // Check if game is paused by any component
+    if (window.gamePaused) {
+      // Continue the animation loop but don't update game state
+      gameAnimationId = requestAnimationFrame(gameLoop);
       return;
     }
     
@@ -559,6 +642,68 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update hacker obstacles
     hackerController.update(gameSpeed, deltaTime);
     
+    // Check if we're in boss loading phase
+    const isHackerActive = hackerController && hackerController.hacker && hackerController.hacker.active;
+    const isHackerLoading = hackerController && hackerController.hacker && hackerController.hacker.isLoading;
+    
+    // Set global loading state for other controllers (but don't override if hacker controller already set it)
+    // The hacker controller manages this flag during loading transitions
+    if (isHackerLoading !== undefined) {
+      const oldValue = window.hackerIsLoading;
+      window.hackerIsLoading = isHackerLoading;
+      
+      // Debug logging when the flag changes
+      if (oldValue !== isHackerLoading) {
+        console.log(`GAME LOOP: window.hackerIsLoading changed from ${oldValue} to ${isHackerLoading}`);
+      }
+    }
+    
+    // Debug logging (throttled to avoid console spam)
+    const now = Date.now();
+    if (now - (hackerController.lastDebugLog || 0) > 2000) { // Log every 2 seconds
+      console.log('Hacker state - Active:', isHackerActive, 'Loading:', isHackerLoading);
+      hackerController.lastDebugLog = now;
+    }
+    
+    // Update shield powerups during hacker loading phase
+    if (shieldController) {
+      shieldController.update(deltaTime, gameSpeed, isHackerLoading);
+      if (player && shieldController.checkCollision) {
+        const shieldCollected = shieldController.checkCollision(player);
+        if (shieldCollected) {
+          console.log('Player collected a shield!');
+        }
+      }
+    } else {
+      console.error('Shield controller not available in game loop!');
+    }
+    
+    // Update attack powerups during hacker loading phase
+    if (attackPowerupController) {
+      attackPowerupController.update(deltaTime, isHackerLoading);
+      if (player && attackPowerupController.checkCollision) {
+        const attackPowerupCollected = attackPowerupController.checkCollision(player);
+        if (attackPowerupCollected) {
+          console.log('Player collected an attack powerup!');
+          // Add any power-up collection logic here
+        }
+      }
+    } else {
+      console.error('Attack powerup controller not available in game loop!');
+    }
+    
+    // Update electric ball controller
+    if (electricBallController) {
+      electricBallController.update(deltaTime, player, hackerController.hacker);
+      
+      // Show/hide star instruction based on hacker loading state
+      if (isHackerLoading && electricBallController.getShotsRemaining() === 0) {
+        electricBallController.showStarInstruction();
+      } else {
+        electricBallController.hideStarInstruction();
+      }
+    }
+    
     // Check for hacker projectile collisions with player
     if (hackerController.checkProjectileCollisions) {
       const projectileHit = hackerController.checkProjectileCollisions(player);
@@ -572,30 +717,59 @@ document.addEventListener('DOMContentLoaded', function() {
     // Draw player
     player.draw();
     
-    // Only draw obstacles if hacker is not in loading mode
+    // Always draw these game elements, regardless of loading state
+    // Draw obstacles (except during hacker loading phase)
     if (!window.hackerIsLoading) {
-      // Draw obstacles
       obstacleController.draw();
-      
-      // Draw coins
-      coinController.draw(ctx);
-      
-      // Draw milk bottles with deltaTime for notification animation
-      milkController.draw(deltaTime);
-      
-      // Draw burger collectibles with deltaTime for notification animation
-      burgerController.draw(ctx, deltaTime);
-      
-      // Draw skull obstacles
+    }
+    
+    // Always draw coins
+    coinController.draw(ctx);
+    
+    // Always draw milk bottles with deltaTime for notification animation
+    milkController.draw(deltaTime);
+    
+    // Always draw burger collectibles with deltaTime for notification animation
+    burgerController.draw(ctx, deltaTime);
+    
+    // Draw skull obstacles (except during hacker loading phase)
+    if (!window.hackerIsLoading) {
       skullController.draw();
-    } else {
-      // If hacker is loading, log that we're skipping obstacle drawing
-      console.log('Skipping obstacle drawing during hacker loading phase');
+    }
+    
+    if (window.hackerIsLoading) {
+      console.log('Hacker loading phase - drawing all collectibles but skipping some obstacles');
     }
     
     // Draw hacker obstacles - always draw the hacker itself, but conditionally draw projectiles
     // The draw method will handle this internally based on the loading state
     hackerController.draw(deltaTime, window.hackerIsLoading);
+    
+    // Draw shield powerups - ALWAYS draw for debugging
+    if (shieldController) {
+      console.log('Drawing shield powerups (debug mode)');
+      shieldController.draw(ctx);
+    } else {
+      console.error('Shield controller not available for drawing!');
+    }
+    
+    // Draw attack powerups
+    if (attackPowerupController) {
+      console.log('Drawing attack powerups');
+      attackPowerupController.draw(ctx);
+    } else {
+      console.error('Attack powerup controller not available for drawing!');
+    }
+    
+    // Draw electric ball effects
+    if (electricBallController) {
+      electricBallController.draw(ctx, hackerController.hacker);
+    }
+    
+    // Draw hacker controller (hacker and projectiles)
+    if (hackerController) {
+      hackerController.draw(deltaTime, isHackerLoading);
+    }
     
     // Check for coin collisions
     coinController.checkCollision(player);
@@ -644,20 +818,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!window.hackerIsLoading) {
       const skullCollision = skullController.checkCollision(player);
       if (skullCollision) {
-        // Lose a life when hitting a skull
-        if (typeof window.loseLife === 'function') {
-          window.loseLife();
-        } else if (window.game && typeof window.game.loseLife === 'function') {
-          window.game.loseLife();
+        // Check if player has shield first
+        if (player.shieldHits > 0) {
+          // Use player's takeDamage method which will handle shield hits
+          const damageResult = player.takeDamage(1);
+          
+          // If shield absorbed the hit, log it
+          if (!damageResult) {
+            console.log('Shield protected player from virus!');
+            // Note: The shield guard sound is now played in the player.takeDamage method
+          }
         } else {
-          console.error('loseLife function not found!');
-        }
-        
-        // Play cat hit sound
-        const catHitSound = new Audio('/games/phish404/audio/cat-hit.mp3');
-        catHitSound.volume = gameVolume;
-        if (!isMuted) {
-          catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
+          // No shield, lose a life when hitting a skull
+          if (typeof window.loseLife === 'function') {
+            window.loseLife();
+          } else if (window.game && typeof window.game.loseLife === 'function') {
+            window.game.loseLife();
+          } else {
+            console.error('loseLife function not found!');
+          }
+          
+          // Play cat hit sound
+          catHitSound.volume = gameVolume;
+          if (!isMuted) {
+            catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
+          }
         }
       }
     } else {
@@ -818,7 +1003,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Function to explicitly resume the game after popup interactions
-  function resumeGame() {
+  function resumeGameAfterPopup() {
     console.log('Resuming game after popup, preserving coin count', new Date().toISOString());
     
     // Hide all popups to ensure they're closed
@@ -862,6 +1047,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (burgerController) burgerController.draw(ctx, 0);
     if (skullController) skullController.draw();
     if (hackerController) hackerController.draw(0);
+    if (shieldController) shieldController.draw(ctx);
+    if (attackPowerupController) attackPowerupController.draw(ctx);
     
     // Start the game loop with a small delay to ensure everything is ready
     setTimeout(() => {
@@ -885,6 +1072,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (burgerController && typeof burgerController.reset === 'function') burgerController.reset();
     if (skullController && typeof skullController.reset === 'function') skullController.reset();
     if (hackerController && typeof hackerController.reset === 'function') hackerController.reset();
+    if (shieldController && typeof shieldController.reset === 'function') shieldController.reset();
     
     // Reset player position
     if (player && typeof player.reset === 'function') player.reset();
@@ -1107,8 +1295,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const gameOverSound = new Audio('/games/phish404/audio/losetrumpet.mp3');
   const declineSound = new Audio('/games/phish404/audio/Decline.wav');
   
-  // Store all game sounds for volume control
-  const gameSounds = [vishingSound, gameOverSound, declineSound, correctSound, wrongSound, catMeowSound];
+  // Shield sound effects
+  window.shieldSound = new Audio('/games/phish404/audio/coin-hit.mp3');
+  window.shieldHitSound = new Audio('/games/phish404/audio/coin-hit.mp3');
+  window.shieldBreakSound = new Audio('/games/phish404/audio/shield_break.mp3');
+  
+  // Add shield sounds to gameSounds for volume control
+  gameSounds.push(window.shieldSound, window.shieldHitSound, window.shieldBreakSound);
   
   // Update initial volume for all sounds
   updateAudioVolume();
@@ -1149,6 +1342,17 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize the game
   setScreen();
   window.addEventListener('resize', setScreen);
+  
+  // Force create a shield for testing
+  setTimeout(() => {
+    console.log('FORCING SHIELD CREATION FOR TESTING');
+    if (window.shieldController) {
+      window.shieldController.debugMode = true;
+      window.shieldController.spawnShield(true);
+    } else {
+      console.error('Shield controller not initialized!');
+    }
+  }, 3000); // Wait 3 seconds after game starts
   
   // Define the key handler function
   function handleKeyDown(event) {
@@ -1318,11 +1522,27 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to initialize audio controls
   function initAudioControls() {
+    const audioControls = document.getElementById('audioControls');
     const volumeSlider = document.getElementById('volumeSlider');
     const muteButton = document.getElementById('muteButton');
     const musicButton = document.getElementById('musicButton');
-    const audioControls = document.getElementById('audioControls');
     const backgroundMusic = document.getElementById('backgroundMusic');
+    
+    if (!audioControls || !volumeSlider || !muteButton || !musicButton) {
+      console.log('Audio control elements not found');
+      return;
+    }
+    
+    // Ensure sound and music are on by default for new users
+    if (localStorage.getItem('isMuted') === null) {
+      isMuted = false;
+      localStorage.setItem('isMuted', 'false');
+    }
+    
+    if (localStorage.getItem('musicEnabled') === null) {
+      musicEnabled = true;
+      localStorage.setItem('musicEnabled', 'true');
+    }
     
     // Set initial volume from slider if available
     if (volumeSlider) {
@@ -1526,6 +1746,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (skullController) skullController.reset();
     if (hackerController) hackerController.reset();
     if (obstacleController) obstacleController.reset();
+    if (shieldController) shieldController.reset();
+    if (attackPowerupController) attackPowerupController.reset();
+    if (electricBallController) electricBallController.reset();
     
     // Update UI
     updateLivesDisplay();

@@ -1,0 +1,943 @@
+class ShieldPowerupController {
+  constructor(gameWidth, gameHeight, scaleRatio) {
+    this.gameWidth = gameWidth;
+    this.gameHeight = gameHeight;
+    this.scaleRatio = scaleRatio;
+    
+    // Array to hold active shield powerups
+    this.shields = [];
+    
+    // Shield properties - smaller size
+    this.width = 80 * scaleRatio;
+    this.height = 80 * scaleRatio;
+    
+    // Load shield image
+    this.image = new Image();
+    this.image.src = '/games/phish404/img/shield.png';
+    
+    // Sound effect for collecting shield
+    this.collectSound = new Audio('/games/phish404/audio/powerup.mp3');
+    
+    // Flag to only spawn during hacker loading phase
+    this.onlyDuringHackerLoading = true;
+    
+    // Debug mode for testing
+    this.debugMode = false;
+    
+    // Respawn timer
+    this.respawnTimer = null;
+    
+    // Track if first shield has been collected and tutorial shown
+    this.firstShieldCollected = false;
+    
+    // Track the player who collected the shield (for applying shield after challenge)
+    this.pendingShieldPlayer = null;
+    
+    // Flag to track if a shield challenge is currently active
+    this.shieldChallengeActive = false;
+    
+    // Notification properties
+    this.notification = {
+      active: false,
+      text: ['SUPER SHIELD POWER-UP!', 'ANSWER CORRECTLY TO ACTIVATE', 'IDENTIFY PHISHING ATTEMPTS', 'GAIN 3X DAMAGE PROTECTION', '', 'Press SPACE to CONTINUE'],
+      y: this.gameHeight * 0.5, // Position at exact middle of screen
+      opacity: 1,
+      waitingForKeypress: false
+    };
+    
+    // Bind event listener for space key
+    this.handleKeyDown = this.handleKeyDown.bind(this);
+    
+    // Bind the handler methods to this instance
+    this.handleCorrectAnswer = this.handleCorrectAnswer.bind(this);
+    this.handleIncorrectAnswer = this.handleIncorrectAnswer.bind(this);
+    this.showRandomPhishingChallenge = this.showRandomPhishingChallenge.bind(this);
+    this.setupChallengeListeners = this.setupChallengeListeners.bind(this);
+    this.restoreOriginalHandlers = this.restoreOriginalHandlers.bind(this);
+    this.activateShieldOnSuccess = this.activateShieldOnSuccess.bind(this);
+  }
+  
+  reset() {
+    this.shields = [];
+    
+    // Clear any existing respawn timer
+    if (this.respawnTimer) {
+      clearTimeout(this.respawnTimer);
+      this.respawnTimer = null;
+    }
+  }
+  
+  // Create a moving shield that travels across the screen
+  spawnShield() {
+    // Start position at right side of screen
+    const x = this.gameWidth;
+    
+    // Random y position in the middle 60% of screen height
+    const y = Math.random() * (this.gameHeight * 0.6) + (this.gameHeight * 0.2);
+    
+    const shield = {
+      x: x,
+      y: y,
+      width: this.width,
+      height: this.height,
+      collected: false,
+      speed: 2 * this.scaleRatio, // Shield movement speed
+      visible: true
+    };
+    
+    this.shields.push(shield);
+    return shield;
+  }
+  
+  update(deltaTime, gameSpeed, hackerLoading) {
+    // Don't update if notification is active and waiting for keypress
+    if (this.notification.active && this.notification.waitingForKeypress) {
+      return;
+    }
+    
+    // Only spawn shields during hacker loading or in debug mode
+    if ((hackerLoading || this.debugMode) && this.shields.length === 0 && !this.respawnTimer) {
+      this.respawnTimer = setTimeout(() => {
+        this.spawnShield();
+        this.respawnTimer = null;
+      }, 2000); // Wait 2 seconds before spawning
+    }
+    
+    // Move shields from right to left
+    for (let i = this.shields.length - 1; i >= 0; i--) {
+      const shield = this.shields[i];
+      
+      // Move shield left
+      shield.x -= shield.speed;
+      
+      // Remove shield if it goes off screen
+      if (shield.x + shield.width < 0) {
+        this.shields.splice(i, 1);
+        
+        // Spawn a new shield if we're still in hacker loading or debug mode
+        if (hackerLoading || this.debugMode) {
+          this.respawnTimer = setTimeout(() => {
+            this.spawnShield();
+            this.respawnTimer = null;
+          }, 2000);
+        }
+      }
+    }
+  }
+  
+  checkCollision(player) {
+    // Use for loop with reverse iteration to safely remove items while iterating
+    for (let i = this.shields.length - 1; i >= 0; i--) {
+      const shield = this.shields[i];
+      
+      if (player.x < shield.x + shield.width &&
+          player.x + player.width > shield.x &&
+          player.y < shield.y + shield.height &&
+          player.y + player.height > shield.y) {
+            
+        // Remove the shield from the array
+        this.shields.splice(i, 1);
+        
+        // Play collection sound
+        if (this.collectSound) {
+          this.collectSound.currentTime = 0;
+          this.collectSound.play().catch(e => console.log("Error playing shield collect sound:", e));
+        }
+        
+        // Only activate a new challenge if we don't have a pending one
+        if (!this.pendingShieldPlayer) {
+          // Store the player reference for later shield activation
+          this.pendingShieldPlayer = player;
+          
+          // Show notification about the shield challenge
+          this.showNotification();
+          
+          // Spawn a new shield after a delay if in hacker loading
+          if (window.hackerIsLoading) {
+            this.respawnTimer = setTimeout(() => {
+              this.spawnShield();
+              this.respawnTimer = null;
+            }, 5000); // Wait 5 seconds before spawning a new shield
+          }
+        }
+      }
+    }
+    
+    return this.shields.length === 0; // Return true if all shields collected
+  }
+  
+  showNotification() {
+    // Only show notification for first shield collected
+    if (!this.firstShieldCollected) {
+      this.firstShieldCollected = true;
+      this.notification.active = true;
+      this.notification.waitingForKeypress = true;
+      
+      // Make sure handleKeyDown is properly bound to this instance
+      const boundHandleKeyDown = this.handleKeyDown.bind(this);
+      
+      // Remove any existing event listener first to avoid duplicates
+      if (this._boundHandleKeyDown) {
+        window.removeEventListener('keydown', this._boundHandleKeyDown);
+        this._boundHandleKeyDown = null;
+      } else {
+        window.removeEventListener('keydown', this.handleKeyDown);
+      }
+      
+      // Add event listener for space key with the bound function
+      window.addEventListener('keydown', boundHandleKeyDown);
+      
+      // Store the bound function for later removal
+      this._boundHandleKeyDown = boundHandleKeyDown;
+      
+      // Pause the game
+      if (typeof window.pauseGame === 'function') {
+        window.pauseGame(true, 'shield_tutorial');
+      }
+    }
+  }
+  
+  handleKeyDown(event) {
+    // Check if space key was pressed and notification is active
+    if (event.code === 'Space' && this.notification.active && this.notification.waitingForKeypress) {
+      // Hide notification
+      this.notification.active = false;
+      this.notification.waitingForKeypress = false;
+      
+      // Remove event listener using the stored bound function
+      if (this._boundHandleKeyDown) {
+        window.removeEventListener('keydown', this._boundHandleKeyDown);
+        this._boundHandleKeyDown = null;
+      } else {
+        window.removeEventListener('keydown', this.handleKeyDown);
+      }
+      
+      // Show a random phishing challenge
+      this.showRandomPhishingChallenge();
+    }
+  }
+  
+  showRandomPhishingChallenge() {
+    // Randomly choose between email and phone call challenge
+    const challengeType = Math.random() < 0.5 ? 'email' : 'phone';
+    
+    // Explicitly set shield challenge active flag
+    this.shieldChallengeActive = true;
+    
+    // Set up event listeners for the challenge responses
+    this.setupChallengeListeners();
+    
+    // Show the appropriate challenge
+    if (challengeType === 'email') {
+      if (typeof window.showEmailPhishingPopup === 'function') {
+        window.showEmailPhishingPopup();
+      } else {
+        this.shieldChallengeActive = false; // Reset flag if popup can't be shown
+        this.activateShieldOnSuccess(); // Fallback if function not found
+      }
+    } else {
+      if (typeof window.showPhoneVishingPopup === 'function') {
+        window.showPhoneVishingPopup();
+      } else {
+        this.shieldChallengeActive = false; // Reset flag if popup can't be shown
+        this.activateShieldOnSuccess(); // Fallback if function not found
+      }
+    }
+  }
+  
+  setupChallengeListeners() {
+    // Only set up event handlers if we have a pending shield challenge
+    }
+  }
+}
+
+handleKeyDown(event) {
+  // Check if space key was pressed and notification is active
+  if (event.code === 'Space' && this.notification.active && this.notification.waitingForKeypress) {
+    // Hide notification
+    this.notification.active = false;
+    this.notification.waitingForKeypress = false;
+
+    // Remove event listener using the stored bound function
+    if (this._boundHandleKeyDown) {
+      window.removeEventListener('keydown', this._boundHandleKeyDown);
+      this._boundHandleKeyDown = null;
+    } else {
+      window.removeEventListener('keydown', this.handleKeyDown);
+    }
+
+    // Show a random phishing challenge
+    this.showRandomPhishingChallenge();
+  }
+}
+
+showRandomPhishingChallenge() {
+  // Randomly choose between email and phone call challenge
+  const challengeType = Math.random() < 0.5 ? 'email' : 'phone';
+
+  // Explicitly set shield challenge active flag
+  this.shieldChallengeActive = true;
+
+  // Set up event listeners for the challenge responses
+  this.setupChallengeListeners();
+
+  // Show the appropriate challenge
+  if (challengeType === 'email') {
+    if (typeof window.showEmailPhishingPopup === 'function') {
+      window.showEmailPhishingPopup();
+    } else {
+      this.shieldChallengeActive = false; // Reset flag if popup can't be shown
+      this.activateShieldOnSuccess(); // Fallback if function not found
+    }
+  } else {
+    if (typeof window.showPhoneVishingPopup === 'function') {
+      window.showPhoneVishingPopup();
+    } else {
+      this.shieldChallengeActive = false; // Reset flag if popup can't be shown
+      this.activateShieldOnSuccess(); // Fallback if function not found
+    }
+  }
+}
+
+setupChallengeListeners() {
+  // Store original handlers and set up our own handlers for the challenge
+  this.originalHandlers = {};
+
+  // Get references to all the buttons we need to handle
+  const emailCleanBtn = document.getElementById('emailClean');
+  const emailMaliciousBtn = document.getElementById('emailMalicious');
+  const phoneDoItBtn = document.getElementById('phoneDoIt');
+  const phoneSkipBtn = document.getElementById('phoneSkip');
+
+  // For email buttons, we'll use event listeners instead of replacing onclick
+  if (emailCleanBtn) {
+    // Create a wrapper function that will intercept clicks
+    this._boundEmailCleanHandler = (event) => {
+      // Only intercept if this is specifically a shield challenge
+      if (this.shieldChallengeActive && this.pendingShieldPlayer) {
+        console.log('Shield controller: Intercepting email clean button click');
+        event.stopImmediatePropagation(); // Stop other handlers from executing
+        this.handleIncorrectAnswer(event);
+      }
+    };
+
+    // Add our interceptor as the first event listener (capturing phase)
+    emailCleanBtn.addEventListener('click', this._boundEmailCleanHandler, true);
+  }
+
+  if (emailMaliciousBtn) {
+    // Create a wrapper function that will intercept clicks
+    this._boundEmailMaliciousHandler = (event) => {
+      // Only intercept if this is specifically a shield challenge
+      if (this.shieldChallengeActive && this.pendingShieldPlayer) {
+        console.log('Shield controller: Intercepting email malicious button click');
+        event.stopImmediatePropagation(); // Stop other handlers from executing
+        this.handleCorrectAnswer(event);
+      }
+    };
+
+    // Add our interceptor as the first event listener (capturing phase)
+    emailMaliciousBtn.addEventListener('click', this._boundEmailMaliciousHandler, true);
+  }
+
+  // For phone buttons, use the same approach as email buttons
+  if (phoneDoItBtn) {
+    // Create a wrapper function that will intercept clicks
+    this._boundPhoneDoItHandler = (event) => {
+      // Only intercept if this is specifically a shield challenge
+      if (this.shieldChallengeActive && this.pendingShieldPlayer) {
+        console.log('Shield controller: Intercepting phone do it button click');
+        event.stopImmediatePropagation(); // Stop other handlers from executing
+        this.handleIncorrectAnswer(event);
+      }
+    };
+
+    // Add our interceptor as the first event listener (capturing phase)
+    phoneDoItBtn.addEventListener('click', this._boundPhoneDoItHandler, true);
+  }
+
+  if (phoneSkipBtn) {
+    // Create a wrapper function that will intercept clicks
+    this._boundPhoneSkipHandler = (event) => {
+      // Only intercept if this is specifically a shield challenge
+      if (this.shieldChallengeActive && this.pendingShieldPlayer) {
+        console.log('Shield controller: Intercepting phone skip button click');
+        event.stopImmediatePropagation(); // Stop other handlers from executing
+        this.handleCorrectAnswer(event);
+      }
+    };
+
+    // Add our interceptor as the first event listener (capturing phase)
+    phoneSkipBtn.addEventListener('click', this._boundPhoneSkipHandler, true);
+  }
+}
+
+handleCorrectAnswer(event) {
+  // Only process shield activation if this is a shield challenge
+  // This is the critical check to prevent regular phone popups from granting shields
+  if (!this.shieldChallengeActive || !this.pendingShieldPlayer) {
+    // If this isn't a shield challenge, don't do anything special
+    // Let the original event handlers handle it
+    return;
+  }
+
+  // Play correct sound
+  const correctSound = document.getElementById('correctSound');
+  if (correctSound) {
+    correctSound.currentTime = 0;
+    correctSound.play().catch(e => console.log("Error playing correct sound:", e));
+  }
+
+  // Activate shield on the player - only during shield challenges
+  this.activateShieldOnSuccess();
+
+  // Hide all popups
+  const emailPopup = document.getElementById('emailPopup');
+  const phonePopup = document.getElementById('phonePopup');
+  if (emailPopup) emailPopup.style.display = 'none';
+  if (phonePopup) phonePopup.style.display = 'none';
+
+  // Clear pause states
+  if (typeof window.clearPauseState === 'function') {
+    window.clearPauseState('shield_challenge');
+  }
+
+  // Remove keydown event listener if it exists
+  if (this._boundHandleKeyDown) {
+    window.removeEventListener('keydown', this._boundHandleKeyDown);
+    this._boundHandleKeyDown = null;
+  }
+
+  // Restore original button handlers
+  this.restoreOriginalHandlers();
+
+  // Reset shield challenge state
+  this.shieldChallengeActive = false;
+  this.pendingShieldPlayer = null;
+
+  // Clear all possible pause states
+  const pauseReasons = ['shield_tutorial', 'shield_challenge', 'email_phishing', 'phone_vishing'];
+  pauseReasons.forEach(reason => {
+    if (typeof window.pauseGame === 'function') {
+      window.pauseGame(false, reason);
+    }
+  });
+
+  // Reset game state
+  if (window.game) {
+    window.game.gameOver = false;
+    window.game.popupVisible = false;
+  }
+
+  // Resume the game - use resumeGameAfterPopup for consistent behavior
+  if (typeof window.resumeGameAfterPopup === 'function') {
+    console.log('Shield controller: Calling resumeGameAfterPopup');
+    window.resumeGameAfterPopup();
+  } else if (typeof window.resumeGame === 'function') {
+    console.log('Shield controller: Falling back to resumeGame');
+    window.resumeGame();
+  } else if (window.startGameLoop) {
+    // Last resort: try to start the game loop directly
+    console.log('Shield controller: Last resort - calling startGameLoop directly');
+    window.startGameLoop();
+  } else {
+    console.error('Shield controller: No method available to resume game!');
+  }
+}
+
+handleIncorrectAnswer(event) {
+  // Only process if this is a shield challenge
+  // This is the critical check to prevent regular phone popups from interfering with shield logic
+  if (!this.shieldChallengeActive || !this.pendingShieldPlayer) {
+    // If this isn't a shield challenge, don't do anything special
+    // Let the original event handlers handle it
+    return;
+  }
+
+  // Play wrong sound
+  const wrongSound = document.getElementById('wrongSound');
+  if (wrongSound) {
+    wrongSound.currentTime = 0;
+    wrongSound.play().catch(e => console.log("Error playing wrong sound:", e));
+  }
+
+  // Clear the pending shield player
+  this.pendingShieldPlayer = null;
+
+  // Hide all popups
+  const emailPopup = document.getElementById('emailPopup');
+  const phonePopup = document.getElementById('phonePopup');
+  if (emailPopup) emailPopup.style.display = 'none';
+  if (phonePopup) phonePopup.style.display = 'none';
+
+  // Clear pause states
+  if (typeof window.clearPauseState === 'function') {
+    window.clearPauseState('shield_challenge');
+  }
+
+  // Remove keydown event listener if it exists
+  if (this._boundHandleKeyDown) {
+    window.removeEventListener('keydown', this._boundHandleKeyDown);
+    this._boundHandleKeyDown = null;
+  }
+
+  // Restore original button handlers
+  this.restoreOriginalHandlers();
+
+  // Reset shield challenge state
+  this.shieldChallengeActive = false;
+
+  // Clear all possible pause states
+  const pauseReasons = ['shield_tutorial', 'shield_challenge', 'email_phishing', 'phone_vishing'];
+  pauseReasons.forEach(reason => {
+    if (typeof window.pauseGame === 'function') {
+      window.pauseGame(false, reason);
+    }
+  });
+
+  // Reset game state
+  if (window.game) {
+    window.game.gameOver = false;
+    window.game.popupVisible = false;
+  }
+
+  // Resume the game - use resumeGameAfterPopup for consistent behavior
+  if (typeof window.resumeGameAfterPopup === 'function') {
+    console.log('Shield controller: Calling resumeGameAfterPopup from handleIncorrectAnswer');
+    window.resumeGameAfterPopup();
+  } else if (typeof window.resumeGame === 'function') {
+    console.log('Shield controller: Falling back to resumeGame from handleIncorrectAnswer');
+    window.resumeGame();
+  } else if (window.startGameLoop) {
+    // Last resort: try to start the game loop directly
+    console.log('Shield controller: Last resort - calling startGameLoop directly from handleIncorrectAnswer');
+    window.startGameLoop();
+  } else {
+    console.error('Shield controller: No method available to resume game from handleIncorrectAnswer!');
+  }
+}
+
+restoreOriginalHandlers() {
+  if (!this.originalHandlers) {
+    return;
+  }
+
+  // Restore email clean button handler
+  if (this.originalHandlers.emailClean) {
+    const emailCleanBtn = document.getElementById('emailClean');
+    if (emailCleanBtn) {
+      emailCleanBtn.onclick = this.originalHandlers.emailClean;
+    }
+  }
+
+  // Restore email malicious button handler
+  if (this.originalHandlers.emailMalicious) {
+    const emailMaliciousBtn = document.getElementById('emailMalicious');
+    if (emailMaliciousBtn) {
+      emailMaliciousBtn.onclick = this.originalHandlers.emailMalicious;
+    }
+  }
+
+  // Restore phone do it button handler
+  if (this.originalHandlers.phoneDoIt) {
+    const phoneDoItBtn = document.getElementById('phoneDoIt');
+    if (phoneDoItBtn) {
+      phoneDoItBtn.onclick = this.originalHandlers.phoneDoIt;
+    }
+  }
+
+  // Restore phone skip button handler
+  if (this.originalHandlers.phoneSkip) {
+    const phoneSkipBtn = document.getElementById('phoneSkip');
+    if (phoneSkipBtn) {
+      phoneSkipBtn.onclick = this.originalHandlers.phoneSkip;
+    }
+  }
+
+  // Clear the saved handlers
+  this.originalHandlers = {};
+}
+
+activateShieldOnSuccess() {
+  // Check if we have a pending player to give shield to
+  if (this.pendingShieldPlayer && this.pendingShieldPlayer.activateShield) {
+    this.pendingShieldPlayer.activateShield(3); // Shield absorbs 3 hits
+    // This is the critical check to prevent regular phone popups from granting shields
+    if (!this.shieldChallengeActive || !this.pendingShieldPlayer) {
+      // If this isn't a shield challenge, don't do anything special
+      // Let the original event handlers handle it
+      return;
+    }
+    
+    // Play correct sound
+    const correctSound = document.getElementById('correctSound');
+    if (correctSound) {
+      correctSound.currentTime = 0;
+      correctSound.play().catch(e => console.log("Error playing correct sound:", e));
+    }
+    
+    // Activate shield on the player - only during shield challenges
+    this.activateShieldOnSuccess();
+    
+    // Hide all popups
+    const emailPopup = document.getElementById('emailPopup');
+    const phonePopup = document.getElementById('phonePopup');
+    if (emailPopup) emailPopup.style.display = 'none';
+    if (phonePopup) phonePopup.style.display = 'none';
+    
+    // Clear pause states
+    if (typeof window.clearPauseState === 'function') {
+      window.clearPauseState('shield_challenge');
+    }
+    
+    // Remove keydown event listener if it exists
+    if (this._boundHandleKeyDown) {
+      window.removeEventListener('keydown', this._boundHandleKeyDown);
+      this._boundHandleKeyDown = null;
+    }
+    
+    // Restore original button handlers
+    this.restoreOriginalHandlers();
+    
+    // Reset shield challenge state
+    this.shieldChallengeActive = false;
+    this.pendingShieldPlayer = null;
+    
+    // Clear all possible pause states
+    const pauseReasons = ['shield_tutorial', 'shield_challenge', 'email_phishing', 'phone_vishing'];
+    pauseReasons.forEach(reason => {
+      if (typeof window.pauseGame === 'function') {
+        window.pauseGame(false, reason);
+      }
+    });
+    
+    // Reset game state
+    if (window.game) {
+      window.game.gameOver = false;
+      window.game.popupVisible = false;
+    }
+    
+    // Resume the game - use resumeGameAfterPopup for consistent behavior
+    if (typeof window.resumeGameAfterPopup === 'function') {
+      console.log('Shield controller: Calling resumeGameAfterPopup');
+      window.resumeGameAfterPopup();
+    } else if (typeof window.resumeGame === 'function') {
+      console.log('Shield controller: Falling back to resumeGame');
+      window.resumeGame();
+    } else if (window.startGameLoop) {
+      // Last resort: try to start the game loop directly
+      console.log('Shield controller: Last resort - calling startGameLoop directly');
+      window.startGameLoop();
+    } else {
+      console.error('Shield controller: No method available to resume game!');
+    }
+  }
+  
+  handleIncorrectAnswer(event) {
+    // Only process if this is a shield challenge
+    // This is the critical check to prevent regular phone popups from interfering with shield logic
+    if (!this.shieldChallengeActive || !this.pendingShieldPlayer) {
+      // If this isn't a shield challenge, don't do anything special
+      // Let the original event handlers handle it
+      return;
+    }
+    
+    // Play wrong sound
+    const wrongSound = document.getElementById('wrongSound');
+    if (wrongSound) {
+      wrongSound.currentTime = 0;
+      wrongSound.play().catch(e => console.log("Error playing wrong sound:", e));
+    }
+    
+    // Clear the pending shield player
+    this.pendingShieldPlayer = null;
+    
+    // Hide all popups
+    const emailPopup = document.getElementById('emailPopup');
+    const phonePopup = document.getElementById('phonePopup');
+    if (emailPopup) emailPopup.style.display = 'none';
+    if (phonePopup) phonePopup.style.display = 'none';
+    
+    // Clear pause states
+    if (typeof window.clearPauseState === 'function') {
+      window.clearPauseState('shield_challenge');
+    }
+    
+    // Remove keydown event listener if it exists
+    if (this._boundHandleKeyDown) {
+      window.removeEventListener('keydown', this._boundHandleKeyDown);
+      this._boundHandleKeyDown = null;
+    }
+    
+    // Restore original button handlers
+    this.restoreOriginalHandlers();
+    
+    // Reset shield challenge state
+    this.shieldChallengeActive = false;
+    
+    // Clear all possible pause states
+    const pauseReasons = ['shield_tutorial', 'shield_challenge', 'email_phishing', 'phone_vishing'];
+    pauseReasons.forEach(reason => {
+      if (typeof window.pauseGame === 'function') {
+        window.pauseGame(false, reason);
+      }
+    });
+    
+    // Reset game state
+    if (window.game) {
+      window.game.gameOver = false;
+      window.game.popupVisible = false;
+    }
+    
+    // Resume the game - use resumeGameAfterPopup for consistent behavior
+    if (typeof window.resumeGameAfterPopup === 'function') {
+      console.log('Shield controller: Calling resumeGameAfterPopup from handleIncorrectAnswer');
+      window.resumeGameAfterPopup();
+    } else if (typeof window.resumeGame === 'function') {
+      console.log('Shield controller: Falling back to resumeGame from handleIncorrectAnswer');
+      window.resumeGame();
+    } else if (window.startGameLoop) {
+      // Last resort: try to start the game loop directly
+      console.log('Shield controller: Last resort - calling startGameLoop directly from handleIncorrectAnswer');
+      window.startGameLoop();
+    } else {
+      console.error('Shield controller: No method available to resume game from handleIncorrectAnswer!');
+    }
+  }
+  
+  restoreOriginalHandlers() {
+    if (!this.originalHandlers) {
+      return;
+    }
+    
+    // Restore email clean button handler
+    if (this.originalHandlers.emailClean) {
+      const emailCleanBtn = document.getElementById('emailClean');
+      if (emailCleanBtn) {
+        emailCleanBtn.onclick = this.originalHandlers.emailClean;
+      }
+    }
+    
+    // Restore email malicious button handler
+    if (this.originalHandlers.emailMalicious) {
+      const emailMaliciousBtn = document.getElementById('emailMalicious');
+      if (emailMaliciousBtn) {
+        emailMaliciousBtn.onclick = this.originalHandlers.emailMalicious;
+      }
+    }
+    
+    // Restore phone do it button handler
+    if (this.originalHandlers.phoneDoIt) {
+      const phoneDoItBtn = document.getElementById('phoneDoIt');
+      if (phoneDoItBtn) {
+        phoneDoItBtn.onclick = this.originalHandlers.phoneDoIt;
+      }
+    }
+    
+    // Restore phone skip button handler
+    if (this.originalHandlers.phoneSkip) {
+      const phoneSkipBtn = document.getElementById('phoneSkip');
+      if (phoneSkipBtn) {
+        phoneSkipBtn.onclick = this.originalHandlers.phoneSkip;
+      }
+    }
+    
+    // Clear the saved handlers
+    this.originalHandlers = {};
+  }
+  
+  activateShieldOnSuccess() {
+    // Check if we have a pending player to give shield to
+    if (this.pendingShieldPlayer && this.pendingShieldPlayer.activateShield) {
+      this.pendingShieldPlayer.activateShield(3); // Shield absorbs 3 hits
+    }
+    
+    // Clear the pending shield player and reset state
+    this.pendingShieldPlayer = null;
+    this.notification.active = false;
+    this.notification.waitingForKeypress = false;
+  }
+  
+  // Helper method to draw rounded rectangles for browsers that don't support roundRect
+  drawRoundedRect(ctx, x, y, width, height, radius, fill, stroke) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    
+    if (fill) {
+      ctx.fill();
+    }
+    
+    if (stroke) {
+      // Draw border
+      ctx.strokeStyle = '#00a8ff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+  }
+  
+  draw(ctx) {
+    // Draw all active shields
+    this.shields.forEach((shield, index) => {
+      ctx.save();
+      
+      // Draw shield image or placeholder
+      if (this.image.complete) {
+        // Draw the shield image
+        ctx.drawImage(
+          this.image,
+          shield.x,
+          shield.y,
+          shield.width,
+          shield.height
+        );
+      } else {
+        // Simple placeholder if image not loaded
+        ctx.fillStyle = 'lightblue';
+        ctx.fillRect(shield.x, shield.y, shield.width, shield.height);
+        
+        // Simple border
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(shield.x, shield.y, shield.width, shield.height);
+        
+        // Simple text
+        ctx.fillStyle = 'black';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('SHIELD', shield.x + shield.width/2, shield.y + shield.height/2);
+      }
+      
+      ctx.restore();
+    });
+    
+    // Only draw notification if active and visible
+    if (this.notification.active && this.notification.opacity > 0) {
+      ctx.save();
+      
+      // Set transparency based on fade in/out
+      ctx.globalAlpha = this.notification.opacity;
+      
+      // Draw background
+      const padding = 20;
+      const lineHeight = 28; // Reduced line height for smaller spacing
+      const width = 450; // Slightly narrower notification
+      const height = (this.notification.text.length * lineHeight) + (padding * 2);
+      const x = (this.gameWidth - width) / 2;
+      const y = this.notification.y - height / 2;
+      
+      // Create a pulsing effect for the notification
+      const time = Date.now() / 1000;
+      const pulseScale = 1 + Math.sin(time * 4) * 0.02; // Subtle pulse
+      
+      // Apply the pulse scale
+      ctx.translate(x + width/2, y + height/2);
+      ctx.scale(pulseScale, pulseScale);
+      ctx.translate(-(x + width/2), -(y + height/2));
+      
+      // Draw semi-transparent background with rounded corners and gradient
+      const gradient = ctx.createLinearGradient(x, y, x, y + height);
+      gradient.addColorStop(0, 'rgba(25, 25, 75, 0.85)');
+      gradient.addColorStop(1, 'rgba(10, 10, 40, 0.9)');
+      ctx.fillStyle = gradient;
+      
+      // Use roundRect if available, otherwise draw a regular rectangle
+      if (ctx.roundRect) {
+        ctx.roundRect(x, y, width, height, 15);
+        ctx.fill();
+        
+        // Draw glowing border
+        const borderGlow = ctx.createLinearGradient(x, y, x + width, y + height);
+        borderGlow.addColorStop(0, '#00a8ff');
+        borderGlow.addColorStop(0.5, '#00ffaa');
+        borderGlow.addColorStop(1, '#00a8ff');
+        
+        ctx.strokeStyle = borderGlow;
+        ctx.lineWidth = 4;
+        ctx.roundRect(x, y, width, height, 15);
+        ctx.stroke();
+      } else {
+        // Fallback for browsers that don't support roundRect
+        this.drawRoundedRect(ctx, x, y, width, height, 15, true, true);
+      }
+      
+      // Set text alignment for all text
+      ctx.textAlign = 'center';
+      
+      // Draw each line of text with different colors and effects
+      this.notification.text.forEach((line, index) => {
+        const textY = y + padding + (index * lineHeight) + 15;
+        
+        // Different styling for different lines
+        if (index === 0) {
+          // Title text with glow effect
+          ctx.font = 'bold 14px "Press Start 2P", cursive';
+          ctx.fillStyle = '#ffff00'; // Yellow
+          ctx.shadowColor = '#ff8800';
+          ctx.shadowBlur = 6;
+          ctx.fillText(line, x + width/2, textY);
+          ctx.shadowBlur = 0;
+        } 
+        else if (index === 1) {
+          // Second line - blue
+          ctx.font = 'bold 12px "Press Start 2P", cursive';
+          ctx.fillStyle = '#00ffff'; // Cyan
+          ctx.fillText(line, x + width/2, textY);
+        }
+        else if (index === 2) {
+          // Third line - green
+          ctx.font = 'bold 12px "Press Start 2P", cursive';
+          ctx.fillStyle = '#00ff88'; // Green
+          ctx.fillText(line, x + width/2, textY);
+        }
+        else if (index === 3) {
+          // Fourth line - red
+          ctx.font = 'bold 11px "Press Start 2P", cursive';
+          ctx.fillStyle = '#ff5555'; // Red
+          ctx.fillText(line, x + width/2, textY);
+        }
+        else if (index === 5) {
+          // Press space line with blinking effect
+          ctx.font = 'bold 11px "Press Start 2P", cursive';
+          
+          // Blinking effect
+          if (Math.floor(Date.now() / 500) % 2 === 0) {
+            ctx.fillStyle = '#ffffff'; // White
+          } else {
+            ctx.fillStyle = '#ffaa00'; // Orange
+          }
+          
+          ctx.fillText(line, x + width/2, textY);
+        }
+        else {
+          // Default text style
+          ctx.font = 'bold 11px "Press Start 2P", cursive';
+          ctx.fillStyle = 'white';
+          ctx.fillText(line, x + width/2, textY);
+        }
+      });
+      
+      // Draw shield icons in the corners for decoration
+      if (this.image.complete) {
+        const iconSize = 30; // Smaller icons
+        ctx.drawImage(this.image, x + 15, y + 15, iconSize, iconSize); // Top left
+        ctx.drawImage(this.image, x + width - iconSize - 15, y + 15, iconSize, iconSize); // Top right
+        ctx.drawImage(this.image, x + 15, y + height - iconSize - 15, iconSize, iconSize); // Bottom left
+        ctx.drawImage(this.image, x + width - iconSize - 15, y + height - iconSize - 15, iconSize, iconSize); // Bottom right
+      }
+      
+      ctx.restore();
+    }
+  }
+}
+
+// Add to global scope for access from game.js
+window.ShieldPowerupController = ShieldPowerupController;

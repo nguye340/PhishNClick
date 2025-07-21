@@ -25,6 +25,9 @@
   <script src="skull-projectile.js"></script>
   <script src="hacker.js"></script>
   <script src="hacker-controller.js"></script>
+  <script src="shield-powerup-controller.js"></script>
+  <script src="attack-powerup-controller.js"></script>
+  <script src="electric-ball-controller.js"></script>
   <script src="game-fixes.js"></script>
   <script src="game.js"></script>
 </head>
@@ -48,6 +51,28 @@
       0% { opacity: 1; }
       50% { opacity: 0.3; }
       100% { opacity: 1; }
+    }
+    
+    @keyframes rainbow {
+      0% { color: #ff0000; }
+      16.66% { color: #ff8000; }
+      33.33% { color: #ffff00; }
+      50% { color: #00ff00; }
+      66.66% { color: #0080ff; }
+      83.33% { color: #8000ff; }
+      100% { color: #ff0000; }
+    }
+    
+    @keyframes flashGreen {
+      0% { color: #00ff00; }
+      50% { color: #80ff80; }
+      100% { color: #58cc58; }
+    }
+    
+    @keyframes flashYellow {
+      0% { color: #fcc246; }
+      50% { color: #f8c600; }
+      100% { color: #ff8521; }
     }
   </style>
   
@@ -89,9 +114,21 @@
         <span id="coinCount" style="font-family: 'Press Start 2P', cursive; color: gold; text-shadow: 2px 2px 2px rgba(0,0,0,0.7); font-size: 14px;">0</span>
         
         <!-- Level counter -->
-        <div style="margin-left: 50px; display: flex; align-items: center; gap: 5px;">
+        <div style="margin-left: 30px; display: flex; align-items: center; gap: 5px;">
           <img src="/games/phish404/img/levelup.gif" style="width: 25px; height: 25px;">
           <span id="levelCount" style="font-family: 'Press Start 2P', cursive; color: #00ff00; text-shadow: 2px 2px 2px rgba(0,0,0,0.7); font-size: 14px;">LV 1</span>
+        </div>
+        
+        <!-- Shield counter - hidden by default -->
+        <div id="shieldCounterContainer" style="margin-left: 30px; display: none; align-items: center; gap: 5px;">
+          <img src="/games/phish404/img/shield-icon.png" style="width: 25px; height: 25px;">
+          <span id="shieldCounter" style="font-family: 'Press Start 2P', cursive; color: #00a8ff; text-shadow: 2px 2px 2px rgba(0,0,0,0.7); font-size: 14px;">x3</span>
+        </div>
+        
+        <!-- Star powerup counter - hidden by default -->
+        <div id="starCounterContainer" style="margin-left: 30px; display: none; align-items: center; gap: 5px;">
+          <img src="/games/phish404/img/star/star1.png" style="width: 25px; height: 25px;">
+          <span id="starCounter" style="font-family: 'Press Start 2P', cursive; color: #ffd700; text-shadow: 2px 2px 2px rgba(0,0,0,0.7); font-size: 14px;">x3</span>
         </div>
       </div>
     </div>
@@ -106,9 +143,19 @@
     <span style="font-family: 'Press Start 2P', cursive; color: #ff0000; font-size: 16px; animation: blink 1s infinite;">CAT SLOWING DOWN! LOW ENERGY! FIND MILK BOTTLES!</span>
   </div>
   
+  <!-- Star powerup instruction -->
+  <div id="starInstruction" style="display: none; width: 100%; text-align: center; padding: 10px; background-color: black;">
+    <span style="font-family: 'Press Start 2P', cursive; color: #ffd700; font-size: 10px; animation: rainbow 2s infinite;">COLLECT STARS TO ATTACK THE HACKER! 3 SHOTS/STAR</span>
+  </div>
+  
   <!-- Footer message -->
-  <div style="width: 100%; text-align: center; padding: 10px 5px; background-color: black; margin-bottom: 5px;">
-    <span style="font-family: 'Press Start 2P', cursive; color: gold; font-size: 10px; text-shadow: 1px 1px 2px black;">BE NOT AFRAID OF CALLS AND MAILS - DEAL WITH THEM CORRECTLY TO BECOME STRONGER AND EARN MORE COINS!</span>
+  <div id="footerMessage" style="width: 100%; text-align: center; padding: 10px 5px; background-color: black; margin-bottom: 5px;">
+    <span style="font-family: 'Press Start 2P', cursive; color: gold; font-size: 10px; text-shadow: 1px 1px 2px black;">
+      ANSWER CALLS AND MAILS CORRECTLY TO 
+      <span style="animation: flashGreen 1s infinite;">LEVEL UP</span> 
+      & EARN 
+      <span style="animation: flashYellow 1s infinite;">COINS</span>!
+    </span>
   </div>
   
   <!-- Subtle Audio Controls -->

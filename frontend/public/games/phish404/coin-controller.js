@@ -73,7 +73,9 @@ class CoinController {
         
         // Play sound
         this.coinSound.currentTime = 0;
-        this.coinSound.play();
+        if (this.coinSound && !window.isMuted) {
+          this.coinSound.play().catch(e => console.log("Error playing coin sound:", e));
+        }
         
         // Increment counter
         this.coinsCollected++;

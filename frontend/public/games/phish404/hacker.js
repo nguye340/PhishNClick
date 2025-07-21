@@ -39,6 +39,15 @@ class Hacker {
     this.attackSequenceCount = 0; // Count attacks before loading phase
     this.attacksBeforeLoading = 3; // Number of attacks before entering loading phase (increased to 3)
     
+    // Defeat and explosion properties
+    this.isDefeated = false;
+    this.isExploding = false;
+    this.explosionFrameIndex = 0;
+    this.explosionTickCount = 0;
+    this.explosionTicksPerFrame = 3; // Slower explosion animation
+    this.explosionFrames = 16; // 16 frames for boss-explode animation
+    this.explosionComplete = false;
+    
     // Load hacker images
     this.images = [];
     for (let i = 1; i <= this.numberOfFrames; i++) {
@@ -47,12 +56,45 @@ class Hacker {
       this.images.push(img);
     }
     
+    // Load explosion images
+    this.explosionImages = [];
+    for (let i = 1; i <= this.explosionFrames; i++) {
+      const img = new Image();
+      img.src = `/games/phish404/img/boss-explode/boss-explode${i}.png`;
+      this.explosionImages.push(img);
+    }
+    
+    // Load defeat sounds
+    this.bossDefeatSound = new Audio('/games/phish404/audio/boss-defeat.wav');
+    this.victorySound = new Audio('/games/phish404/audio/Victory.mp3');
+    this.yummySound = new Audio('/games/phish404/audio/yummy.mp3');
+    
     this.type = 'hacker';
   }
   
   update(frameTimeDelta, gameSpeed) {
     // Don't update if not active
     if (!this.active) return;
+    
+    // Handle explosion animation if defeated
+    if (this.isExploding) {
+      this.explosionTickCount++;
+      if (this.explosionTickCount > this.explosionTicksPerFrame) {
+        this.explosionTickCount = 0;
+        this.explosionFrameIndex++;
+        
+        if (this.explosionFrameIndex >= this.explosionFrames) {
+          // Explosion animation complete
+          this.explosionComplete = true;
+          console.log('HACKER: Explosion animation complete');
+          return; // Don't update anything else
+        }
+      }
+      return; // Don't update normal animation during explosion
+    }
+    
+    // Don't update normal behavior if defeated
+    if (this.isDefeated) return;
     
     // Get canvas height for boundaries
     const canvasHeight = this.ctx.canvas.height;
@@ -92,12 +134,18 @@ class Hacker {
       // Update loading timer
       this.loadingTimer += frameTimeDelta;
       
+      // Debug logging every 500ms
+      if (Math.floor(this.loadingTimer / 500) > Math.floor((this.loadingTimer - frameTimeDelta) / 500)) {
+        console.log(`HACKER LOADING: ${this.loadingTimer.toFixed(0)}ms / ${this.loadingDuration}ms`);
+      }
+      
       // Check if loading is complete
       if (this.loadingTimer >= this.loadingDuration) {
+        console.log('HACKER: Loading phase complete! Exiting loading mode...');
         this.isLoading = false;
         this.loadingTimer = 0;
         this.shootTimer = this.shootInterval; // Ready to shoot immediately after loading
-        console.log('Hacker finished loading viruses!');
+        console.log('HACKER: Successfully exited loading mode, ready to attack!');
       }
     } else {
       // Only update shoot timer when not loading
@@ -108,6 +156,23 @@ class Hacker {
   draw() {
     // Don't draw if not active
     if (!this.active) return;
+    
+    // Draw explosion animation if exploding
+    if (this.isExploding && !this.explosionComplete) {
+      const explosionImage = this.explosionImages[this.explosionFrameIndex];
+      if (explosionImage && explosionImage.complete) {
+        // Draw explosion centered on hacker position
+        const explosionSize = Math.max(this.width, this.height) * 1.5; // Make explosion bigger than hacker
+        const explosionX = this.fixedX + (this.width - explosionSize) / 2;
+        const explosionY = this.y + (this.height - explosionSize) / 2;
+        
+        this.ctx.drawImage(explosionImage, explosionX, explosionY, explosionSize, explosionSize);
+      }
+      return; // Don't draw normal hacker during explosion
+    }
+    
+    // Don't draw if explosion is complete
+    if (this.explosionComplete) return;
     
     if (this.images[this.frameIndex] && this.images[this.frameIndex].complete) {
       // Save context for transformations
@@ -153,11 +218,11 @@ class Hacker {
         
         // Draw text
         this.ctx.font = `${barHeight * 1.5}px 'Press Start 2P', monospace`;
-        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillStyle = 'red';
         this.ctx.textAlign = 'center';
         this.ctx.fillText('LOADING VIRUSES...', barX + barWidth / 2, barY - barHeight);
         
-        // Draw flashing "ATTACK NOW!" text in the middle of the screen
+        // Draw flashing "Your Turn!" text in the middle of the screen
         const flashSpeed = 300; // milliseconds per flash cycle
         const isFlashing = Math.floor(Date.now() / flashSpeed) % 2 === 0;
         
@@ -170,13 +235,13 @@ class Hacker {
           const canvasWidth = this.ctx.canvas.width;
           const canvasHeight = this.ctx.canvas.height;
           
-          // Draw "ATTACK NOW!" text
-          this.ctx.fillText('ATTACK NOW!', canvasWidth / 2, canvasHeight / 2);
+          // Draw "Your Turn!" text
+          this.ctx.fillText('YOUR TURN!', canvasWidth / 2, canvasHeight / 2);
           
           // Draw smaller instruction text below
           this.ctx.font = `${barHeight * 2}px 'Press Start 2P', monospace`;
           this.ctx.fillStyle = '#ffffff'; // White
-          this.ctx.fillText('JUMP INTO THE HACKER!', canvasWidth / 2, canvasHeight / 2 + barHeight * 6);
+          this.ctx.fillText('Collect STARS to attack', canvasWidth / 2, canvasHeight / 2 + barHeight * 6);
         }
         
         // Draw outline
@@ -218,17 +283,43 @@ class Hacker {
   }
   
   startLoading() {
+    console.log('HACKER: Starting loading phase...');
     this.isLoading = true;
     this.loadingTimer = 0;
-    console.log('Hacker is loading viruses...');
+    console.log(`HACKER: Loading duration set to ${this.loadingDuration}ms`);
+    console.log('HACKER: Notifying hacker controller of loading state...');
+    // Update global loading state
+    if (window.hackerController) {
+      window.hackerController.setLoadingState(true);
+      console.log('HACKER: Successfully notified hacker controller');
+    } else {
+      console.warn('HACKER: window.hackerController not found!');
+    }
   }
   
   activate() {
     this.active = true;
+    console.log('Hacker activated');
+    // Set global loading state if needed
+    if (window.hackerController) {
+      window.hackerController.setLoadingState(this.isLoading);
+    }
+  }
+  
+  resetLives(bonusLives = 0) {
+    // Reset lives with potential bonus for increased difficulty
+    this.maxLives = 3 + bonusLives;
+    this.lives = this.maxLives;
+    console.log(`HACKER: Lives reset to ${this.lives} (${bonusLives} bonus lives)`);
   }
   
   deactivate() {
     this.active = false;
+    console.log('Hacker deactivated');
+    // Clear global loading state
+    if (window.hackerController) {
+      window.hackerController.setLoadingState(false);
+    }
   }
   
   // Method to handle the hacker taking damage
@@ -254,6 +345,10 @@ class Hacker {
       if (this.isLoading) {
         this.isLoading = false;
         this.loadingTimer = 0;
+        // Update global loading state
+        if (window.hackerController) {
+          window.hackerController.setLoadingState(false);
+        }
       }
       // Deactivate the hacker
       this.active = false;
@@ -270,44 +365,123 @@ class Hacker {
     this.invincibleTimer = 0;
   }
   
-  // Draw the lives indicator above the hacker
+  // Draw the lives indicator below the hacker
   drawLivesIndicator() {
-    // Position the lives indicator above the hacker
-    const heartSize = this.width * 0.2;
-    const startX = this.fixedX + (this.width - (heartSize * this.maxLives)) / 2;
-    const y = this.y - heartSize * 1.5;
+    // Load heart image if not already loaded
+    if (!this.heartImage) {
+      this.heartImage = new Image();
+      this.heartImage.src = '/games/phish404/img/heart.gif';
+      this.heartImage.onload = () => {
+        // Redraw when the image is loaded
+        this.needsRedraw = true;
+      };
+      return; // Skip drawing this frame
+    }
+    
+    // Position the lives indicator below the hacker
+    const heartSize = this.width * 0.4; // Increased heart size (25% of hacker width)
+    const spacing = heartSize * 0.1; // Slightly more spacing between larger hearts
+    const totalWidth = (heartSize * this.maxLives) + (spacing * (this.maxLives - 1));
+    const startX = this.fixedX + (this.width - totalWidth) / 2;
+    const y = this.y + this.height + (heartSize * 0.5); // Position below the hacker
     
     // Draw each heart representing a life
     for (let i = 0; i < this.maxLives; i++) {
-      // Determine if this heart should be filled or empty
-      const isFilled = i < this.lives;
+      const x = startX + (i * (heartSize + spacing));
       
-      // Draw the heart
-      this.ctx.fillStyle = isFilled ? '#ff0000' : '#666666';
-      this.ctx.strokeStyle = '#ffffff';
-      this.ctx.lineWidth = 2;
+      // Only draw hearts for remaining lives
+      if (i < this.lives) {
+        if (this.heartImage.complete) {
+          this.ctx.drawImage(this.heartImage, x, y, heartSize, heartSize);
+        } else {
+          // Fallback to drawing a red circle if image isn't loaded yet
+          this.ctx.fillStyle = '#ff0000';
+          this.ctx.beginPath();
+          this.ctx.arc(x + heartSize/2, y + heartSize/2, heartSize/2, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      }
+    }
+  }
+  
+  // Take damage from electric ball hits
+  takeDamage(damage) {
+    if (this.invincible || !this.active) {
+      console.log('HACKER: Damage blocked - invincible or inactive');
+      return false;
+    }
+    
+    // Allow damage during loading phase (player's turn to attack)
+    if (this.isLoading) {
+      console.log('HACKER: Taking damage during loading phase (player\'s turn)');
+    }
+    
+    this.lives -= damage;
+    console.log(`HACKER: Took ${damage} damage! Lives remaining: ${this.lives}`);
+    
+    // Make hacker invincible for a short time after being hit
+    this.invincible = true;
+    this.invincibleTimer = this.invincibleDuration;
+    
+    // Check if hacker is defeated
+    if (this.lives <= 0) {
+      this.lives = 0;
+      console.log('HACKER: Defeated by electric ball! Starting defeat sequence...');
       
-      // Position for this heart
-      const x = startX + (i * heartSize);
+      // Start defeat sequence
+      this.startDefeatSequence();
       
-      // Draw heart shape
-      this.ctx.beginPath();
-      const topLeftX = x + heartSize * 0.1;
-      const topLeftY = y + heartSize * 0.3;
-      const topRightX = x + heartSize * 0.9;
-      const topRightY = y + heartSize * 0.3;
-      const bottomX = x + heartSize * 0.5;
-      const bottomY = y + heartSize * 0.9;
+      return true; // Return true to indicate hacker was defeated
+    }
+    
+    return false; // Return false to indicate hacker is still alive
+  }
+  
+  startDefeatSequence() {
+    console.log('HACKER: Starting defeat sequence with explosion and sounds...');
+    
+    // Set defeat flags
+    this.isDefeated = true;
+    this.isExploding = true;
+    this.explosionFrameIndex = 0;
+    this.explosionTickCount = 0;
+    this.explosionComplete = false;
+    
+    // Play defeat sounds
+    this.playDefeatSounds();
+    
+    // Notify hacker controller of defeat
+    if (window.hackerController) {
+      window.hackerController.onHackerDefeated();
+    }
+  }
+  
+  playDefeatSounds() {
+    console.log('HACKER: Playing defeat sounds...');
+    
+    // Set volume based on game settings
+    const volume = window.gameVolume || 0.5;
+    const isMuted = window.isMuted || false;
+    
+    if (!isMuted) {
+      // Play boss defeat sound immediately
+      this.bossDefeatSound.volume = volume;
+      this.bossDefeatSound.currentTime = 0;
+      this.bossDefeatSound.play().catch(e => console.log('Error playing boss defeat sound:', e));
       
-      // Draw a simple heart shape
-      this.ctx.moveTo(bottomX, bottomY);
-      this.ctx.quadraticCurveTo(x, y + heartSize * 0.5, topLeftX, topLeftY);
-      this.ctx.quadraticCurveTo(x + heartSize * 0.5, y, topRightX, topLeftY);
-      this.ctx.quadraticCurveTo(x + heartSize, y + heartSize * 0.5, bottomX, bottomY);
+      // Play victory sound after a short delay
+      setTimeout(() => {
+        this.victorySound.volume = volume;
+        this.victorySound.currentTime = 0;
+        this.victorySound.play().catch(e => console.log('Error playing victory sound:', e));
+      }, 500);
       
-      // Fill and stroke the heart
-      this.ctx.fill();
-      this.ctx.stroke();
+      // Play yummy sound after victory sound
+      setTimeout(() => {
+        this.yummySound.volume = volume;
+        this.yummySound.currentTime = 0;
+        this.yummySound.play().catch(e => console.log('Error playing yummy sound:', e));
+      }, 1500);
     }
   }
 }
