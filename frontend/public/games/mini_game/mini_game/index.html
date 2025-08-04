@@ -1,0 +1,2340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hooked or Cooked - Phishing Email Game</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      color: white;
+    }
+    
+    .game-container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      background: rgba(0,0,0,0.8);
+      padding: 15px;
+      padding-left: 70px; /* Make room for home button */
+      padding-right: 140px; /* Make room for learn button */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+    
+    .score {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+    
+    .lives {
+      font-size: 20px;
+      font-weight: bold;
+      color: #f44336;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .heart {
+      color: #ff1744;
+      font-size: 24px;
+      animation: heartbeat 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .game-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .email-icon {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(45deg, #2196F3, #21CBF3);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      transition: all 0.3s ease;
+      animation: float 3s ease-in-out infinite;
+      box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .email-icon:hover {
+      transform: scale(1.2) rotate(5deg);
+      box-shadow: 0 6px 20px rgba(33, 150, 243, 0.5);
+    }
+    
+
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+
+    
+    .email-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .email-content {
+      background: white;
+      color: black;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80%;
+      overflow-y: auto;
+    }
+    
+    .email-header {
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .email-from {
+      font-weight: bold;
+      color: #333 !important;
+    }
+    
+    .email-subject {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #1976D2 !important;
+    }
+    
+    .email-body {
+      line-height: 1.6;
+      margin: 20px 0;
+      color: #333 !important;
+    }
+    
+    .email-body * {
+      color: #333 !important;
+    }
+    
+    .email-body a {
+      color: #2196F3 !important;
+      text-decoration: underline;
+    }
+    
+    .email-body a:hover {
+      color: #1976D2 !important;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 25px;
+    }
+    
+    .btn {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .btn-catch {
+      background: #4CAF50;
+      color: white;
+    }
+    
+    .btn-catch:hover {
+      background: #45a049;
+    }
+    
+    .btn-drop {
+      background: #f44336;
+      color: white;
+    }
+    
+    .btn-drop:hover {
+      background: #da190b;
+    }
+    
+    .game-over {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    
+    .game-over-content {
+      background: white;
+      color: black;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      max-width: 500px;
+    }
+    
+    .final-score {
+      font-size: 48px;
+      font-weight: bold;
+      color: #4CAF50;
+      margin: 20px 0;
+    }
+    
+    .home-btn {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background: rgba(0,0,0,0.8);
+      border: 3px solid #fff;
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      font-size: 20px;
+      z-index: 1001;
+      transition: all 0.1s ease;
+    }
+    
+    .home-btn:hover {
+      background: rgba(255,255,255,0.2);
+      transform: scale(1.05);
+    }
+    
+    .learn-btn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: #2196F3;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      padding: 10px 16px;
+      color: white;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      z-index: 1001;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+      backdrop-filter: blur(10px);
+    }
+    
+    .learn-btn:hover {
+      background: #1976D2;
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+    }
+    
+    .learn-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
+    }
+    
+    .welcome-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    
+    .welcome-content {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      max-width: 400px;
+      width: 90%;
+    }
+    
+    .welcome-title {
+      font-size: 32px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .welcome-subtitle {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 30px;
+    }
+    
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+    
+    .input-group input:focus {
+      outline: none;
+      border-color: #2196F3;
+    }
+    
+    .welcome-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 25px;
+    }
+    
+    .welcome-btn {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .welcome-btn.primary {
+      background: #2196F3;
+      color: white;
+    }
+    
+    .welcome-btn.primary:hover {
+      background: #1976D2;
+      transform: translateY(-1px);
+    }
+    
+    .welcome-btn.secondary {
+      background: #FF9800;
+      color: white;
+    }
+    
+    .welcome-btn.secondary:hover {
+      background: #F57C00;
+      transform: translateY(-1px);
+    }
+    
+    .combo-display {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      font-weight: bold;
+      color: #FFD700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0;
+      animation: comboPopup 2s ease-out;
+    }
+    
+    @keyframes comboPopup {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+      80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
+    
+    .score-popup {
+      position: absolute;
+      font-size: 24px;
+      font-weight: bold;
+      pointer-events: none;
+      z-index: 998;
+      animation: scoreFloat 1.5s ease-out forwards;
+    }
+    
+    .score-popup.positive {
+      color: #4CAF50;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    
+    .score-popup.negative {
+      color: #f44336;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    
+    @keyframes scoreFloat {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(0.8); }
+    }
+    
+    .particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: #FFD700;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 997;
+      animation: particleExplode 1s ease-out forwards;
+    }
+    
+    @keyframes particleExplode {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0) translateY(-100px); }
+    }
+    
+    .catphish-character {
+      position: fixed;
+      width: 60px;
+      height: 60px;
+      z-index: 500;
+      pointer-events: none;
+      transform-origin: center bottom;
+      transition: none; /* Remove transition for smooth custom movement */
+    }
+    
+    .catphish-character img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    
+    .catphish-character.jumping {
+      animation: catJump 0.6s ease-out;
+    }
+    
+    @keyframes catJump {
+      0% { transform: translateY(0) scale(1); }
+      30% { transform: translateY(-15px) scale(1.1); }
+      60% { transform: translateY(-8px) scale(1.05); }
+      100% { transform: translateY(0) scale(1); }
+    }
+    
+    .air-meter {
+      position: fixed;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 200px;
+      background: rgba(0,0,0,0.8);
+      border-radius: 15px;
+      border: 3px solid #fff;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 5px;
+    }
+    
+    .air-meter-label {
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+    
+    .air-meter-bar {
+      flex: 1;
+      width: 20px;
+      background: #333;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .air-meter-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(to top, #4CAF50, #8BC34A, #CDDC39);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    .air-meter-fill.low {
+      background: linear-gradient(to top, #f44336, #FF5722);
+      animation: airWarning 1s ease-in-out infinite alternate;
+    }
+    
+    .air-meter-fill.critical {
+      background: linear-gradient(to top, #d32f2f, #f44336);
+      animation: airCritical 0.5s ease-in-out infinite alternate;
+    }
+    
+    @keyframes airWarning {
+      0% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    
+    @keyframes airCritical {
+      0% { opacity: 0.5; box-shadow: 0 0 10px #f44336; }
+      100% { opacity: 1; box-shadow: 0 0 20px #f44336; }
+    }
+    
+    .bubble-trail {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      background: radial-gradient(circle, rgba(173, 216, 230, 0.8), rgba(135, 206, 250, 0.6));
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 450;
+      animation: bubbleFloat 2s ease-out forwards;
+    }
+    
+    @keyframes bubbleFloat {
+      0% {
+        opacity: 0.8;
+        transform: scale(1) translateY(0);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0.3) translateY(-50px);
+      }
+    }
+    
+    .air-warning {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(244, 67, 54, 0.95);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      z-index: 200; /* Lower z-index so emails and CatPhish appear on top */
+      box-shadow: 0 4px 20px rgba(244, 67, 54, 0.5);
+      animation: warningPulse 1s ease-in-out infinite alternate;
+      pointer-events: none; /* Allow clicks to pass through */
+    }
+    
+    @keyframes warningPulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      100% { transform: translate(-50%, -50%) scale(1.05); }
+    }
+    
+    .air-warning.fade-out {
+      animation: warningFadeOut 0.5s ease-out forwards;
+    }
+    
+    @keyframes warningFadeOut {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    }
+    
+    /* Link Preview Styles */
+    .hidden-link {
+      color: inherit;
+      text-decoration: none;
+      position: relative;
+      cursor: pointer;
+    }
+    
+    .hidden-link:hover {
+      text-decoration: underline;
+      color: #2196F3;
+    }
+    
+    .link-preview {
+      position: absolute;
+      background: #333;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    
+    .link-preview.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .link-preview::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #333;
+    }
+    
+    /* Attachment Styles */
+    .attachment {
+      display: block;
+      background: #f9f9f9;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+      max-width: 100%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .attachment-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .attachment-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+      background: #4CAF50;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 10px;
+    }
+    
+    .attachment-icon.pdf { background: #f44336; }
+    .attachment-icon.docx { background: #2196F3; }
+    .attachment-icon.xlsx { background: #4CAF50; }
+    
+    .attachment-name {
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .attachment-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .attachment-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .preview-btn {
+      background: #2196F3;
+      color: white;
+    }
+    
+    .download-btn {
+      background: #4CAF50;
+      color: white;
+    }
+    
+    .attachment-btn:hover {
+      opacity: 0.8;
+    }
+    
+    /* Attachment Preview Modal */
+    .attachment-preview {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .attachment-content {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      color: #333 !important;
+    }
+    
+    .attachment-content h3 {
+      color: #333 !important;
+      margin-top: 0;
+    }
+    
+    .attachment-content * {
+      color: #333 !important;
+    }
+    
+    .attachment-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+    
+    .attachment-close:hover {
+      color: #000;
+    }
+    
+    .malicious-warning {
+      background: #ffebee;
+      border: 1px solid #f44336;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 15px;
+      color: #c62828;
+      font-weight: bold;
+    }
+    
+    /* Link Feedback Modal */
+    .link-feedback {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 2500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .link-feedback-content {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      max-width: 500px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    
+    .link-feedback-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+    
+    .link-feedback-close:hover {
+      color: #000;
+    }
+    
+    .feedback-correct {
+      border-left: 5px solid #4CAF50;
+    }
+    
+    .feedback-wrong {
+      border-left: 5px solid #f44336;
+    }
+    
+    .feedback-hint {
+      border-left: 5px solid #FF9800;
+    }
+    
+    .feedback-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+    
+    .feedback-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333 !important;
+    }
+    
+    .feedback-message {
+      font-size: 16px;
+      line-height: 1.5;
+      color: #555 !important;
+      margin-bottom: 20px;
+    }
+    
+    .feedback-message * {
+      color: #555 !important;
+    }
+    
+    .feedback-url {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 14px;
+      margin: 15px 0;
+      word-break: break-all;
+      color: #333 !important;
+    }
+    
+    /* Game Report Modal */
+    .game-report {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 2500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+    }
+    
+    .report-content {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 800px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      color: #333;
+    }
+    
+    .report-header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 20px;
+    }
+    
+    .report-title {
+      font-size: 28px;
+      font-weight: bold;
+      color: #2196F3;
+      margin-bottom: 10px;
+    }
+    
+    .report-subtitle {
+      font-size: 18px;
+      color: #666;
+    }
+    
+    .report-section {
+      margin-bottom: 25px;
+    }
+    
+    .section-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      border-left: 4px solid #2196F3;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .performance-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    
+    .indicator-excellent {
+      background: #e8f5e8;
+      border-left: 4px solid #4CAF50;
+    }
+    
+    .indicator-good {
+      background: #fff3e0;
+      border-left: 4px solid #FF9800;
+    }
+    
+    .indicator-needs-work {
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+    }
+    
+    .email-review {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .email-review:hover {
+      background: #e0e0e0;
+    }
+    
+    .email-review.correct {
+      border-left: 4px solid #4CAF50;
+    }
+    
+    .email-review.wrong {
+      border-left: 4px solid #f44336;
+    }
+    
+    .email-preview {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .report-close {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: #666;
+    }
+    
+    .report-close:hover {
+      color: #000;
+    }
+    
+    .report-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Screen -->
+  <div class="welcome-screen" id="welcomeScreen">
+    <div class="welcome-content">
+      <div class="welcome-title">Hooked or Cooked 🎣 📧</div>
+      <div class="welcome-subtitle">Email Phishing Detection Game</div>
+      
+      <div class="input-group">
+        <label for="playerName">Your Name:</label>
+        <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+      </div>
+      
+      <div class="input-group">
+        <label for="playerEmail">Your Email (optional):</label>
+        <input type="email" id="playerEmail" placeholder="Enter your email">
+      </div>
+      
+      <div class="welcome-buttons">
+        <button class="welcome-btn secondary" onclick="goToLearn()">📖 Learn First</button>
+        <button class="welcome-btn primary" onclick="startGame()">🎮 Start Game</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="game-container" id="gameContainer" style="display: none;">
+    <button class="home-btn" onclick="goHome()" title="Return to Home">🏠</button>
+    <button class="learn-btn" onclick="goToLearn()">📖 Learn</button>
+    
+    <!-- CatPhish Character -->
+    <div class="catphish-character" id="catphish">
+      <img src="catphish-character-emoji.png" alt="CatPhish" id="catphishImg">
+    </div>
+    
+    <!-- Air Meter -->
+    <div class="air-meter" id="airMeter">
+      <div class="air-meter-label">AIR</div>
+      <div class="air-meter-bar">
+        <div class="air-meter-fill" id="airFill" style="height: 100%;"></div>
+      </div>
+    </div>
+    
+    <div class="header">
+      <div class="score">Score: <span id="score">0</span></div>
+      <div class="lives">
+        <span>Lives:</span>
+        <div id="hearts-container">
+          <span class="heart">❤️</span>
+          <span class="heart">❤️</span>
+          <span class="heart">❤️</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="game-area" id="gameArea"></div>
+  </div>
+  
+  <!-- Email Modal -->
+  <div class="email-modal" id="emailModal">
+    <div class="email-content">
+      <div class="email-header">
+        <div class="email-from">From: <span id="emailFrom"></span></div>
+        <div class="email-subject" id="emailSubject"></div>
+      </div>
+      <div class="email-body" id="emailBody"></div>
+      <div class="action-buttons">
+        <button class="btn btn-catch" onclick="catchEmail()">🎣 Catch</button>
+        <button class="btn btn-drop" onclick="dropEmail()">🗑️ Drop</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Game Over Modal -->
+  <div class="game-over" id="gameOver">
+    <div class="game-over-content">
+      <h2>Game Over!</h2>
+      <div class="final-score" id="finalScore">0</div>
+      <p id="gameOverMessage"></p>
+      <div class="action-buttons">
+        <button class="btn btn-catch" onclick="restartGame()">🔄 Play Again</button>
+        <button class="btn btn-drop" onclick="goHome()">🏠 Home</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Attachment Preview Modal -->
+  <div class="attachment-preview" id="attachmentPreview">
+    <div class="attachment-content">
+      <button class="attachment-close" onclick="closeAttachmentPreview()">&times;</button>
+      <h3 id="attachmentTitle">Attachment Preview</h3>
+      <div id="attachmentBody"></div>
+    </div>
+  </div>
+  
+  <!-- Link Feedback Modal -->
+  <div class="link-feedback" id="linkFeedback">
+    <div class="link-feedback-content" id="linkFeedbackContent">
+      <button class="link-feedback-close" onclick="closeLinkFeedback()">&times;</button>
+      <div class="feedback-icon" id="feedbackIcon">🔗</div>
+      <div class="feedback-title" id="feedbackTitle">Link Analysis</div>
+      <div class="feedback-message" id="feedbackMessage"></div>
+      <div class="feedback-url" id="feedbackUrl"></div>
+    </div>
+  </div>
+  
+  <!-- Game Report Modal -->
+  <div class="game-report" id="gameReport">
+    <div class="report-content">
+      <button class="report-close" onclick="closeGameReport()">&times;</button>
+      
+      <div class="report-header">
+        <div class="report-title" id="reportTitle">Game Report</div>
+        <div class="report-subtitle" id="reportSubtitle">Performance Analysis</div>
+      </div>
+      
+      <div class="report-section">
+        <div class="section-title">📊 Overall Performance</div>
+        <div class="stats-grid" id="statsGrid"></div>
+      </div>
+      
+      <div class="report-section">
+        <div class="section-title">🎯 What You're Good At</div>
+        <div id="strengthsSection"></div>
+      </div>
+      
+      <div class="report-section">
+        <div class="section-title">📚 Areas for Improvement</div>
+        <div id="improvementSection"></div>
+      </div>
+      
+      <div class="report-section">
+        <div class="section-title">✅ Correct Answers</div>
+        <div id="correctSection"></div>
+      </div>
+      
+      <div class="report-section">
+        <div class="section-title">❌ Review Mistakes</div>
+        <div id="mistakesSection"></div>
+      </div>
+      
+      <div class="report-buttons">
+        <button class="btn btn-catch" onclick="restartGame()">🔄 Play Again</button>
+        <button class="btn btn-drop" onclick="goHome()">🏠 Home</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let emails = [];
+    let score = 0;
+    let lives = 3;
+    let currentEmail = null;
+    let gameRunning = false; // Start as false until player starts
+    let spawnInterval;
+    let combo = 0;
+    let maxCombo = 0;
+    let difficulty = 1;
+    let emailsAnswered = 0;
+    let spawnRate = 1000; // Base spawn rate
+    let playerName = 'Player'; // Default name
+    let airLevel = 100; // Air level (0-100)
+    let airDecayRate = 2; // Air lost per second (increased for more urgency)
+    let airDecayInterval;
+    let mouseX = 0;
+    let mouseY = 0;
+    let catphishX = 0;
+    let catphishY = 0;
+    let catphishExpressionTimeout;
+    let bubbleTrailInterval;
+    let airWarningShown = false;
+    let currentAirWarning = null;
+    
+    // Performance tracking variables
+    let correctAnswers = [];
+    let wrongAnswers = [];
+    let phishingCaught = 0;
+    let phishingMissed = 0;
+    let legitimateKept = 0;
+    let legitimateDropped = 0;
+    let linkClicks = 0;
+    let attachmentViews = 0;
+    let linkHovers = 0;
+    let suspiciousLinkClicks = 0;
+    let downloadWithoutPreview = 0;
+    let securityMistakes = [];
+    let currentAttachmentPreviewed = false;
+
+    // Load emails from JSON
+    fetch('emails.json')
+      .then(response => response.json())
+      .then(data => {
+        emails = data;
+        // Don't start game automatically - wait for player to click start
+      })
+      .catch(error => {
+        console.error('Error loading emails:', error);
+        // Fallback emails if JSON fails to load
+        emails = [
+          {
+            "phish": true,
+            "from": "security@fakebank.com",
+            "subject": "Urgent: Verify Your Account",
+            "body": "Dear customer, please verify your account immediately at http://fakebank-login.com"
+          },
+          {
+            "phish": false,
+            "from": "friend@example.com",
+            "subject": "Dinner Tonight?",
+            "body": "Hey! Are you free for dinner tonight? Text me!"
+          }
+        ];
+        // Don't start game automatically - wait for player to click start
+      });
+
+    function startGame() {
+      // Get player name from input
+      const nameInput = document.getElementById('playerName');
+      if (nameInput && nameInput.value.trim()) {
+        playerName = nameInput.value.trim();
+      }
+      
+      // Hide welcome screen and show game
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('gameContainer').style.display = 'flex';
+      
+      // Start the game
+      gameRunning = true;
+      updateDisplay();
+      spawnEmails();
+      startAirSystem();
+      startMouseTracking();
+      startSmoothMovement();
+      startBubbleTrail();
+    }
+
+    function spawnEmails() {
+      if (!gameRunning) return;
+      
+      spawnInterval = setInterval(() => {
+        if (gameRunning) {
+          createEmailIcon();
+        }
+      }, spawnRate + Math.random() * 500); // Dynamic spawn rate
+    }
+
+    function createEmailIcon() {
+      const gameArea = document.getElementById('gameArea');
+      const emailIcon = document.createElement('div');
+      emailIcon.className = 'email-icon';
+      
+      // Random email data
+      const emailData = emails[Math.floor(Math.random() * emails.length)];
+      emailIcon.emailData = emailData;
+      
+      // Use the same email icons for all emails (no visual hints)
+      const emailIcons = ['📧', '💌', '📨', '✉️', '📮'];
+      emailIcon.innerHTML = emailIcons[Math.floor(Math.random() * emailIcons.length)];
+      
+      // Random position
+      const x = Math.random() * (gameArea.offsetWidth - 60);
+      const y = Math.random() * (gameArea.offsetHeight - 60);
+      
+      emailIcon.style.left = x + 'px';
+      emailIcon.style.top = y + 'px';
+      
+      emailIcon.onclick = () => openEmail(emailData, emailIcon);
+      
+      gameArea.appendChild(emailIcon);
+      
+      // Remove after 6 seconds if not clicked (faster pace)
+      setTimeout(() => {
+        if (emailIcon.parentNode) {
+          emailIcon.remove();
+          // Missed email penalty (no popup to avoid confusion)
+          if (emailData.phish) {
+            // Good - missed a phishing email
+            updateScore(2);
+          } else {
+            // Bad - missed a legitimate email
+            updateScore(-3);
+            combo = 0; // Reset combo
+          }
+        }
+      }, 6000);
+    }
+
+    function openEmail(emailData, iconElement) {
+      currentEmail = { data: emailData, icon: iconElement };
+      
+      // Reset attachment preview tracking for new email
+      currentAttachmentPreviewed = false;
+      
+      // Play bubble pop sound
+      playBubblePopSound();
+      
+      document.getElementById('emailFrom').textContent = emailData.from;
+      document.getElementById('emailSubject').textContent = emailData.subject;
+      
+      // Use innerHTML for body to support HTML links
+      const emailBodyElement = document.getElementById('emailBody');
+      emailBodyElement.innerHTML = emailData.body;
+      
+      // Add attachment if present
+      if (emailData.attachment) {
+        const attachmentHtml = `
+          <br><br>
+          <div class="attachment">
+            <div class="attachment-header">
+              <div class="attachment-icon ${emailData.attachment.type}">${emailData.attachment.type.toUpperCase()}</div>
+              <div class="attachment-name">${emailData.attachment.name}</div>
+            </div>
+            <div class="attachment-buttons">
+              <button class="attachment-btn preview-btn" onclick="previewAttachment('${emailData.attachment.name}', '${emailData.attachment.type}', ${emailData.attachment.malicious}, \`${emailData.attachment.content}\`)">👁️ Preview</button>
+              <button class="attachment-btn download-btn" onclick="downloadAttachment('${emailData.attachment.name}')">📥 Download</button>
+            </div>
+          </div>
+        `;
+        emailBodyElement.innerHTML += attachmentHtml;
+      }
+      
+      // Setup link hover previews for hidden links
+      setupLinkPreviews();
+      
+      document.getElementById('emailModal').style.display = 'flex';
+    }
+    
+    function playBubblePopSound() {
+      try {
+        const audio = new Audio('bubble-pop.mp3');
+        audio.volume = 0.3; // Set volume to 30%
+        audio.play().catch(e => {
+          // Ignore audio play errors (browser restrictions)
+          console.log('Audio play prevented by browser');
+        });
+      } catch (e) {
+        // Ignore audio errors
+        console.log('Audio not supported');
+      }
+    }
+    
+    function playCorrectSound() {
+      try {
+        const audio = new Audio('happy-message-ping-351298.mp3');
+        audio.volume = 0.4; // Set volume to 40%
+        audio.play().catch(e => {
+          // Ignore audio play errors (browser restrictions)
+          console.log('Audio play prevented by browser');
+        });
+      } catch (e) {
+        // Ignore audio errors
+        console.log('Audio not supported');
+      }
+    }
+    
+    function playWrongSound() {
+      try {
+        const audio = new Audio('cat-meowing-type-02-293290.mp3');
+        audio.volume = 0.5; // Set volume to 50%
+        audio.play().catch(e => {
+          // Ignore audio play errors (browser restrictions)
+          console.log('Audio play prevented by browser');
+        });
+      } catch (e) {
+        // Ignore audio errors
+        console.log('Audio not supported');
+      }
+    }
+    
+    function setupLinkPreviews() {
+      const allLinks = document.querySelectorAll('a[href]');
+      allLinks.forEach(link => {
+        // Prevent actual navigation
+        link.addEventListener('click', handleLinkClick);
+        
+        // Track all link hovers (good security practice)
+        link.addEventListener('mouseenter', function() {
+          linkHovers++;
+          showLinkPreview.call(this);
+        });
+        link.addEventListener('mouseleave', hideLinkPreview);
+        
+        // Show full URL in title for educational purposes
+        const fullUrl = link.getAttribute('href');
+        link.setAttribute('title', `Full URL: ${fullUrl}`);
+      });
+    }
+    
+    function showLinkPreview() {
+      const link = this;
+      const href = link.getAttribute('href');
+      const displayText = link.textContent.trim();
+      
+      const preview = document.createElement('div');
+      preview.className = 'link-preview';
+      
+      // Show both display text and actual URL for education
+      if (displayText !== href) {
+        preview.innerHTML = `
+          <strong>Display:</strong> ${displayText}<br>
+          <strong>Actual URL:</strong> ${href}<br>
+          <em>⚠️ Always check where links really go!</em>
+        `;
+      } else {
+        preview.innerHTML = `
+          <strong>Link goes to:</strong> ${href}<br>
+          <em>✅ Good practice checking links!</em>
+        `;
+      }
+      
+      // Position preview above the link
+      const rect = link.getBoundingClientRect();
+      preview.style.position = 'fixed';
+      preview.style.left = rect.left + (rect.width / 2) + 'px';
+      preview.style.top = (rect.top - 60) + 'px';
+      preview.style.transform = 'translateX(-50%)';
+      preview.style.maxWidth = '300px';
+      
+      document.body.appendChild(preview);
+      
+      // Show with animation
+      setTimeout(() => preview.classList.add('show'), 10);
+      
+      // Store reference for cleanup
+      link._preview = preview;
+    }
+    
+    function hideLinkPreview(event) {
+      const link = event.target;
+      if (link._preview) {
+        link._preview.remove();
+        link._preview = null;
+      }
+    }
+    
+    function previewAttachment(name, type, malicious, content) {
+      const modal = document.getElementById('attachmentPreview');
+      const title = document.getElementById('attachmentTitle');
+      const body = document.getElementById('attachmentBody');
+      
+      // Track attachment views
+      attachmentViews++;
+      currentAttachmentPreviewed = true;
+      
+      title.textContent = `Preview: ${name}`;
+      
+      let bodyContent = '';
+      if (malicious) {
+        bodyContent = `<div class="malicious-warning">⚠️ WARNING: This attachment appears to be malicious!</div>`;
+      }
+      
+      bodyContent += `<div style="white-space: pre-wrap; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; border: 1px solid #ddd; color: #333; font-size: 14px; line-height: 1.4;">${content}</div>`;
+      
+      body.innerHTML = bodyContent;
+      modal.style.display = 'flex';
+    }
+    
+    function downloadAttachment(name) {
+      // Check if attachment was previewed first
+      if (!currentAttachmentPreviewed) {
+        downloadWithoutPreview++;
+        securityMistakes.push({
+          type: 'download_without_preview',
+          email: currentEmail.data,
+          attachment: name,
+          reason: 'Downloaded attachment without previewing - always check attachments before downloading!'
+        });
+      }
+      
+      // Show educational alert instead of actual download
+      const isPhishingEmail = currentEmail && currentEmail.data.phish;
+      let message = `🚨 SECURITY ALERT 🚨\n\n`;
+      
+      if (isPhishingEmail) {
+        message += `This attachment "${name}" is from a PHISHING email and could be malicious!\n\n`;
+        message += `In a real scenario, this could:\n`;
+        message += `• Install malware on your computer\n`;
+        message += `• Steal your personal information\n`;
+        message += `• Encrypt your files (ransomware)\n\n`;
+        message += `🛡️ SECURITY TIP: Always preview attachments and verify the sender before downloading!`;
+      } else {
+        message += `This attachment "${name}" appears to be from a legitimate email.\n\n`;
+        message += `However, always remember to:\n`;
+        message += `• Preview attachments before downloading\n`;
+        message += `• Scan downloads with antivirus\n`;
+        message += `• Verify the sender is who you expect\n\n`;
+        message += `✅ This would be safe to download in a real scenario.`;
+      }
+      
+      alert(message);
+    }
+    
+
+    
+    function closeAttachmentPreview() {
+      document.getElementById('attachmentPreview').style.display = 'none';
+    }
+    
+    function handleLinkClick(event) {
+      event.preventDefault(); // Prevent navigation
+      const link = event.target;
+      const href = link.getAttribute('href');
+      const isPhishingEmail = currentEmail && currentEmail.data.phish;
+      
+      // Track link clicks
+      linkClicks++;
+      
+      // Check if this is a suspicious link click (security mistake)
+      if (isPhishingEmail || isSuspiciousLink(href)) {
+        suspiciousLinkClicks++;
+        securityMistakes.push({
+          type: 'suspicious_link_click',
+          email: currentEmail.data,
+          link: href,
+          reason: 'Clicked on suspicious/malicious link - always verify links before clicking!'
+        });
+      }
+      
+      analyzeLinkClick(href, isPhishingEmail);
+    }
+    
+    function isSuspiciousLink(href) {
+      // Check for common suspicious link patterns
+      const suspiciousPatterns = [
+        /bit\.ly|tinyurl|t\.co|goo\.gl/, // URL shorteners
+        /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/, // IP addresses
+        /[a-z0-9-]+\.(tk|ml|ga|cf)/, // Suspicious TLDs
+        /[^a-zA-Z0-9.-]/, // Non-standard characters in domain
+        /paypal.*secure|amazon.*verify|microsoft.*login/i, // Phishing keywords
+        /urgent|verify|suspend|click.*here|act.*now/i // Urgent language
+      ];
+      
+      return suspiciousPatterns.some(pattern => pattern.test(href));
+    }
+    
+    function analyzeLinkClick(url, isPhishingEmail) {
+      const modal = document.getElementById('linkFeedback');
+      const content = document.getElementById('linkFeedbackContent');
+      const icon = document.getElementById('feedbackIcon');
+      const title = document.getElementById('feedbackTitle');
+      const message = document.getElementById('feedbackMessage');
+      const urlDiv = document.getElementById('feedbackUrl');
+      
+      // Reset classes
+      content.className = 'link-feedback-content';
+      
+      // Analyze the URL for suspicious patterns
+      const suspiciousPatterns = [
+        /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/, // IP addresses
+        /[a-z]+-[a-z]+-[a-z]+\.(com|net|org)/, // Hyphenated domains
+        /[a-z]+[0-9]+[a-z]*\.(com|net|org)/, // Numbers in domain
+        /(paypal|amazon|microsoft|apple|google|facebook)-[a-z]+/, // Brand impersonation
+        /[a-z]+\.(tk|ml|ga|cf)$/, // Suspicious TLDs
+        /[a-z]{20,}\.(com|net|org)/, // Very long domain names
+      ];
+      
+      const isSuspiciousUrl = suspiciousPatterns.some(pattern => pattern.test(url.toLowerCase()));
+      
+      // Show URL
+      urlDiv.textContent = url;
+      
+      if (isPhishingEmail && isSuspiciousUrl) {
+        // Correct identification of suspicious link in phishing email
+        content.classList.add('feedback-correct');
+        icon.textContent = '✅';
+        title.textContent = 'Good Eye!';
+        message.innerHTML = `<strong>Correct!</strong> This link is suspicious. You spotted:<br>• Suspicious domain pattern<br>• This is from a phishing email<br><br>🎯 <strong>Tip:</strong> Always hover over links to see where they really go!`;
+      } else if (isPhishingEmail && !isSuspiciousUrl) {
+        // Missed suspicious link in phishing email
+        content.classList.add('feedback-hint');
+        icon.textContent = '🤔';
+        title.textContent = 'Look Closer!';
+        message.innerHTML = `<strong>Hint:</strong> This email is phishing, but the link might look legitimate at first glance.<br><br>🔍 <strong>Check for:</strong><br>• Misspellings in the domain<br>• Extra words or hyphens<br>• Different top-level domains (.com vs .net)`;
+      } else if (!isPhishingEmail && !isSuspiciousUrl) {
+        // Legitimate link in legitimate email
+        content.classList.add('feedback-correct');
+        icon.textContent = '✅';
+        title.textContent = 'Safe Link!';
+        message.innerHTML = `<strong>Good!</strong> This appears to be a legitimate link from a trusted source.<br><br>✨ <strong>Why it's safe:</strong><br>• Matches the sender's domain<br>• No suspicious patterns<br>• From a legitimate email`;
+      } else {
+        // Legitimate email but user clicked anyway
+        content.classList.add('feedback-hint');
+        icon.textContent = '💡';
+        title.textContent = 'Be Careful!';
+        message.innerHTML = `<strong>Remember:</strong> Even legitimate links should be verified.<br><br>🛡️ <strong>Best practices:</strong><br>• Hover before clicking<br>• Verify the sender<br>• Check the full URL`;
+      }
+      
+      modal.style.display = 'flex';
+    }
+    
+    function closeLinkFeedback() {
+      document.getElementById('linkFeedback').style.display = 'none';
+    }
+    
+    function showGameReport() {
+      const modal = document.getElementById('gameReport');
+      const title = document.getElementById('reportTitle');
+      const subtitle = document.getElementById('reportSubtitle');
+      const statsGrid = document.getElementById('statsGrid');
+      const strengthsSection = document.getElementById('strengthsSection');
+      const improvementSection = document.getElementById('improvementSection');
+      const correctSection = document.getElementById('correctSection');
+      const mistakesSection = document.getElementById('mistakesSection');
+      
+      // Set personalized title
+      title.textContent = `${playerName}'s Performance Report`;
+      
+      // Calculate accuracy
+      const totalAnswers = correctAnswers.length + wrongAnswers.length;
+      const accuracy = totalAnswers > 0 ? Math.round((correctAnswers.length / totalAnswers) * 100) : 0;
+      
+      // Performance message
+      let performanceLevel = '';
+      if (accuracy >= 90) performanceLevel = 'Excellent! 🏆';
+      else if (accuracy >= 75) performanceLevel = 'Great Work! 🎯';
+      else if (accuracy >= 60) performanceLevel = 'Good Progress! 👍';
+      else performanceLevel = 'Keep Learning! 📚';
+      
+      subtitle.textContent = `${performanceLevel} - ${accuracy}% Accuracy`;
+      
+      // Generate stats grid
+      statsGrid.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${score}</div>
+          <div class="stat-label">Final Score</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${accuracy}%</div>
+          <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${maxCombo}x</div>
+          <div class="stat-label">Max Combo</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${difficulty}</div>
+          <div class="stat-label">Level Reached</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${phishingCaught}</div>
+          <div class="stat-label">Phishing Caught</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${legitimateKept}</div>
+          <div class="stat-label">Legitimate Kept</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${linkClicks}</div>
+          <div class="stat-label">Links Analyzed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${attachmentViews}</div>
+          <div class="stat-label">Attachments Viewed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${linkHovers}</div>
+          <div class="stat-label">Links Hovered</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${suspiciousLinkClicks}</div>
+          <div class="stat-label">Risky Link Clicks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${downloadWithoutPreview}</div>
+          <div class="stat-label">Unsafe Downloads</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${securityMistakes.length}</div>
+          <div class="stat-label">Security Mistakes</div>
+        </div>
+      `;
+      
+      // Generate strengths section
+      let strengths = [];
+      if (phishingCaught > phishingMissed) {
+        strengths.push('🛡️ Great at spotting phishing attempts!');
+      }
+      if (legitimateKept > legitimateDropped) {
+        strengths.push('✅ Excellent at recognizing legitimate emails!');
+      }
+      if (linkHovers > 0) {
+        strengths.push('🔍 Excellent security habit - you hover over links to check where they go!');
+      }
+      if (linkClicks > 0 && suspiciousLinkClicks === 0) {
+        strengths.push('🛡️ Great judgment - you only clicked on safe links!');
+      }
+      if (attachmentViews > 0) {
+        strengths.push('📎 Smart approach - you preview attachments before downloading!');
+      }
+      if (downloadWithoutPreview === 0 && attachmentViews > 0) {
+        strengths.push('✅ Perfect attachment safety - always previewed before downloading!');
+      }
+      if (securityMistakes.length === 0) {
+        strengths.push('🏆 Flawless security behavior - no risky actions taken!');
+      }
+      if (maxCombo >= 5) {
+        strengths.push('🔥 Impressive combo streak - you\'re getting consistent!');
+      }
+      if (difficulty >= 3) {
+        strengths.push('⚡ Handled high-pressure situations well!');
+      }
+      
+      if (strengths.length === 0) {
+        strengths.push('🌟 You completed the game - that\'s a great start!');
+      }
+      
+      strengthsSection.innerHTML = strengths.map(strength => 
+        `<div class="performance-indicator indicator-excellent">${strength}</div>`
+      ).join('');
+      
+      // Generate improvement areas
+      let improvements = [];
+      if (phishingMissed > 0) {
+        improvements.push('🎣 Practice identifying phishing red flags: suspicious domains, urgent language, unexpected attachments');
+      }
+      if (legitimateDropped > 0) {
+        improvements.push('📧 Work on recognizing legitimate emails: official domains, expected content, proper formatting');
+      }
+      if (suspiciousLinkClicks > 0) {
+        improvements.push('🚨 Avoid clicking suspicious links - hover first to check where they lead!');
+      }
+      if (downloadWithoutPreview > 0) {
+        improvements.push('📎 Always preview attachments before downloading - this prevents malware infections!');
+      }
+      if (linkHovers === 0 && (linkClicks > 0 || wrongAnswers.some(w => w.email.linkType))) {
+        improvements.push('🔗 Develop the habit of hovering over links to see their real destination!');
+      }
+      if (attachmentViews === 0 && wrongAnswers.some(w => w.email.attachment)) {
+        improvements.push('📎 Always preview attachments before trusting them!');
+      }
+      if (accuracy < 75) {
+        improvements.push('📚 Review the learning guide to strengthen your phishing detection skills');
+      }
+      
+      if (improvements.length === 0) {
+        improvements.push('🎯 You\'re doing great! Keep practicing to maintain your skills.');
+      }
+      
+      improvementSection.innerHTML = improvements.map(improvement => 
+        `<div class="performance-indicator indicator-needs-work">${improvement}</div>`
+      ).join('');
+      
+      // Generate security mistakes section
+      const securitySection = document.createElement('div');
+      securitySection.className = 'report-section';
+      securitySection.innerHTML = `
+        <div class="section-title">🚨 Security Mistakes Review</div>
+        <div id="securityMistakesContent"></div>
+      `;
+      
+      if (securityMistakes.length > 0) {
+        const mistakesHtml = securityMistakes.map(mistake => {
+          let icon = '🚨';
+          let title = '';
+          
+          switch(mistake.type) {
+            case 'suspicious_link_click':
+              icon = '🔗';
+              title = `Clicked Suspicious Link: ${mistake.link}`;
+              break;
+            case 'download_without_preview':
+              icon = '📎';
+              title = `Downloaded Without Preview: ${mistake.attachment}`;
+              break;
+          }
+          
+          return `
+            <div class="email-review wrong">
+              <strong>${icon} ${title}</strong><br>
+              <strong>Email:</strong> ${mistake.email.from} - ${mistake.email.subject}<br>
+              <div class="email-preview">${mistake.reason}</div>
+            </div>
+          `;
+        }).join('');
+        
+        securitySection.querySelector('#securityMistakesContent').innerHTML = mistakesHtml;
+      } else {
+        securitySection.querySelector('#securityMistakesContent').innerHTML = 
+          '<p>🎉 Perfect! No security mistakes made this round.</p>';
+      }
+      
+      // Insert security section before correct answers
+      const correctSectionElement = document.querySelector('#correctSection').parentElement;
+      correctSectionElement.parentElement.insertBefore(securitySection, correctSectionElement);
+      
+      // Generate correct answers section
+      if (correctAnswers.length > 0) {
+        correctSection.innerHTML = correctAnswers.map(answer => `
+          <div class="email-review correct" onclick="reviewEmail('${answer.email.from}', '${answer.email.subject}', '${answer.reason}')">
+            <strong>From:</strong> ${answer.email.from}<br>
+            <strong>Subject:</strong> ${answer.email.subject}<br>
+            <div class="email-preview">${answer.reason}</div>
+          </div>
+        `).join('');
+      } else {
+        correctSection.innerHTML = '<p>No correct answers this round. Keep practicing!</p>';
+      }
+      
+      // Generate mistakes section
+      if (wrongAnswers.length > 0) {
+        mistakesSection.innerHTML = wrongAnswers.map(answer => `
+          <div class="email-review wrong" onclick="reviewEmail('${answer.email.from}', '${answer.email.subject}', '${answer.reason}')">
+            <strong>From:</strong> ${answer.email.from}<br>
+            <strong>Subject:</strong> ${answer.email.subject}<br>
+            <div class="email-preview">${answer.reason}</div>
+          </div>
+        `).join('');
+      } else {
+        mistakesSection.innerHTML = '<p>Perfect game! No mistakes made. 🎉</p>';
+      }
+      
+      modal.style.display = 'flex';
+    }
+    
+    function reviewEmail(from, subject, reason) {
+      alert(`From: ${from}\nSubject: ${subject}\n\n${reason}\n\nTip: Click on emails during the game to see their full content and practice your analysis skills!`);
+    }
+    
+    function closeGameReport() {
+      document.getElementById('gameReport').style.display = 'none';
+    }
+    
+    function goHome() {
+      window.location.href = '/games';
+    }
+
+    function catchEmail() {
+      if (!currentEmail) return;
+      
+      const isCorrect = !currentEmail.data.phish; // Correct if it's NOT phishing
+      emailsAnswered++;
+      
+      if (isCorrect) {
+        combo++;
+        const points = 10 + (combo > 3 ? Math.floor(combo / 2) : 0);
+        updateScore(points);
+        showScorePopup(currentEmail.icon, `+${points}`, true);
+        createParticles(currentEmail.icon, '#4CAF50');
+        restoreAir(); // CatPhish gets air from correct answers!
+        playCorrectSound(); // Play happy sound for correct answer
+        
+        // Track performance
+        legitimateKept++;
+        correctAnswers.push({
+          email: currentEmail.data,
+          action: 'caught',
+          reason: 'Correctly identified as legitimate'
+        });
+        
+        if (combo >= 5 && combo % 5 === 0) {
+          showComboMessage(`${combo}x COMBO!`);
+        }
+      } else {
+        updateScore(-5);
+        showScorePopup(currentEmail.icon, '-5', false);
+        createParticles(currentEmail.icon, '#f44336');
+        combo = 0;
+        lives--;
+        showHurtExpression(); // Show hurt expression when losing life
+        playWrongSound(); // Play cat meow for wrong answer
+        
+        // Track performance
+        phishingMissed++;
+        wrongAnswers.push({
+          email: currentEmail.data,
+          action: 'caught',
+          reason: 'Missed phishing attempt - should have been dropped'
+        });
+        
+        if (lives <= 0) {
+          endGame();
+        }
+      }
+      
+      updateDifficulty();
+      closeModal();
+    }
+
+    function dropEmail() {
+      if (!currentEmail) return;
+      
+      const isCorrect = currentEmail.data.phish; // Correct if it IS phishing
+      emailsAnswered++;
+      
+      if (isCorrect) {
+        combo++;
+        const points = 10 + (combo > 3 ? Math.floor(combo / 2) : 0);
+        updateScore(points);
+        showScorePopup(currentEmail.icon, `+${points}`, true);
+        createParticles(currentEmail.icon, '#4CAF50');
+        restoreAir(); // CatPhish gets air from correct answers!
+        playCorrectSound(); // Play happy sound for correct answer
+        
+        // Track performance
+        phishingCaught++;
+        correctAnswers.push({
+          email: currentEmail.data,
+          action: 'dropped',
+          reason: 'Correctly identified as phishing'
+        });
+        
+        if (combo >= 5 && combo % 5 === 0) {
+          showComboMessage(`${combo}x COMBO!`);
+        }
+      } else {
+        updateScore(-5);
+        showScorePopup(currentEmail.icon, '-5', false);
+        createParticles(currentEmail.icon, '#f44336');
+        combo = 0;
+        lives--;
+        showHurtExpression(); // Show hurt expression when losing life
+        playWrongSound(); // Play cat meow for wrong answer
+        
+        // Track performance
+        legitimateDropped++;
+        wrongAnswers.push({
+          email: currentEmail.data,
+          action: 'dropped',
+          reason: 'Incorrectly dropped legitimate email'
+        });
+        
+        if (lives <= 0) {
+          endGame();
+        }
+      }
+      
+      updateDifficulty();
+      closeModal();
+    }
+
+    function closeModal() {
+      if (currentEmail && currentEmail.icon) {
+        currentEmail.icon.remove();
+      }
+      
+      // Clean up any link previews
+      const previews = document.querySelectorAll('.link-preview');
+      previews.forEach(preview => preview.remove());
+      
+      document.getElementById('emailModal').style.display = 'none';
+      currentEmail = null;
+      updateDisplay();
+    }
+
+    function updateScore(points) {
+      score += points;
+      if (score < 0) score = 0;
+      if (combo > maxCombo) maxCombo = combo;
+    }
+    
+    function showScorePopup(element, text, isPositive) {
+      const popup = document.createElement('div');
+      popup.className = `score-popup ${isPositive ? 'positive' : 'negative'}`;
+      popup.textContent = text;
+      
+      // Use the element's position relative to the game area
+      const gameArea = document.getElementById('gameArea');
+      const gameRect = gameArea.getBoundingClientRect();
+      
+      popup.style.left = (parseFloat(element.style.left) + 30) + 'px';
+      popup.style.top = (parseFloat(element.style.top) + gameRect.top + 30) + 'px';
+      
+      gameArea.appendChild(popup);
+      
+      setTimeout(() => {
+        if (popup.parentNode) {
+          popup.remove();
+        }
+      }, 1500);
+    }
+    
+    function createParticles(element, color) {
+      const gameArea = document.getElementById('gameArea');
+      const gameRect = gameArea.getBoundingClientRect();
+      const centerX = parseFloat(element.style.left) + 30;
+      const centerY = parseFloat(element.style.top) + 30;
+      
+      for (let i = 0; i < 8; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.background = color;
+        particle.style.left = centerX + 'px';
+        particle.style.top = centerY + 'px';
+        
+        const angle = (i / 8) * Math.PI * 2;
+        const distance = 50 + Math.random() * 30;
+        particle.style.setProperty('--dx', Math.cos(angle) * distance + 'px');
+        particle.style.setProperty('--dy', Math.sin(angle) * distance + 'px');
+        
+        gameArea.appendChild(particle);
+        setTimeout(() => {
+          if (particle.parentNode) {
+            particle.remove();
+          }
+        }, 1000);
+      }
+    }
+    
+    function showComboMessage(text) {
+      const comboDiv = document.createElement('div');
+      comboDiv.className = 'combo-display';
+      comboDiv.textContent = text;
+      document.body.appendChild(comboDiv);
+      
+      setTimeout(() => comboDiv.remove(), 2000);
+    }
+    
+    function updateDifficulty() {
+      // Increase difficulty every 10 emails
+      if (emailsAnswered > 0 && emailsAnswered % 10 === 0) {
+        difficulty++;
+        spawnRate = Math.max(400, 1000 - (difficulty * 100)); // Faster spawning
+        airDecayRate = Math.min(4, 2 + (difficulty * 0.3)); // Much faster air decay
+        
+        // Restart spawn interval with new rate
+        clearInterval(spawnInterval);
+        spawnEmails();
+        
+        showComboMessage(`LEVEL ${difficulty}!`);
+      }
+    }
+    
+    function startMouseTracking() {
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+    }
+    
+    function startSmoothMovement() {
+      // Initialize CatPhish position
+      catphishX = mouseX;
+      catphishY = mouseY;
+      
+      // Smooth movement animation loop
+      function smoothMove() {
+        if (gameRunning) {
+          // Smooth dragging effect - CatPhish follows with delay
+          const dragFactor = 0.08; // Lower = more dragging
+          const targetX = mouseX + 25; // Position closer to the right of mouse
+          const targetY = mouseY - 15; // Closer to mouse level
+          
+          catphishX += (targetX - catphishX) * dragFactor;
+          catphishY += (targetY - catphishY) * dragFactor;
+          
+          updateCatphishPosition();
+          requestAnimationFrame(smoothMove);
+        }
+      }
+      smoothMove();
+    }
+    
+    function updateCatphishPosition() {
+      const catphish = document.getElementById('catphish');
+      if (catphish) {
+        catphish.style.left = catphishX + 'px';
+        catphish.style.top = catphishY + 'px';
+      }
+    }
+    
+    function startBubbleTrail() {
+      bubbleTrailInterval = setInterval(() => {
+        if (gameRunning && airLevel > 0) {
+          createBubbleTrail();
+        }
+      }, 200); // Create bubble every 200ms
+    }
+    
+    function createBubbleTrail() {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble-trail';
+      
+      // Position bubble to the right of CatPhish with some randomness
+      const offsetX = Math.random() * 15; // Only positive offset to the right
+      const offsetY = (Math.random() - 0.5) * 20;
+      
+      bubble.style.left = (catphishX + 50 + offsetX) + 'px'; // Adjusted for closer position
+      bubble.style.top = (catphishY + 20 + offsetY) + 'px';
+      
+      document.body.appendChild(bubble);
+      
+      // Remove bubble after animation
+      setTimeout(() => {
+        if (bubble.parentNode) {
+          bubble.remove();
+        }
+      }, 2000);
+    }
+    
+    function startAirSystem() {
+      airDecayInterval = setInterval(() => {
+        if (gameRunning) {
+          airLevel -= airDecayRate;
+          if (airLevel < 0) airLevel = 0;
+          
+          updateAirMeter();
+          updateCatphishExpression();
+          
+          // Lose life if air runs out
+          if (airLevel <= 0) {
+            lives--;
+            airLevel = 50; // Give some air back
+            showHurtExpression(); // Show hurt expression when losing life to air
+            if (lives <= 0) {
+              endGame();
+            } else {
+              updateDisplay();
+            }
+          }
+        }
+      }, 1000); // Every second
+    }
+    
+    function updateAirMeter() {
+      const airFill = document.getElementById('airFill');
+      if (airFill) {
+        airFill.style.height = airLevel + '%';
+        
+        // Update visual state
+        airFill.className = 'air-meter-fill';
+        if (airLevel <= 20) {
+          airFill.classList.add('critical');
+        } else if (airLevel <= 40) {
+          airFill.classList.add('low');
+        }
+      }
+    }
+    
+    function updateCatphishExpression() {
+      const catphishImg = document.getElementById('catphishImg');
+      if (!catphishImg) return;
+      
+      if (airLevel <= 20) {
+        catphishImg.src = 'catphish-character-scared.png';
+        // Show warning if not already shown
+        if (!airWarningShown) {
+          showAirWarning();
+        }
+      } else {
+        catphishImg.src = 'catphish-character-emoji.png';
+        // Hide warning if air level is good
+        if (airWarningShown) {
+          hideAirWarning();
+        }
+      }
+    }
+    
+    function showAirWarning() {
+      if (currentAirWarning) return; // Don't show multiple warnings
+      
+      airWarningShown = true;
+      const warning = document.createElement('div');
+      warning.className = 'air-warning';
+      warning.innerHTML = '⚠️ CatPhish is running out of air!<br>📧 Collect email bubbles to restore air!';
+      
+      document.body.appendChild(warning);
+      currentAirWarning = warning;
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        hideAirWarning();
+      }, 3000);
+    }
+    
+    function hideAirWarning() {
+      if (currentAirWarning) {
+        currentAirWarning.classList.add('fade-out');
+        setTimeout(() => {
+          if (currentAirWarning && currentAirWarning.parentNode) {
+            currentAirWarning.remove();
+          }
+          currentAirWarning = null;
+          airWarningShown = false;
+        }, 500);
+      }
+    }
+    
+    function showHurtExpression() {
+      const catphishImg = document.getElementById('catphishImg');
+      if (!catphishImg) return;
+      
+      // Clear any existing timeout
+      if (catphishExpressionTimeout) {
+        clearTimeout(catphishExpressionTimeout);
+      }
+      
+      // Show hurt expression
+      catphishImg.src = 'catphish-character-hurt.png';
+      
+      // Reset to normal expression after 1.5 seconds
+      catphishExpressionTimeout = setTimeout(() => {
+        catphishImg.src = 'catphish-character-emoji.png';
+      }, 1500);
+    }
+    
+    function restoreAir() {
+      airLevel = Math.min(100, airLevel + 25); // Restore 25 air points
+      updateAirMeter();
+      updateCatphishExpression();
+      
+      // Make CatPhish jump and show happy expression
+      const catphish = document.getElementById('catphish');
+      const catphishImg = document.getElementById('catphishImg');
+      
+      if (catphish && catphishImg) {
+        catphish.classList.add('jumping');
+        catphishImg.src = 'catphish-character-very-happy0.png';
+        
+        // Clear any existing timeout
+        if (catphishExpressionTimeout) {
+          clearTimeout(catphishExpressionTimeout);
+        }
+        
+        // Reset expression after animation (longer duration for happiness)
+        catphishExpressionTimeout = setTimeout(() => {
+          catphishImg.src = 'catphish-character-emoji.png';
+          catphish.classList.remove('jumping');
+        }, 2500); // Extended to 2.5 seconds
+      }
+    }
+
+    function updateDisplay() {
+      document.getElementById('score').textContent = score;
+      
+      // Update hearts display
+      const hearts = document.querySelectorAll('.heart');
+      hearts.forEach((heart, index) => {
+        if (index < lives) {
+          heart.style.opacity = '1';
+          heart.style.transform = 'scale(1)';
+        } else {
+          heart.style.opacity = '0.3';
+          heart.style.transform = 'scale(0.8)';
+          heart.style.filter = 'grayscale(100%)';
+        }
+      });
+    }
+
+    function endGame() {
+      gameRunning = false;
+      clearInterval(spawnInterval);
+      if (airDecayInterval) {
+        clearInterval(airDecayInterval);
+      }
+      if (bubbleTrailInterval) {
+        clearInterval(bubbleTrailInterval);
+      }
+      
+      // Show detailed performance report
+      showGameReport();
+    }
+
+    function restartGame() {
+      score = 0;
+      lives = 3;
+      gameRunning = false;
+      currentEmail = null;
+      combo = 0;
+      maxCombo = 0;
+      difficulty = 1;
+      emailsAnswered = 0;
+      spawnRate = 1000;
+      airLevel = 100;
+      airDecayRate = 2; // Updated base rate
+      
+      // Reset performance tracking
+      correctAnswers = [];
+      wrongAnswers = [];
+      phishingCaught = 0;
+      phishingMissed = 0;
+      legitimateKept = 0;
+      legitimateDropped = 0;
+      linkClicks = 0;
+      attachmentViews = 0;
+      linkHovers = 0;
+      suspiciousLinkClicks = 0;
+      downloadWithoutPreview = 0;
+      securityMistakes = [];
+      currentAttachmentPreviewed = false;
+      
+      // Clear all email icons
+      const gameArea = document.getElementById('gameArea');
+      gameArea.innerHTML = '';
+      
+      // Clear intervals
+      if (spawnInterval) {
+        clearInterval(spawnInterval);
+      }
+      if (airDecayInterval) {
+        clearInterval(airDecayInterval);
+      }
+      if (catphishExpressionTimeout) {
+        clearTimeout(catphishExpressionTimeout);
+      }
+      if (bubbleTrailInterval) {
+        clearInterval(bubbleTrailInterval);
+      }
+      
+      // Reset warning state
+      airWarningShown = false;
+      if (currentAirWarning) {
+        currentAirWarning.remove();
+        currentAirWarning = null;
+      }
+      
+      // Hide game and show welcome screen
+      document.getElementById('gameContainer').style.display = 'none';
+      document.getElementById('gameOver').style.display = 'none';
+      document.getElementById('emailModal').style.display = 'none';
+      document.getElementById('gameReport').style.display = 'none';
+      document.getElementById('welcomeScreen').style.display = 'flex';
+      
+      // Reset hearts display
+      const hearts = document.querySelectorAll('.heart');
+      hearts.forEach(heart => {
+        heart.style.opacity = '1';
+        heart.style.transform = 'scale(1)';
+        heart.style.filter = 'none';
+      });
+    }
+
+    function goHome() {
+      window.location.href = '/';
+    }
+    
+    function goToLearn() {
+      window.location.href = 'learn.html';
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('emailModal').onclick = function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    };
+  </script>
+</body>
+</html>

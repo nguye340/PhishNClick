@@ -1,0 +1,184 @@
+[
+  {
+    "phish": true,
+    "from": "security@fakebank.com",
+    "subject": "Urgent: Verify Your Account",
+    "body": "Dear customer, please <a href='http://fakebank-login.com' class='hidden-link'>verify your account</a> immediately to avoid suspension.",
+    "linkType": "hidden"
+  },
+  {
+    "phish": false,
+    "from": "friend@example.com",
+    "subject": "Dinner Tonight?",
+    "body": "Hey! Are you free for dinner tonight? Text me!"
+  },
+  {
+    "phish": true,
+    "from": "admin@paypal-alert.com",
+    "subject": "Your Account Is Suspended!",
+    "body": "We noticed unusual activity on your PayPal account. Confirm now at <a href='https://paypal-support-verify.com'>https://paypal-support-verify.com</a>",
+    "linkType": "obvious"
+  },
+  {
+    "phish": false,
+    "from": "updates@github.com",
+    "subject": "New repository invite",
+    "body": "You've been invited to collaborate on 'hooked-or-cooked'. View it here: <a href='https://github.com'>https://github.com</a>",
+    "linkType": "obvious"
+  },
+  {
+    "phish": true,
+    "from": "it-support@university.edu",
+    "subject": "Mandatory Password Reset",
+    "body": "Reset your password within 24 hours by <a href='http://university-helpdesk.com' class='hidden-link'>clicking here</a>.",
+    "linkType": "hidden"
+  },
+  {
+    "phish": false,
+    "from": "events@meetup.com",
+    "subject": "Tech Talk this Friday",
+    "body": "Join us for a cybersecurity talk! RSVP: <a href='https://www.meetup.com/tech-talk'>https://www.meetup.com/tech-talk</a>",
+    "linkType": "obvious"
+  },
+  {
+    "phish": true,
+    "from": "lottery@bigwin.com",
+    "subject": "You've Won $10,000!",
+    "body": "Claim your prize by providing your details. Please see the attached form for more details.",
+    "attachment": {
+      "name": "Prize_Claim_Form.pdf",
+      "type": "pdf",
+      "malicious": true,
+      "content": "SUSPICIOUS CONTENT: This form requests your Social Security Number, bank account details, and passwords. Legitimate organizations never ask for this information via email attachments."
+    },
+    "linkType": "attachment"
+  },
+  {
+    "phish": false,
+    "from": "netflix@mailer.netflix.com",
+    "subject": "Your April statement is ready",
+    "body": "View your account statement here: <a href='https://www.netflix.com/account'>https://www.netflix.com/account</a>",
+    "linkType": "obvious"
+  },
+  {
+    "phish": true,
+    "from": "billing@applestore-support.com",
+    "subject": "Payment Issue Detected",
+    "body": "There's an issue with your payment method. Please <a href='http://apple-support-help.com' class='hidden-link'>update your billing information</a> immediately.",
+    "linkType": "hidden"
+  },
+  {
+    "phish": false,
+    "from": "jobs@linkedin.com",
+    "subject": "New job recommendations",
+    "body": "Check out these positions matched for you: <a href='https://www.linkedin.com/jobs'>https://www.linkedin.com/jobs</a>",
+    "linkType": "obvious"
+  },
+  {
+    "phish": true,
+    "from": "microsoft@accountsafe.com",
+    "subject": "Security Alert",
+    "body": "Your account was accessed from a new device. Please <a href='http://microsoft-security-review.com' class='hidden-link'>review this activity</a> now.",
+    "linkType": "hidden"
+  },
+  {
+    "phish": false,
+    "from": "info@coursera.org",
+    "subject": "Your certificate is ready!",
+    "body": "Congratulations! Your certificate is attached.",
+    "attachment": {
+      "name": "Course_Certificate.pdf",
+      "type": "pdf",
+      "malicious": false,
+      "content": "CERTIFICATE OF COMPLETION\n\nThis certifies that [Student Name] has successfully completed the course 'Introduction to Cybersecurity' with a grade of 95%.\n\nIssued by: Coursera\nDate: April 2024"
+    },
+    "linkType": "attachment"
+  },
+  {
+    "phish": true,
+    "from": "support@amaz0n-secure.com",
+    "subject": "Order Cancellation Alert",
+    "body": "Your order has been canceled. Click to confirm: <a href='http://amaz0n-verification.com'>http://amaz0n-verification.com</a>",
+    "linkType": "obvious"
+  },
+  {
+    "phish": false,
+    "from": "spotify@spotify.com",
+    "subject": "Weekly Discover Playlist is here",
+    "body": "Check out your new mix: <a href='https://open.spotify.com'>https://open.spotify.com</a>",
+    "linkType": "obvious"
+  },
+  {
+    "phish": true,
+    "from": "security@facebook-support.com",
+    "subject": "Unusual Login Attempt",
+    "body": "We detected a login attempt from Moscow. Please <a href='http://facebook-security-check.com' class='hidden-link'>verify your identity</a> immediately.",
+    "linkType": "hidden"
+  },
+  {
+    "phish": true,
+    "from": "hr@yourcompany-benefits.com",
+    "subject": "Important: Update Your W-4 Form",
+    "body": "Please complete the attached W-4 form by end of week to avoid payroll issues.",
+    "attachment": {
+      "name": "W4_Form_2024.docx",
+      "type": "docx",
+      "malicious": true,
+      "content": "SUSPICIOUS CONTENT: This document contains macros that will execute when opened. It requests unusual personal information including mother's maiden name and previous addresses. Real HR departments use secure portals, not email attachments for tax forms."
+    },
+    "linkType": "attachment"
+  },
+  {
+    "phish": false,
+    "from": "accounting@yourcompany.com",
+    "subject": "Monthly Expense Report",
+    "body": "Please find your monthly expense report attached for review.",
+    "attachment": {
+      "name": "Expense_Report_March.xlsx",
+      "type": "xlsx",
+      "malicious": false,
+      "content": "EXPENSE REPORT - MARCH 2024\n\nEmployee: John Doe\nDepartment: Marketing\n\nMeals: $245.50\nTravel: $1,200.00\nSupplies: $89.25\n\nTotal: $1,534.75\n\nApproved by: Jane Smith, Manager"
+    },
+    "linkType": "attachment"
+  },
+  {
+    "phish": true,
+    "from": "noreply@bank-security-alert.com",
+    "subject": "Suspicious Activity Detected",
+    "body": "We've detected unusual activity on your account. Please review the attached security report immediately.",
+    "attachment": {
+      "name": "Security_Alert.pdf",
+      "type": "pdf",
+      "malicious": true,
+      "content": "SUSPICIOUS CONTENT: This 'security report' asks you to call a phone number and provide your account PIN, Social Security Number, and online banking password. Real banks never request sensitive information this way."
+    },
+    "linkType": "attachment"
+  },
+  {
+    "phish": false,
+    "from": "support@dropbox.com",
+    "subject": "File shared with you",
+    "body": "Sarah Johnson shared 'Project Proposal.docx' with you. <a href='https://www.dropbox.com/s/abc123/project'>https://www.dropbox.com/s/abc123/project</a>",
+    "linkType": "obvious"
+  },
+  {
+    "phish": true,
+    "from": "invoice@quickbooks-billing.com",
+    "subject": "Overdue Invoice #QB-2024-0891",
+    "body": "Your payment is overdue. Please see the attached invoice for immediate payment.",
+    "attachment": {
+      "name": "Invoice_QB-2024-0891.pdf",
+      "type": "pdf",
+      "malicious": true,
+      "content": "SUSPICIOUS CONTENT: This fake invoice contains a QR code that leads to a payment site asking for credit card information. The invoice has spelling errors and an unusual payment method request. Always verify invoices through official channels."
+    },
+    "linkType": "attachment"
+  },
+  {
+    "phish": true,
+    "from": "updates@google-drive-share.com",
+    "subject": "Document requires your signature",
+    "body": "A document has been shared with you that requires your digital signature. Please <a href='http://google-docs-sign.com' class='hidden-link'>sign the document</a> within 48 hours.",
+    "linkType": "hidden"
+  }
+]

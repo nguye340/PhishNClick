@@ -6,7 +6,7 @@ import seedPopup from '../seeds/seedPopup.js';
 dotenv.config();
 
 // Hardcoded fallback connection string (only for development)
-const connectionString = process.env.MONGO_URI || 'mongodb+srv://nguye340:Group6CatPhish2025_ISCapstone@phishnclickcluster.zgid1.mongodb.net/scenarios?retryWrites=true&w=majority&appName=PhishNClickCluster';
+const connectionString = process.env.MONGO_URI;
 
 export const connectDB = async () => {
   try {

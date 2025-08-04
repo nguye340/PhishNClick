@@ -564,6 +564,9 @@ body{
 .invisible{
   visibility: hidden;
 }
+.static{
+  position: static;
+}
 .fixed{
   position: fixed;
 }
@@ -901,6 +904,15 @@ body{
 .animate-pulse{
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+@keyframes spin{
+
+  to{
+    transform: rotate(360deg);
+  }
+}
+.animate-spin{
+  animation: spin 1s linear infinite;
+}
 .cursor-move{
   cursor: move;
 }
@@ -1068,6 +1080,9 @@ body{
 }
 .border-b{
   border-bottom-width: 1px;
+}
+.border-b-2{
+  border-bottom-width: 2px;
 }
 .border-b-4{
   border-bottom-width: 4px;
@@ -1565,6 +1580,10 @@ body{
 .text-black{
   --tw-text-opacity: 1;
   color: rgb(0 0 0 / var(--tw-text-opacity, 1));
+}
+.text-blue-400{
+  --tw-text-opacity: 1;
+  color: rgb(96 165 250 / var(--tw-text-opacity, 1));
 }
 .text-blue-500{
   --tw-text-opacity: 1;
