@@ -9,6 +9,7 @@ import popupRoutes from './routes/popup.route.js';
 import popupEventRoutes from './routes/popupEvent.route.js'; // popupEventRoutes and popupRoutes are just aliases for the routes files, can view it as variable names as well
 import sessionRoutes from './routes/session.routes.js';
 import sessionStatsRoutes from './routes/sessionStats.routes.js';
+import quizResultRoutes from './routes/quizResult.route.js';
 
 
 // ES Module equivalent of __dirname
@@ -28,14 +29,24 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Test route
+app.get('/api/test', (req, res) => {
+  res.json({ success: true, message: 'Server is working!' });
+});
+
 // API Routes
 app.use('/api/popup', popupRoutes);
 app.use('/api/popupEvent', popupEventRoutes);
 app.use('/api/session', sessionRoutes);
 app.use('/api/sessionStats', sessionStatsRoutes);
+app.use('/api/quiz-results', quizResultRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  connectDB();
-
+// Connect to database first, then start server
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}).catch((error) => {
+  console.error('Failed to connect to database:', error);
+  process.exit(1);
 });

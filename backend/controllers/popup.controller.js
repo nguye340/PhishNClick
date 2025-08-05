@@ -1,4 +1,5 @@
 
+import mongoose from 'mongoose';
 import Popup from '../models/popup.model.js';
 
 export async function getAllPopups(req, res) {
@@ -12,11 +13,24 @@ export async function getAllPopups(req, res) {
 
 export async function getRandomPopup(req, res) {
   try {
-    const count = await Popup.countDocuments();
-    const random = Math.floor(Math.random() * count);
-    const popup = await Popup.findOne().skip(random);
+    console.log('Getting random popup...');
+    
+    // Use MongoDB's aggregate with $sample for better random selection
+    const randomPopups = await Popup.aggregate([
+      { $sample: { size: 1 } }
+    ]);
+    
+    console.log('Random popups found:', randomPopups.length);
+    
+    if (randomPopups.length === 0) {
+      return res.status(404).json({ success: false, error: "No popups found in database" });
+    }
+    
+    const popup = randomPopups[0];
+    console.log('Found popup:', popup ? 'Yes' : 'No');
     res.status(200).json({success: true, data: popup});
   } catch (err) {
+    console.error('Error in getRandomPopup:', err);
     res.status(500).json({ success: false, error: "Server Error" });
   }
 }

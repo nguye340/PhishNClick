@@ -7,7 +7,7 @@ import auth from '../middleware/auth.js';
 const router = Router();
 
 router.get('/', auth, getAllPopups);
-router.get('/random', auth, getRandomPopup);
+router.get('/random', getRandomPopup); // Removed auth for frontend access
 // GET /api/popup/category/:categoryName
 router.get('/category/:categoryName', getPopupsByCategory);
 // GET /api/popup/category/:categoryName/:subtypeName

@@ -13,6 +13,7 @@ import prizeRewardPopups from './prize_reward.js';
 import securityWarningPopups from './security_warning.js';
 import subscriptionScamPopups from './subscription_scam.js';
 import techSupportScamPopups from './tech_support_scam.js';
+import softwareUpdateScamPopups from './software_update_scam.js';
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -42,6 +43,7 @@ const seedPopups = async () => {
       ...securityWarningPopups,
       ...subscriptionScamPopups,
       ...techSupportScamPopups,
+      ...softwareUpdateScamPopups,
       // Add any other popup arrays here as you create them
     ];
 

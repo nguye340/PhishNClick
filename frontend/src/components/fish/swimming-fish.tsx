@@ -798,15 +798,15 @@ export function SwimmingFish() {
             </div>
           ))}
 
-          {/* Score display */}
-          <div className="fixed top-24 right-8 z-50 bg-arcade-bg/80 backdrop-blur-sm p-4 rounded-lg border border-arcade-cyan/30 shadow-glow-sm">
+          {/* Score display - Hidden as requested */}
+          {/* <div className="fixed top-24 right-8 z-50 bg-arcade-bg/80 backdrop-blur-sm p-4 rounded-lg border border-arcade-cyan/30 shadow-glow-sm">
             <div className="font-arcade text-2xl text-arcade-cyan glow-heading">
               Score: {clickedCount} / {MAX_SCORE}
             </div>
             <div className="font-terminal text-sm text-white/70 mt-1">
               Catch all the phish!
             </div>
-          </div>
+          </div> */}
 
           {/* Score popup animation */}
           <AnimatePresence>

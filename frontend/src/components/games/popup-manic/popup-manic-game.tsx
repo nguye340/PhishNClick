@@ -4,62 +4,184 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { getSession } from 'next-auth/react'
 import axios from 'axios'
+import { v4 as uuidv4 } from 'uuid'
+import { useSession, getSession } from 'next-auth/react'
 import { DraggableWindow } from './draggable-window'
+import ModernPopupIntegration from './modern-popup-integration'
 
-interface Popup {
+// Define the popup model that combines both old and new properties
+type PopupStyle = {
+  theme: 'windows' | 'mac' | 'modern' | 'retro' | 'custom'
+  headerColor: string
+  bodyColor: string
+  borderColor: string
+  borderWidth: number
+  borderRadius: number
+  fontFamily: string
+  fontSize: string
+  boxShadow: string
+}
+
+type PopupPosition = {
+  x: number
+  y: number
+}
+
+type PopupSize = {
+  width: number
+  height: number
+}
+
+type PopupButton = {
+  text: string
+  is_safe: boolean
+}
+
+type PopupIndicator = {
+  element: string
+  indicator_type: string
+  description: string
+  severity: 'low' | 'medium' | 'high'
+}
+
+type PopupBrandElements = {
+  impersonated_brand_name?: string
+  logo_url?: string
+}
+
+type PopupPhishingIndicators = {
+  misspellings: boolean
+  urgencyLanguage: boolean
+  suspiciousURL: boolean
+  poorFormatting: boolean
+  inconsistentBranding: boolean
+  grammaticalErrors: boolean
+  requestForPersonalInfo: boolean
+  unexpectedAttachment: boolean
+  threatLanguage: boolean
+}
+
+type PopupElements = {
+  hasLogo?: boolean
+  logoPath?: string
+  hasButton?: boolean
+  buttonText?: string
+  hasInputField?: boolean
+  inputFieldLabel?: string
+  hasAttachment?: boolean
+  attachmentName?: string
+}
+
+// New popup class that handles both old and new properties
+class Popup {
+  // Required properties
   id: string
   title: string
   message: string
-  type: 'malicious' | 'benign' | 'neutral'
-  position: {
-    x: number
-    y: number
+  style: PopupStyle
+  position: PopupPosition
+  size: PopupSize
+  
+  // New model properties
+  is_malicious: boolean
+  ui_type: string
+  category: string
+  subtype?: string
+  correct_action: string
+  
+  // Optional properties
+  brand_elements?: PopupBrandElements
+  buttons?: PopupButton[]
+  indicators_of_compromise?: PopupIndicator[]
+  difficulty_level?: 'easy' | 'medium' | 'hard' | 'expert'
+  time_limit_ms?: number
+  explanation?: {
+    why_this_popup_is_X_type?: string
+    what_to_look_for?: string[]
+    real_world_impact?: string
+    prevention_tips?: string[]
   }
-  size: {
-    width: number
-    height: number
-  }
-  closeMethod: 'click_x' | 'click_x_after_time' | 'click_button' | 'slide_away' | 'run_antivirus' | 'hang_up' | 'drag_to_trash' | 'shake_to_close' | 'solve_puzzle' | 'click_all_iocs' | 'no_action'
-  correctAction: 'click' | 'close' | 'ignore'
-  // Visual styling
-  style: {
-    theme: 'windows' | 'mac' | 'modern' | 'retro' | 'custom'
-    headerColor: string
-    bodyColor: string
-    borderColor: string
-    borderWidth: number
-    borderRadius: number
-    fontFamily: string
-    fontSize: string
-    boxShadow: string
-  }
-  // Phishing indicators
-  phishingIndicators?: {
-    misspellings: boolean
-    urgencyLanguage: boolean
-    suspiciousURL: boolean
-    poorFormatting: boolean
-    inconsistentBranding: boolean
-    grammaticalErrors: boolean
-    requestForPersonalInfo: boolean
-    unexpectedAttachment: boolean
-    threatLanguage: boolean
-  }
-  // Content elements
-  elements?: {
-    hasLogo?: boolean
-    logoPath?: string
-    hasButton?: boolean
-    buttonText?: string
-    hasInputField?: boolean
-    inputFieldLabel?: string
-    hasAttachment?: boolean
-    attachmentName?: string
-  }
-  // Additional properties
+  
+  // Legacy properties
+  phishingIndicators?: PopupPhishingIndicators
+  elements?: PopupElements
   hint?: string
+  
+  constructor(data: Partial<Popup>) {
+    // Required properties with defaults
+    this.id = data.id || `popup-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+    this.title = data.title || ''
+    this.message = data.message || ''
+    this.style = data.style || {
+      theme: 'windows',
+      headerColor: '#0078D7',
+      bodyColor: '#ffffff',
+      borderColor: '#cccccc',
+      borderWidth: 1,
+      borderRadius: 3,
+      fontFamily: 'Segoe UI, sans-serif',
+      fontSize: '14px',
+      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)'
+    }
+    this.position = data.position || { x: 0, y: 0 }
+    this.size = data.size || { width: 300, height: 200 }
+    
+    // New model properties with defaults
+    this.is_malicious = data.is_malicious !== undefined ? data.is_malicious : true
+    this.ui_type = data.ui_type || 'system_alert'
+    this.category = data.category || (this.is_malicious ? 'security_warning' : 'benign_notification')
+    this.correct_action = data.correct_action || (this.is_malicious ? 'FORCE_CLOSE_OS_LEVEL' : 'CLOSE_LEGITIMATE_NATIVE')
+    
+    // Optional properties
+    this.subtype = data.subtype
+    this.brand_elements = data.brand_elements
+    this.buttons = data.buttons
+    this.indicators_of_compromise = data.indicators_of_compromise
+    this.difficulty_level = data.difficulty_level
+    this.time_limit_ms = data.time_limit_ms
+    this.explanation = data.explanation
+    
+    // Legacy properties
+    this.phishingIndicators = data.phishingIndicators
+    this.elements = data.elements
+    this.hint = data.hint
+  }
+  
+  // Compatibility getters for old code
+  get type(): 'malicious' | 'benign' | 'neutral' {
+    return this.is_malicious ? 'malicious' : 'benign'
+  }
+  
+  get closeMethod(): 'click_x' | 'click_x_after_time' | 'click_button' | 'slide_away' | 'run_antivirus' | 'hang_up' | 'drag_to_trash' | 'shake_to_close' | 'solve_puzzle' | 'click_all_iocs' | 'no_action' {
+    // Map from correct_action to closeMethod
+    switch (this.correct_action) {
+      case 'CLOSE_LEGITIMATE_NATIVE':
+        return 'click_x'
+      case 'FORCE_CLOSE_OS_LEVEL':
+        return 'click_x_after_time'
+      case 'ACCEPT_OFFER':
+      case 'DECLINE_OFFER':
+      case 'PROCEED_LEGITIMATE_LOGIN':
+        return 'click_button'
+      case 'IGNORE_UNTIL_AUTOCLOSE':
+        return 'no_action'
+      case 'HANG_UP_CALL':
+        return 'hang_up'
+      default:
+        return 'click_x' // Default fallback
+    }
+  }
+  
+  get correctAction(): 'click' | 'close' | 'ignore' {
+    // Map from correct_action to correctAction
+    if (this.is_malicious) {
+      return 'close'
+    } else {
+      return this.correct_action.includes('ACCEPT') || 
+             this.correct_action.includes('PROCEED') ? 'click' : 'ignore'
+    }
+  }
 }
 
 interface DesktopIcon {
@@ -69,18 +191,122 @@ interface DesktopIcon {
 }
 
 // Function to fetch a random popup from the database
-async function fetchRandomPopup(type?: string) {
+export async function fetchRandomPopup(type?: string) {
   try {
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/popups/random`;
+    // Use the Next.js API route which will proxy the request to the backend
+    let url = '/api/popup/random';
     if (type) {
       url += `?type=${type}`;
     }
-    const response = await axios.get(url);
-    return response.data.data;
-  } catch (error) {
-    console.error('Error fetching random popup:', error);
-    return null;
+    console.log('Fetching popup from:', url);
+    
+    // Add timeout to avoid long waiting periods
+    const response = await axios.get(url, { timeout: 5000 });
+    
+    // Validate the response data
+    if (response.data && response.data.success && response.data.data) {
+      console.log('Successfully fetched popup from API:', response.data.data);
+      return response.data.data;
+    } else {
+      console.warn('API response missing expected data structure:', response.data);
+      throw new Error('Invalid API response format');
+    }
+  } catch (error: any) {
+    // Provide more detailed error information
+    if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+      console.error('Cannot connect to backend server. Make sure it is running at:', 
+        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
+    } else if (error.response) {
+      // The request was made and the server responded with a status code outside of 2xx range
+      console.error('API error response:', error.response.status, error.response.data);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received from API. Backend server might be down.');
+    } else {
+      // Something happened in setting up the request
+      console.error('Error setting up request:', error.message);
+    }
+    
+    // Return mock popup data if API call fails
+    console.log('Using mock popup data instead');
+    const mockPopup = getMockPopup(type as 'malicious' | 'benign' | 'neutral');
+    console.log('Generated mock popup:', mockPopup);
+    return mockPopup;
   }
+}
+
+// Get a pre-defined mock popup for testing
+export function getMockPopup(type: 'malicious' | 'benign' | 'neutral' = 'benign'): Popup {
+  const popupType = type || 'benign';
+  const id = uuidv4();
+  const position = { 
+    x: Math.random() * 500 + 100, 
+    y: Math.random() * 300 + 100 
+  };
+  const size = { width: 400, height: 250 };
+  
+  // Create a complete Popup object using our class constructor
+  return new Popup({
+    id: id,
+    title: popupType === 'malicious' ? 'Security Alert!' : 'System Notification',
+    message: popupType === 'malicious' 
+      ? 'Your computer has been infected with a virus! Click here to clean your system.' 
+      : 'System update available. Would you like to install now?',
+    is_malicious: popupType === 'malicious',
+    ui_type: popupType === 'malicious' ? 'system_alert' : 'browser_notification',
+    category: popupType === 'malicious' ? 'security_warning' : 'benign_notification',
+    correct_action: popupType === 'malicious' ? 'FORCE_CLOSE_OS_LEVEL' : 'ACCEPT_OFFER',
+    style: {
+      theme: 'windows',
+      headerColor: '#0078D7',
+      bodyColor: '#ffffff',
+      borderColor: '#cccccc',
+      borderWidth: 1,
+      borderRadius: 4,
+      fontFamily: 'Segoe UI, Arial, sans-serif',
+      fontSize: '14px',
+      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)'
+    },
+    position,
+    size,
+    // Legacy elements for backward compatibility
+    elements: {
+      hasButton: true,
+      buttonText: popupType === 'malicious' ? 'Remove Virus Now' : 'Install Update',
+      hasLogo: true,
+      logoPath: popupType === 'malicious' ? '/warning.png' : '/info.png',
+      hasInputField: false
+    },
+    // Add buttons for the new model
+    buttons: [
+      {
+        text: popupType === 'malicious' ? 'Remove Virus Now' : 'Install Update',
+        is_safe: popupType !== 'malicious'
+      },
+      {
+        text: 'Cancel',
+        is_safe: popupType === 'malicious'
+      }
+    ],
+    // Add indicators of compromise for the new model
+    indicators_of_compromise: popupType === 'malicious' ? [
+      { element: 'message', indicator_type: 'urgency', description: 'The popup uses urgent language to pressure the user', severity: 'high' },
+      { element: 'message', indicator_type: 'jargon', description: 'The popup uses technical terms to confuse the user', severity: 'medium' },
+      { element: 'title', indicator_type: 'spelling', description: 'The popup contains spelling mistakes', severity: 'medium' }
+    ] : [],
+    // Legacy phishing indicators for backward compatibility
+    phishingIndicators: popupType === 'malicious' ? {
+      misspellings: true,
+      urgencyLanguage: true,
+      suspiciousURL: true,
+      poorFormatting: false,
+      inconsistentBranding: false,
+      grammaticalErrors: false,
+      requestForPersonalInfo: true,
+      unexpectedAttachment: false,
+      threatLanguage: true
+    } : undefined
+  });
 }
 
 // Get random close method for a popup
@@ -350,60 +576,86 @@ const generateRandomElements = (type: 'malicious' | 'benign' | 'neutral') => {
 
 // Function to transform API popup to match our Popup interface
 const transformPopupFromAPI = (apiPopup: any, position = { x: 0, y: 0 }, size = { width: 300, height: 200 }): Popup => {
-  // Default style based on popup type
-  const defaultStyle = generateRandomStyle(apiPopup.type)
+  // Generate style based on UI type and category
+  const uiType = apiPopup.ui_type || 'system_alert';
+  const defaultStyle = generateStyleFromUIType(uiType, apiPopup.is_malicious);
   
-  // Map backend close_method to frontend closeMethod
-  const closeMethodMap: Record<string, 'click_x' | 'click_x_after_time' | 'click_button' | 'slide_away' | 'run_antivirus' | 'hang_up' | 'drag_to_trash' | 'shake_to_close' | 'solve_puzzle' | 'click_all_iocs' | 'no_action'> = {
-    'click_x': 'click_x',
-    'click_x_after_time': 'click_x_after_time',
-    'click_button': 'click_button',
-    'slide_away': 'slide_away',
-    'run_antivirus': 'run_antivirus',
-    'hang_up': 'hang_up',
-    'drag_to_trash': 'drag_to_trash',
-    'shake_to_close': 'shake_to_close',
-    'solve_puzzle': 'solve_puzzle',
-    'click_all_iocs': 'click_all_iocs',
-    'no_action': 'no_action'
-  }
-  
-  // Create a popup object that matches our interface
-  const popup: Popup = {
+  // Create a popup object using our class constructor
+  return new Popup({
     id: apiPopup._id || `popup-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
     title: apiPopup.title,
     message: apiPopup.message,
-    type: apiPopup.type,
+    // Map backend fields directly
+    is_malicious: apiPopup.is_malicious,
+    ui_type: apiPopup.ui_type,
+    category: apiPopup.category,
+    subtype: apiPopup.subtype,
+    // Frontend positioning
     position,
     size,
-    closeMethod: closeMethodMap[apiPopup.close_method] || getRandomCloseMethod(),
-    correctAction: apiPopup.correct_action || (apiPopup.type === 'malicious' ? 'close' : apiPopup.type === 'benign' ? 'click' : 'ignore'),
-    style: defaultStyle,
-    elements: generateRandomElements(apiPopup.type)
+    // Map brand elements if available
+    brand_elements: apiPopup.brand_elements,
+    // Map buttons if available
+    buttons: apiPopup.buttons,
+    // Map correct action
+    correct_action: apiPopup.correct_action,
+    // Map indicators of compromise
+    indicators_of_compromise: apiPopup.indicators_of_compromise,
+    // Game mechanics
+    difficulty_level: apiPopup.difficulty_level,
+    time_limit_ms: apiPopup.time_limit_ms,
+    // Educational content
+    explanation: apiPopup.explanation,
+    // Frontend styling
+    style: defaultStyle
+  });
+};
+
+// Tutorial content removed - now using educational modal system
+
+// Helper function to generate style based on UI type and malicious status
+const generateStyleFromUIType = (uiType: string, isMalicious: boolean) => {
+  // Default style
+  const style = {
+    theme: 'windows' as 'windows' | 'mac' | 'modern' | 'retro' | 'custom',
+    headerColor: '#0078D7',
+    bodyColor: '#ffffff',
+    borderColor: '#cccccc',
+    borderWidth: 1,
+    borderRadius: 3,
+    fontFamily: 'Segoe UI, sans-serif',
+    fontSize: '14px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)'
+  };
+
+  // Adjust style based on UI type
+  switch (uiType) {
+    case 'system_alert':
+      style.theme = 'windows';
+      if (isMalicious) {
+        style.headerColor = '#d9534f'; // Red for malicious
+      }
+      break;
+    case 'browser_notification':
+      style.theme = 'modern';
+      style.borderRadius = 8;
+      break;
+    case 'login_form':
+      style.theme = 'custom';
+      style.borderWidth = 0;
+      style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.15)';
+      break;
+    case 'chat_message':
+      style.theme = 'modern';
+      style.borderRadius = 12;
+      style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+      break;
+    // Add more cases for other UI types
+    default:
+      // Default already set
   }
-  
-  // Add phishing indicators for malicious popups
-  if (apiPopup.type === 'malicious') {
-    popup.phishingIndicators = generatePhishingIndicators()
-    
-    // Modify message based on phishing indicators
-    if (popup.phishingIndicators.misspellings) {
-      popup.message = addMisspellings(popup.message)
-    }
-    if (popup.phishingIndicators.grammaticalErrors) {
-      popup.message = addGrammaticalErrors(popup.message)
-    }
-    if (popup.phishingIndicators.urgencyLanguage) {
-      popup.message = addUrgencyLanguage(popup.message)
-    }
-  }
-  
-  // Add hint if available
-  if (apiPopup.hint) {
-    popup.hint = apiPopup.hint
-  }
-  
-  return popup
+
+  return style;
 }
 
 export default function PopupManicGame() {
@@ -411,10 +663,13 @@ export default function PopupManicGame() {
   const [session, setSession] = useState<any>(null)
   const [score, setScore] = useState(0)
   const [level, setLevel] = useState(1)
-  const [time, setTime] = useState(60)
+
   const [gameActive, setGameActive] = useState(false)
   const [gameOver, setGameOver] = useState(false)
   const [popups, setPopups] = useState<Popup[]>([])
+  const [popupPositions, setPopupPositions] = useState<{[key: string]: {x: number, y: number}}>({}) 
+  const [minimizedPopups, setMinimizedPopups] = useState<Set<string>>(new Set())
+  const [hintModal, setHintModal] = useState<{popup: any, currentSlide: number} | null>(null)
   const [mistakes, setMistakes] = useState(0)
   const [showInstructions, setShowInstructions] = useState(true)
   const [activePrograms, setActivePrograms] = useState<string[]>([])
@@ -425,7 +680,7 @@ export default function PopupManicGame() {
   const [updatingSoftware, setUpdatingSoftware] = useState(false)
   const [softwareUpdateProgress, setSoftwareUpdateProgress] = useState<{[key: string]: number}>({
     'Firecat Browser': 0,
-    'MeowareBytes Antivirus': 0,
+    'Nyantivirus': 0,
     'Windows Security': 0
   })
   
@@ -446,20 +701,41 @@ export default function PopupManicGame() {
   })
   const [malwareDetected, setMalwareDetected] = useState(false)
   
-  // Fetch session data on component mount
+  // Tutorial system removed - now using educational modal system
+  const [seenPopupCategories, setSeenPopupCategories] = useState<Set<string>>(new Set())
+  
+  // Quiz system state
+  const [encounteredPopups, setEncounteredPopups] = useState<Popup[]>([])
+  const [quizActive, setQuizActive] = useState(false)
+  const [currentQuiz, setCurrentQuiz] = useState<any>(null)
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([])
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [quizAnswers, setQuizAnswers] = useState<any[]>([])
+  const [quizStartTime, setQuizStartTime] = useState<number>(0)
+  const [questionStartTime, setQuestionStartTime] = useState<number>(0)
+  const [completedQuizzes, setCompletedQuizzes] = useState<any[]>([])
+  
+  // Use hardcoded mock session data instead of actual authentication
   useEffect(() => {
-    const fetchSession = async () => {
-      const sessionData = await getSession()
-      setSession(sessionData)
+    // Mock session data
+    const mockSession = {
+      user: {
+        id: '123456',
+        name: 'Test User',
+        email: 'test@example.com',
+      },
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
     }
     
-    fetchSession()
+    // Set the mock session
+    setSession(mockSession)
+    console.log('Using mock session:', mockSession)
   }, [])
 
   // Desktop icons configuration - organized in two columns
   const leftColumnIcons: DesktopIcon[] = [
     {
-      name: "Firecat.exe",
+      name: "Firecat",
       imagePath: "/img/firecat-taskbar.png",
       action: () => {
         console.log("Opening Firecat browser")
@@ -468,10 +744,10 @@ export default function PopupManicGame() {
       }
     },
     {
-      name: "MeowareBytes - Antivirus.exe",
+      name: "Nyantivirus",
       imagePath: "/img/meowareBytes-taskbar.png",
       action: () => {
-        console.log("Opening MeowareBytes antivirus")
+        console.log("Opening Nyantivirus")
         setActivePrograms(prev => [...prev, "meowarebytes"])
         
         // If there are popups that require running antivirus to close
@@ -484,7 +760,7 @@ export default function PopupManicGame() {
       }
     },
     {
-      name: "Notepad.exe",
+      name: "Notepad",
       imagePath: "/img/notepad-taskbar.png",
       action: () => {
         console.log("Opening Notepad")
@@ -539,10 +815,13 @@ export default function PopupManicGame() {
     setGameActive(true)
     setScore(0)
     setLevel(1)
-    setTime(60)
+
     setMistakes(0)
     setGameOver(false)
     setPopups([])
+    setPopupPositions({})
+    setMinimizedPopups(new Set())
+    setHintModal(null)
     generatePopups(1) // Start with level 1 popups
   }
 
@@ -605,51 +884,132 @@ export default function PopupManicGame() {
       }
     }
     
+    // Generate initial positions for new popups
+    newPopups.forEach(popup => {
+      // Generate initial position for new popup
+      if (popup.id) {
+        setPopupPositions(prev => ({
+          ...prev,
+          [popup.id]: generateRandomPosition()
+        }));
+      }
+    });
+    
     setPopups(newPopups)
   }
+  
+  // Generate random position for popup windows
+  const generateRandomPosition = () => {
+    const maxX = window.innerWidth - 450; // popup max width
+    const maxY = window.innerHeight - 300; // popup approx height
+    return {
+      x: Math.max(50, Math.random() * maxX),
+      y: Math.max(50, Math.random() * maxY)
+    };
+  };
   
   // Generate a fallback popup when API fails
   const generateFallbackPopup = (): Popup => {
     const type = Math.random() > 0.6 ? 'malicious' : Math.random() > 0.5 ? 'benign' : 'neutral'
-    const correctAction = type === 'malicious' ? 'close' : type === 'benign' ? 'click' : 'ignore'
+    const legacyCorrectAction = type === 'malicious' ? 'close' : type === 'benign' ? 'click' : 'ignore'
     
-    // Create a popup with varied visual style
-    const popup: Popup = {
-      id: `popup-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      title: getRandomTitle(type),
-      message: getRandomMessage(type),
-      type,
-      position: {
-        x: 100 + Math.random() * (window.innerWidth - 500),
-        y: 100 + Math.random() * (window.innerHeight - 400)
-      },
-      size: {
-        width: 250 + Math.random() * 150,
-        height: 150 + Math.random() * 150
-      },
-      closeMethod: getRandomCloseMethod(),
-      correctAction,
-      style: generateRandomStyle(type),
-      elements: generateRandomElements(type)
+    // Map legacy type to new model properties
+    const is_malicious = type === 'malicious'
+    const ui_type = type === 'malicious' ? 'system_alert' : type === 'benign' ? 'browser_notification' : 'system_notification'
+    const category = type === 'malicious' ? 'security_warning' : type === 'benign' ? 'update_notification' : 'information'
+    const correct_action = type === 'malicious' ? 'FORCE_CLOSE_OS_LEVEL' : type === 'benign' ? 'ACCEPT_OFFER' : 'DISMISS'
+    
+    // Generate position and size
+    const position = {
+      x: 100 + Math.random() * (window.innerWidth - 500),
+      y: 100 + Math.random() * (window.innerHeight - 400)
+    }
+    const size = {
+      width: 250 + Math.random() * 150,
+      height: 150 + Math.random() * 150
     }
     
-    // Add phishing indicators for malicious popups
+    // Generate style and elements
+    const style = generateRandomStyle(type)
+    const elements = generateRandomElements(type)
+    
+    // Generate phishing indicators for malicious popups
+    let phishingIndicators
+    let message = getRandomMessage(type)
+    let indicators_of_compromise: PopupIndicator[] = []
+    
     if (type === 'malicious') {
-      popup.phishingIndicators = generatePhishingIndicators()
+      phishingIndicators = generatePhishingIndicators()
       
       // Modify message based on phishing indicators
-      if (popup.phishingIndicators.misspellings) {
-        popup.message = addMisspellings(popup.message)
+      if (phishingIndicators.misspellings) {
+        message = addMisspellings(message)
+        indicators_of_compromise.push({
+          element: 'message',
+          indicator_type: 'spelling',
+          description: 'The message contains spelling errors',
+          severity: 'medium'
+        })
       }
-      if (popup.phishingIndicators.grammaticalErrors) {
-        popup.message = addGrammaticalErrors(popup.message)
+      if (phishingIndicators.grammaticalErrors) {
+        message = addGrammaticalErrors(message)
+        indicators_of_compromise.push({
+          element: 'message',
+          indicator_type: 'grammar',
+          description: 'The message contains grammatical errors',
+          severity: 'medium'
+        })
       }
-      if (popup.phishingIndicators.urgencyLanguage) {
-        popup.message = addUrgencyLanguage(popup.message)
+      if (phishingIndicators.urgencyLanguage) {
+        message = addUrgencyLanguage(message)
+        indicators_of_compromise.push({
+          element: 'message',
+          indicator_type: 'urgency',
+          description: 'The message uses urgent language to pressure the user',
+          severity: 'high'
+        })
       }
     }
     
-    return popup
+    // Create buttons based on elements
+    const buttons: PopupButton[] = []
+    if (elements && elements.hasButton) {
+      buttons.push({
+        text: elements.buttonText || 'OK',
+        is_safe: !is_malicious
+      })
+      
+      // Add a second button for cancel options
+      if (Math.random() > 0.5) {
+        buttons.push({
+          text: 'Cancel',
+          is_safe: is_malicious
+        })
+      }
+    }
+    
+    // Create a popup using our class constructor
+    return new Popup({
+      id: `popup-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      title: getRandomTitle(type),
+      message,
+      // New model properties
+      is_malicious,
+      ui_type,
+      category,
+      correct_action,
+      // Visual properties
+      position,
+      size,
+      style,
+      // New model arrays
+      buttons,
+      indicators_of_compromise,
+      // Legacy properties for backward compatibility
+      elements,
+      phishingIndicators
+    })
+    
   }
 
 
@@ -754,7 +1114,7 @@ export default function PopupManicGame() {
       case 'slide_away':
         return 'Click and drag this popup off the screen'
       case 'run_antivirus':
-        return 'Run MeowareBytes Antivirus to remove this threat'
+        return 'Run Nyantivirus to remove this threat'
       case 'hang_up':
         return 'Click the Hang Up button to end this call'
       case 'drag_to_trash':
@@ -1125,10 +1485,427 @@ export default function PopupManicGame() {
     }
   }
 
-  // Handle popup interaction
+  // Function to check if a popup category is new and trigger tutorial
+  // Tutorial functions removed - now using educational modal system
+
+  // Handle popup interaction with proper scoring and educational feedback
+  const handlePopupInteraction = (popup: any, action: any) => {
+    // Prevent interactions while hint modal is open
+    if (hintModal) return;
+    
+    // Determine the user's action
+    let userAction: 'click' | 'close' | 'ignore';
+    
+    if (action.type === 'click' && action.safe === false) {
+      // User clicked a potentially unsafe button (like "Claim Prize", "Download Now")
+      userAction = 'click';
+    } else if (action.type === 'close' && action.safe === true) {
+      // User clicked Cancel or X button (safe close)
+      userAction = 'close';
+    } else {
+      // Default to close for other actions
+      userAction = 'close';
+    }
+    
+    // Check if the action was correct
+    const isCorrectAction = checkCorrectAction(popup, userAction);
+    
+    if (isCorrectAction) {
+      // Correct action - award points and close popup
+      playSound(true);
+      const newScore = score + 10;
+      setScore(newScore);
+      
+      // Track encountered popup for quiz system
+      setEncounteredPopups(prev => {
+        const exists = prev.find(p => p.id === popup.id);
+        if (!exists) {
+          return [...prev, popup];
+        }
+        return prev;
+      });
+      
+      // Check if quiz should be triggered (every 100 points)
+      if (newScore > 0 && newScore % 100 === 0 && encounteredPopups.length >= 5) {
+        triggerQuiz(newScore);
+      }
+      
+      removePopup(popup);
+    } else {
+      // Incorrect action - increment mistakes and show educational hint modal
+      playSound(false);
+      const newMistakes = mistakes + 1;
+      setMistakes(newMistakes);
+      
+      // Check if game should end due to too many mistakes
+      if (newMistakes >= 5) {
+        setGameOver(true);
+        setGameActive(false);
+        return;
+      }
+      
+      setHintModal({ popup, currentSlide: 0 });
+      // Don't remove popup yet - let user learn first
+    }
+  };
+  
+  // Check if user action matches the correct action for the popup
+  const checkCorrectAction = (popup: any, userAction: 'click' | 'close' | 'ignore'): boolean => {
+    const correctAction = popup.correct_action;
+    
+    // Map correct_action to user actions
+    if (correctAction === 'FORCE_CLOSE_OS_LEVEL' || correctAction === 'IGNORE_UNTIL_AUTOCLOSE') {
+      return userAction === 'close';
+    } else if (correctAction === 'ACCEPT_OFFER' || correctAction === 'CLICK_BUTTON') {
+      return userAction === 'click';
+    } else if (correctAction === 'VERIFY_LEGITIMACY_EXTERNALLY') {
+      return userAction === 'close'; // Should close and verify externally
+    }
+    
+    // Default: malicious popups should be closed, benign should be clicked
+    if (popup.is_malicious) {
+      return userAction === 'close';
+    } else {
+      return userAction === 'click';
+    }
+  };
+  
+  // Remove popup and clean up state
+  const removePopup = (popup: any) => {
+    setPopups(prev => prev.filter(p => p.id !== popup.id));
+    
+    // Clean up popup position and minimized state
+    setPopupPositions(prev => {
+      const newPositions = { ...prev };
+      delete newPositions[popup.id];
+      return newPositions;
+    });
+    setMinimizedPopups(prev => {
+      const newSet = new Set(Array.from(prev));
+      newSet.delete(popup.id);
+      return newSet;
+    });
+  };
+
+  // Quiz System Functions
+  const triggerQuiz = (currentScore: number) => {
+    if (encounteredPopups.length < 5) {
+      console.log('Not enough encountered popups for quiz');
+      return;
+    }
+    
+    console.log(`Triggering quiz at score ${currentScore}`);
+    setGameActive(false); // Pause the game
+    setQuizActive(true);
+    setQuizStartTime(Date.now());
+    
+    // Generate 10 quiz questions from encountered popups
+    const questions = generateQuizQuestions(encounteredPopups);
+    setQuizQuestions(questions);
+    setCurrentQuestionIndex(0);
+    setQuizAnswers([]);
+    setQuestionStartTime(Date.now());
+    
+    setCurrentQuiz({
+      level: Math.floor(currentScore / 100),
+      score: currentScore,
+      startTime: Date.now()
+    });
+  };
+  
+  const generateQuizQuestions = (popups: Popup[]): any[] => {
+    const questions: any[] = [];
+    const questionTypes = ['categorization', 'correct_action', 'justification', 'prevention'];
+    
+    // Ensure we have enough unique popups
+    const availablePopups = [...popups];
+    
+    for (let i = 0; i < 10; i++) {
+      if (availablePopups.length === 0) break;
+      
+      const randomPopup = availablePopups[Math.floor(Math.random() * availablePopups.length)];
+      const questionType = questionTypes[i % questionTypes.length];
+      
+      const question = createQuizQuestion(randomPopup, questionType, availablePopups);
+      if (question) {
+        questions.push(question);
+      }
+    }
+    
+    return questions;
+  };
+  
+  const createQuizQuestion = (popup: Popup, type: string, allPopups: Popup[]): any => {
+    switch (type) {
+      case 'categorization':
+        return {
+          id: `q_${Date.now()}_${Math.random()}`,
+          type: 'categorization',
+          popup: popup,
+          question: 'What category does this popup belong to?',
+          options: generateCategoryOptions(popup, allPopups),
+          correctAnswer: popup.category,
+          format: 'drag_drop'
+        };
+        
+      case 'correct_action':
+        return {
+          id: `q_${Date.now()}_${Math.random()}`,
+          type: 'correct_action', 
+          popup: popup,
+          question: 'What is the correct action for this popup?',
+          options: generateActionOptions(popup),
+          correctAnswer: popup.correct_action,
+          format: 'interactive_buttons'
+        };
+        
+      case 'justification':
+        return {
+          id: `q_${Date.now()}_${Math.random()}`,
+          type: 'justification',
+          popup: popup,
+          question: popup.is_malicious ? 'Why is this popup malicious?' : 'Why is this popup safe?',
+          options: generateJustificationOptions(popup, allPopups),
+          correctAnswer: popup.explanation?.why_this_popup_is_X_type || 'This popup requires careful evaluation.',
+          format: 'multiple_choice'
+        };
+        
+      case 'prevention':
+        return {
+          id: `q_${Date.now()}_${Math.random()}`,
+          type: 'prevention',
+          popup: popup,
+          question: 'What is the best prevention tip for this type of threat?',
+          options: generatePreventionOptions(popup, allPopups),
+          correctAnswer: popup.explanation?.prevention_tips?.[0] || 'Always verify before taking action.',
+          format: 'multiple_choice'
+        };
+        
+      default:
+        return null;
+    }
+  };
+  
+  const generateCategoryOptions = (correctPopup: Popup, allPopups: Popup[]): string[] => {
+    const categories = ['credential_harvesting', 'brand_impersonation', 'prize_reward', 'benign_notification', 'neutral_ad'];
+    const options = [correctPopup.category];
+    
+    // Add 3 random wrong categories
+    const wrongCategories = categories.filter(cat => cat !== correctPopup.category);
+    for (let i = 0; i < 3 && wrongCategories.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * wrongCategories.length);
+      options.push(wrongCategories.splice(randomIndex, 1)[0]);
+    }
+    
+    return shuffleArray(options);
+  };
+  
+  const generateActionOptions = (popup: Popup): string[] => {
+    const actions = [
+      'FORCE_CLOSE_OS_LEVEL',
+      'CLOSE_LEGITIMATE_NATIVE', 
+      'ACCEPT_OFFER',
+      'DECLINE_OFFER',
+      'IGNORE_UNTIL_AUTOCLOSE'
+    ];
+    
+    const options = [popup.correct_action];
+    const wrongActions = actions.filter(action => action !== popup.correct_action);
+    
+    // Add 3 random wrong actions
+    for (let i = 0; i < 3 && wrongActions.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * wrongActions.length);
+      options.push(wrongActions.splice(randomIndex, 1)[0]);
+    }
+    
+    return shuffleArray(options);
+  };
+  
+  const generateJustificationOptions = (correctPopup: Popup, allPopups: Popup[]): string[] => {
+    const options = [correctPopup.explanation?.why_this_popup_is_X_type || 'This popup requires careful evaluation.'];
+    
+    // Add explanations from other popups as wrong answers
+    const otherExplanations = allPopups
+      .filter(p => p.id !== correctPopup.id && p.explanation?.why_this_popup_is_X_type)
+      .map(p => p.explanation!.why_this_popup_is_X_type!)
+      .slice(0, 3);
+      
+    options.push(...otherExplanations);
+    
+    // Fill with generic wrong answers if needed
+    while (options.length < 4) {
+      options.push('This is a generic security warning.');
+    }
+    
+    return shuffleArray(options);
+  };
+  
+  const generatePreventionOptions = (correctPopup: Popup, allPopups: Popup[]): string[] => {
+    const correctTip = correctPopup.explanation?.prevention_tips?.[0] || 'Always verify before taking action.';
+    const options = [correctTip];
+    
+    // Add prevention tips from other popups
+    const otherTips = allPopups
+      .filter(p => p.id !== correctPopup.id && p.explanation?.prevention_tips?.length)
+      .flatMap(p => p.explanation!.prevention_tips!)
+      .slice(0, 3);
+      
+    options.push(...otherTips);
+    
+    // Fill with generic tips if needed
+    const genericTips = [
+      'Keep your software updated.',
+      'Use strong passwords.',
+      'Be cautious with email attachments.'
+    ];
+    
+    while (options.length < 4) {
+      const randomTip = genericTips[Math.floor(Math.random() * genericTips.length)];
+      if (!options.includes(randomTip)) {
+        options.push(randomTip);
+      }
+    }
+    
+    return shuffleArray(options);
+  };
+  
+  const shuffleArray = (array: any[]): any[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+  
+  const [showAnswerFeedback, setShowAnswerFeedback] = useState<{show: boolean, isCorrect: boolean, correctAnswer: string} | null>(null);
+  const [quizResult, setQuizResult] = useState<{passed: boolean, percentage: number, correctAnswers: number, totalQuestions: number, score: number} | null>(null);
+  
+  const handleQuizAnswer = (answer: any) => {
+    const currentQuestion = quizQuestions[currentQuestionIndex];
+    const isCorrect = answer === currentQuestion.correctAnswer;
+    const reactionTime = Date.now() - questionStartTime;
+    
+    const answerData = {
+      questionId: currentQuestion.id,
+      popupId: currentQuestion.popup.id,
+      questionType: currentQuestion.type,
+      playerAnswer: answer,
+      correctAnswer: currentQuestion.correctAnswer,
+      isCorrect: isCorrect,
+      reactionTimeMs: reactionTime
+    };
+    
+    setQuizAnswers(prev => [...prev, answerData]);
+    
+    // Show answer feedback
+    setShowAnswerFeedback({
+      show: true,
+      isCorrect: isCorrect,
+      correctAnswer: currentQuestion.correctAnswer
+    });
+    
+    // Wait 2 seconds before moving to next question
+    setTimeout(() => {
+      setShowAnswerFeedback(null);
+      
+      // Move to next question or finish quiz
+      if (currentQuestionIndex < quizQuestions.length - 1) {
+        setCurrentQuestionIndex(prev => prev + 1);
+        setQuestionStartTime(Date.now());
+      } else {
+        finishQuiz();
+      }
+    }, 2000);
+  };
+  
+  const finishQuiz = async () => {
+    const correctAnswers = quizAnswers.filter(a => a.isCorrect).length;
+    const totalQuestions = quizQuestions.length;
+    const finalScore = correctAnswers * 10;
+    const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+    const passed = percentage >= 70;
+    const quizEndTime = Date.now();
+    const totalTimeMs = quizEndTime - currentQuiz.startTime;
+    
+    const quizResult = {
+      userId: 'player', // In a real app, this would be the actual user ID
+      quizLevel: currentQuiz.level,
+      score: finalScore,
+      totalQuestions: totalQuestions,
+      correctAnswers: correctAnswers,
+      totalTimeMs: totalTimeMs,
+      questions: quizAnswers,
+      completedAt: new Date().toISOString(),
+      passed: passed,
+      percentage: percentage
+    };
+    
+    try {
+      const response = await fetch('/api/quiz-results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quizResult),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save quiz result');
+      }
+      
+      console.log('Quiz result saved successfully');
+    } catch (error) {
+      console.error('Error saving quiz result:', error);
+    }
+    
+    // Show pass/fail message
+    setQuizResult({
+      passed: passed,
+      percentage: percentage,
+      correctAnswers: correctAnswers,
+      totalQuestions: totalQuestions,
+      score: finalScore
+    });
+    
+    // Reset quiz state after showing result
+    setTimeout(() => {
+      setQuizActive(false);
+      setQuizQuestions([]);
+      setCurrentQuestionIndex(0);
+      setQuizAnswers([]);
+      setCurrentQuiz(null);
+      setShowAnswerFeedback(null);
+      setQuizResult(null);
+      
+      // Level up if passed, otherwise stay at level 1
+      if (passed) {
+        setLevel(prev => prev + 1);
+      } else {
+        setLevel(1); // Keep at level 1 until they pass
+      }
+      
+      // Resume game
+      setGameActive(true);
+    }, 5000); // Show result for 5 seconds
+  };
+  
+  // Handle popup interaction (legacy function for compatibility)
   const handlePopupAction = (popup: Popup, action: 'click' | 'close' | 'ignore') => {
     // Remove the popup from the list
     setPopups(popups.filter(p => p.id !== popup.id))
+    
+    // Clean up popup position and minimized state
+    setPopupPositions(prev => {
+      const newPositions = { ...prev };
+      delete newPositions[popup.id];
+      return newPositions;
+    });
+    setMinimizedPopups(prev => {
+      const newSet = new Set(Array.from(prev));
+      newSet.delete(popup.id);
+      return newSet;
+    });
     
     // Check if the action was correct
     if (action === popup.correctAction) {
@@ -1147,7 +1924,7 @@ export default function PopupManicGame() {
       setMistakes(mistakes + 1)
       
       // Game over if too many mistakes
-      if (mistakes >= 2) {
+      if (mistakes >= 5) {
         setGameOver(true)
         setGameActive(false)
       }
@@ -1157,17 +1934,19 @@ export default function PopupManicGame() {
   // Game timer and popup spawner
   useEffect(() => {
     if (gameActive && !gameOver) {
-      // Timer to countdown game time
-      const timer = setInterval(() => {
-        setTime(prevTime => {
-          if (prevTime <= 1) {
-            clearInterval(timer)
-            setGameOver(true)
-            return 0
-          }
-          return prevTime - 1
-        })
-      }, 1000)
+      // Timer to countdown game time - TEMPORARILY DISABLED FOR DEVELOPMENT
+      // const timer = setInterval(() => {
+      //   setTime(prevTime => {
+      //     if (prevTime <= 1) {
+      //       clearInterval(timer)
+      //       setGameOver(true)
+      //       return 0
+      //     }
+      //     return prevTime - 1
+      //   })
+      // }, 1000)
+      
+
       
       // Spawn new popups periodically based on level
       const popupSpawner = setInterval(() => {
@@ -1175,10 +1954,11 @@ export default function PopupManicGame() {
         if (popups.length < Math.min(level + 2, 8)) { // Max 8 popups at once
           spawnRandomPopup()
         }
-      }, Math.max(8000 - level * 1000, 3000)) // Spawn faster as level increases, but not faster than every 3 seconds
+      }, Math.max(3000 - level * 200, 1000)) // Spawn much faster: 3s at level 1, down to 1s minimum
       
       return () => {
-        clearInterval(timer)
+        // Timer is disabled for development
+        // clearInterval(timer)
         clearInterval(popupSpawner)
       }
     }
@@ -1220,12 +2000,24 @@ export default function PopupManicGame() {
         // Fallback to generating a random popup if API fetch failed
         const newPopup = generateFallbackPopup()
         setPopups(prevPopups => [...prevPopups, newPopup])
+        if (newPopup.id) {
+          setPopupPositions(prev => ({
+            ...prev,
+            [newPopup.id]: generateRandomPosition()
+          }));
+        }
       }
     } catch (error) {
       console.error('Error spawning random popup:', error)
       // Fallback to generating a random popup if API fails
       const newPopup = generateFallbackPopup()
       setPopups(prevPopups => [...prevPopups, newPopup])
+      if (newPopup.id) {
+        setPopupPositions(prev => ({
+          ...prev,
+          [newPopup.id]: generateRandomPosition()
+        }));
+      }
     }
   }
   
@@ -1242,6 +2034,7 @@ export default function PopupManicGame() {
   const [xButtonVisible, setXButtonVisible] = useState<{[key: string]: boolean}>({})
   const [clickedIoCs, setClickedIoCs] = useState<{[key: string]: string[]}>({})
   const [lastMousePositions, setLastMousePositions] = useState<{[key: string]: {x: number, y: number}[]}>({})
+  const [useModernPopups, setUseModernPopups] = useState<boolean>(true) // Set modern popups as default
 
   // Track mouse movement for shake detection
   useEffect(() => {
@@ -1532,24 +2325,24 @@ export default function PopupManicGame() {
                           if (apiPopup) {
                             // Transform the API popup to match our Popup interface
                             // Force size to be appropriate for a prize claim popup
-                            const randomPopup = transformPopupFromAPI(apiPopup, 
-                              { x: Math.random() * 400 + 150, y: Math.random() * 200 + 150 },
-                              { width: 350, height: 250 }
-                            );
+                            const randomPopup = transformPopupFromAPI(apiPopup);
                             
                             // Add the popup to the state
                             setPopups(prev => [...prev, randomPopup]);
+                            if (randomPopup.id) {
+                              setPopupPositions(prev => ({
+                                ...prev,
+                                [randomPopup.id]: generateRandomPosition()
+                              }));
+                            }
                           } else {
                             // Fallback to a default popup if API call fails
-                            const fallbackPopup: Popup = {
+                            const fallbackPopup = new Popup({
                               id: `popup-${Date.now()}`,
                               title: 'Claim Your Prize!',
                               message: 'Enter your credit card details to claim your FREE prize worth $1000!',
-                              type: 'malicious',
                               position: { x: Math.random() * 400 + 150, y: Math.random() * 200 + 150 },
                               size: { width: 350, height: 250 },
-                              closeMethod: 'click_button',
-                              correctAction: 'close',
                               style: {
                                 theme: 'modern',
                                 headerColor: '#d32f2f',
@@ -1561,6 +2354,11 @@ export default function PopupManicGame() {
                                 fontSize: '14px',
                                 boxShadow: '0 12px 24px rgba(0, 0, 0, 0.12)'
                               },
+                              // New model properties
+                              is_malicious: true,
+                              ui_type: 'system_alert',
+                              category: 'security_warning',
+                              correct_action: 'FORCE_CLOSE_OS_LEVEL',
                               elements: {
                                 hasButton: true,
                                 buttonText: 'Claim Now',
@@ -1578,7 +2376,7 @@ export default function PopupManicGame() {
                                 unexpectedAttachment: false,
                                 threatLanguage: false
                               }
-                            };
+                            });
                             setPopups(prev => [...prev, fallbackPopup]);
                           }
                           
@@ -1622,25 +2420,24 @@ export default function PopupManicGame() {
                             
                             if (apiPopup) {
                               // Transform the API popup to match our Popup interface
-                              // Force size to be appropriate for a cart notification
-                              const randomPopup = transformPopupFromAPI(apiPopup, 
-                                { x: Math.random() * 400 + 150, y: Math.random() * 200 + 150 },
-                                { width: 300, height: 150 }
-                              );
+                              const randomPopup = transformPopupFromAPI(apiPopup);
                               
                               // Add the popup to the state
                               setPopups(prev => [...prev, randomPopup]);
+                              if (randomPopup.id) {
+                                setPopupPositions(prev => ({
+                                  ...prev,
+                                  [randomPopup.id]: generateRandomPosition()
+                                }));
+                              }
                             } else {
                               // Fallback to a default popup if API call fails
-                              const fallbackPopup: Popup = {
+                              const fallbackPopup = new Popup({
                                 id: `popup-${Date.now()}`,
                                 title: 'Add to Cart',
                                 message: 'Item added to your cart!',
-                                type: 'benign',
                                 position: { x: Math.random() * 400 + 150, y: Math.random() * 200 + 150 },
                                 size: { width: 300, height: 150 },
-                                closeMethod: 'click_x',
-                                correctAction: 'close',
                                 style: {
                                   theme: 'modern',
                                   headerColor: '#4caf50',
@@ -1652,12 +2449,17 @@ export default function PopupManicGame() {
                                   fontSize: '14px',
                                   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
                                 },
+                                // New model properties
+                                is_malicious: false,
+                                ui_type: 'notification',
+                                category: 'benign_notification',
+                                correct_action: 'CLOSE_LEGITIMATE_NATIVE',
                                 elements: {
                                   hasLogo: true,
                                   logoPath: '/img/logos/shopping-cart.png',
                                   hasButton: false
                                 }
-                              };
+                              });
                               setPopups(prev => [...prev, fallbackPopup]);
                             }
                           } catch (error) {
@@ -1757,7 +2559,7 @@ export default function PopupManicGame() {
                     
                     {activePrograms.includes('meowarebytes') && (
                       <div className="grid grid-cols-5 font-arcade text-xs text-white py-1 border-b border-gray-600">
-                        <div>MeowareBytes.exe</div>
+                        <div>Nyantivirus.exe</div>
                         <div>Running</div>
                         <div>22%</div>
                         <div>350 MB</div>
@@ -1958,7 +2760,7 @@ export default function PopupManicGame() {
               setUpdatingSoftware(false)
               setSoftwareUpdateProgress({
                 'Firecat Browser': 0,
-                'MeowareBytes Antivirus': 0,
+                'Nyantivirus': 0,
                 'Windows Security': 0
               })
             }
@@ -1995,7 +2797,7 @@ export default function PopupManicGame() {
                     setUpdatingSoftware(true)
                     setSoftwareUpdateProgress({
                       'Firecat Browser': 0,
-                      'MeowareBytes Antivirus': 0,
+                      'Nyantivirus': 0,
                       'Windows Security': 0
                     })
                   }
@@ -2138,6 +2940,35 @@ export default function PopupManicGame() {
                 />
               </div>
             )}
+            
+            {/* Minimized popups in taskbar */}
+            {Array.from(minimizedPopups).map(popupId => {
+              const popup = popups.find(p => p.id === popupId);
+              if (!popup) return null;
+              
+              return (
+                <div 
+                  key={popupId}
+                  className="flex items-center justify-center mx-1 cursor-pointer bg-arcade-magenta/30 hover:bg-arcade-magenta/50 p-1 rounded transition-colors"
+                  onClick={() => {
+                    // Restore popup from minimized state
+                    setMinimizedPopups(prev => {
+                      const newSet = new Set(Array.from(prev));
+                      newSet.delete(popupId);
+                      return newSet;
+                    });
+                  }}
+                  style={{
+                    minWidth: '80px',
+                    maxWidth: '120px'
+                  }}
+                >
+                  <span className="text-xs text-white font-arcade truncate px-1">
+                    {popup.brand_elements?.impersonated_brand_name || popup.title || 'Popup'}
+                  </span>
+                </div>
+              );
+            })}
           </div>
           
           {/* Start Menu Dropdown */}
@@ -2162,36 +2993,60 @@ export default function PopupManicGame() {
                       
                       // Add the popup to the state
                       setPopups(prev => [...prev, randomPopup]);
+                      if (randomPopup.id) {
+                        setPopupPositions(prev => ({
+                          ...prev,
+                          [randomPopup.id]: generateRandomPosition()
+                        }));
+                      }
                     } else {
-                      // Fallback to a default popup if API call fails
-                      const fallbackPopup: Popup = {
-                        id: `popup-${Date.now()}`,
-                        title: 'Windows Update',
-                        message: 'Your Windows needs to update. Install now?',
-                        type: 'neutral',
-                        position: { x: Math.random() * 400 + 100, y: Math.random() * 200 + 100 },
-                        size: { width: 300, height: 200 },
-                        closeMethod: 'click_button',
-                        correctAction: 'close',
-                        style: {
-                          theme: 'windows',
-                          headerColor: '#ffb300',
-                          bodyColor: '#ffffff',
-                          borderColor: '#d1d1d1',
-                          borderWidth: 1,
-                          borderRadius: 3,
-                          fontFamily: '"Segoe UI", sans-serif',
-                          fontSize: '14px',
-                          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-                        },
-                        elements: {
-                          hasLogo: true,
-                          logoPath: '/img/logos/microsoft.png',
-                          hasButton: true,
-                          buttonText: 'Install Updates'
+                      // Try one more time with a different API call approach
+                      try {
+                        // Try to get any popup regardless of type
+                        console.log('First API call failed, trying again with different parameters...');
+                        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+                        const fallbackResponse = await axios.get(`${baseUrl}/api/popup/random`, { timeout: 3000 });
+                        
+                        if (fallbackResponse.data && fallbackResponse.data.data) {
+                          const apiPopup = fallbackResponse.data.data;
+                          
+                          // Generate random position for the popup
+                          const randomPosition = {
+                            x: Math.random() * (window.innerWidth - 400) + 50,
+                            y: Math.random() * (window.innerHeight - 300) + 50
+                          };
+                          
+                          // Generate random size based on UI type
+                          const randomSize = {
+                            width: Math.floor(Math.random() * 150) + 300, // 300-450px
+                            height: Math.floor(Math.random() * 100) + 200 // 200-300px
+                          };
+                          
+                          // Transform the API popup to match our Popup interface with random position and size
+                          const randomPopup = transformPopupFromAPI(apiPopup, randomPosition, randomSize);
+                          
+                          // Add the popup to the state
+                          setPopups(prev => [...prev, randomPopup]);
+                          console.log('Successfully added random popup from second API attempt');
+                        } else {
+                          throw new Error('Second API attempt failed');
                         }
-                      };
-                      setPopups(prev => [...prev, fallbackPopup]);
+                      } catch (fallbackError) {
+                        console.error('Both API attempts failed, using mock popup:', fallbackError);
+                        
+                        // Generate a mock popup as last resort
+                        const mockPopup = getMockPopup(Math.random() > 0.5 ? 'malicious' : 'benign');
+                        
+                        // Generate random position
+                        const randomPosition = {
+                          x: Math.random() * (window.innerWidth - 400) + 50,
+                          y: Math.random() * (window.innerHeight - 300) + 50
+                        };
+                        
+                        // Transform the mock popup with random position
+                        const fallbackPopup = transformPopupFromAPI(mockPopup, randomPosition);
+                        setPopups(prev => [...prev, fallbackPopup]);
+                      }
                     }
                   } catch (error) {
                     console.error('Error fetching popup:', error);
@@ -2216,13 +3071,10 @@ export default function PopupManicGame() {
           )}
         </div>
         <div className="flex items-center">
-          <div className="text-arcade-cyan font-arcade text-xs mr-6">
+          <div className="text-arcade-cyan font-arcade text-xs">
             <span className="mr-4">SCORE: {score}</span>
             <span className="mr-4">LEVEL: {level}</span>
-            <span>MISTAKES: {mistakes}/3</span>
-          </div>
-          <div className="text-arcade-magenta font-arcade text-xs">
-            TIME: {time}s
+            <span  className="text-arcade-red">MISTAKES: {mistakes}/5</span>
           </div>
         </div>
       </div>
@@ -2249,7 +3101,7 @@ export default function PopupManicGame() {
                   draggable="false"
                 />
               </div>
-              <p className="text-white font-arcade text-xs text-center shadow-black drop-shadow-md group-hover:text-arcade-cyan transition-colors">
+              <p className="text-white font-arcade text-[10px] text-center shadow-black drop-shadow-md group-hover:text-arcade-cyan transition-colors">
                 {icon.name}
               </p>
             </motion.div>
@@ -2276,7 +3128,7 @@ export default function PopupManicGame() {
                   draggable="false"
                 />
               </div>
-              <p className="text-white font-arcade text-xs text-center shadow-black drop-shadow-md group-hover:text-arcade-cyan transition-colors">
+              <p className="text-white font-arcade text-[10px] text-center shadow-black drop-shadow-md group-hover:text-arcade-cyan transition-colors">
                 {icon.name}
               </p>
             </motion.div>
@@ -2302,20 +3154,17 @@ export default function PopupManicGame() {
                 <li><span className="text-arcade-green">Benign pop-ups:</span> Click to accept them (they're legitimate)</li>
                 <li><span className="text-arcade-yellow">Neutral pop-ups:</span> Ignore them - they'll go away on their own</li>
               </ul>
-              <p>Some pop-ups require special actions:</p>
-              <ul className="text-left list-disc pl-6 space-y-2">
-                <li>Use <span className="text-arcade-cyan">MeowareBytes</span> to remove virus pop-ups</li>
-                <li>Drag some pop-ups to the <span className="text-arcade-cyan">Recycle Bin</span></li>
-                <li>Use <span className="text-arcade-cyan">Task Manager</span> to close frozen programs</li>
-              </ul>
-              <p>You have 60 seconds and can make up to 3 mistakes. Each level gets faster and more challenging!</p>
+
             </div>
-            <button 
-              onClick={startGame}
-              className="font-arcade text-lg px-8 py-3 bg-arcade-magenta text-black rounded hover:bg-arcade-cyan hover:text-white transition-colors"
-            >
-              START GAME
-            </button>
+            <div className="flex flex-col space-y-4">
+              {/* Modern popups are now the default and only option */}
+              <button 
+                onClick={startGame}
+                className="font-arcade text-lg px-8 py-3 bg-arcade-magenta text-black rounded hover:bg-arcade-cyan hover:text-white transition-colors"
+              >
+                START GAME
+              </button>
+            </div>
           </motion.div>
         </div>
       )}
@@ -2345,27 +3194,158 @@ export default function PopupManicGame() {
         </div>
       )}
 
+      {/* Educational Hint Modal */}
+      {hintModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/90 z-[9999]">
+          <motion.div 
+            className="bg-arcade-bg border-2 border-arcade-cyan p-6 rounded-lg max-w-2xl w-full mx-4 shadow-lg shadow-arcade-cyan/30"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-arcade-cyan font-arcade text-xl glow-heading-cyan">Security Learning</h2>
+              <div className="text-arcade-cyan font-arcade text-sm">
+                {hintModal.currentSlide + 1} / 4
+              </div>
+            </div>
+            
+            <div className="bg-gray-800 p-4 rounded-lg mb-6 min-h-[200px] max-h-[300px] overflow-y-auto">
+              {hintModal.currentSlide === 0 && (
+                <div>
+                  <h3 className="text-arcade-magenta font-arcade text-lg mb-3">Why This Popup is {hintModal.popup.is_malicious ? 'Malicious' : 'Safe'}</h3>
+                  <p className="text-gray-300 font-terminal text-base leading-relaxed">
+                    {hintModal.popup.explanation?.why_this_popup_is_X_type || 'This popup requires careful evaluation to determine its legitimacy.'}
+                  </p>
+                </div>
+              )}
+              
+              {hintModal.currentSlide === 1 && (
+                <div>
+                  <h3 className="text-arcade-magenta font-arcade text-lg mb-3">What to Look For</h3>
+                  <ul className="text-gray-300 font-terminal text-base space-y-2">
+                    {(hintModal.popup.explanation?.what_to_look_for || []).map((item: string, index: number) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-arcade-cyan mr-2">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {hintModal.currentSlide === 2 && (
+                <div>
+                  <h3 className="text-arcade-magenta font-arcade text-lg mb-3">Real-World Impact</h3>
+                  <p className="text-gray-300 font-terminal text-base leading-relaxed">
+                    {hintModal.popup.explanation?.real_world_impact || 'Understanding the consequences helps you make better security decisions.'}
+                  </p>
+                </div>
+              )}
+              
+              {hintModal.currentSlide === 3 && (
+                <div>
+                  <h3 className="text-arcade-magenta font-arcade text-lg mb-3">Prevention Tips</h3>
+                  <ul className="text-gray-300 font-terminal text-base space-y-2">
+                    {(hintModal.popup.explanation?.prevention_tips || []).map((tip: string, index: number) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-arcade-green mr-2">✓</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-between">
+              <button
+                onClick={() => {
+                  if (hintModal.currentSlide > 0) {
+                    setHintModal(prev => prev ? { ...prev, currentSlide: prev.currentSlide - 1 } : null);
+                  }
+                }}
+                disabled={hintModal.currentSlide === 0}
+                className={`px-4 py-2 rounded font-arcade text-sm transition-colors ${
+                  hintModal.currentSlide === 0 
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                    : 'bg-arcade-cyan text-black hover:bg-arcade-magenta hover:text-white'
+                }`}
+              >
+                ← Previous
+              </button>
+              
+              {hintModal.currentSlide < 3 ? (
+                <button
+                  onClick={() => {
+                    setHintModal(prev => prev ? { ...prev, currentSlide: prev.currentSlide + 1 } : null);
+                  }}
+                  className="px-4 py-2 bg-arcade-cyan text-black rounded font-arcade text-sm hover:bg-arcade-magenta hover:text-white transition-colors"
+                >
+                  Next →
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    // Close modal and remove the popup
+                    removePopup(hintModal.popup);
+                    setHintModal(null);
+                  }}
+                  className="px-4 py-2 bg-arcade-green text-black rounded font-arcade text-sm hover:bg-green-600 hover:text-white transition-colors"
+                >
+                  Close
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Popups */}
-      {popups.map((popup) => (
-        <motion.div
-          key={popup.id}
-          className="absolute z-40 overflow-hidden"
-          style={{
-            left: popup.position.x,
-            top: popup.position.y,
-            width: popup.size.width,
-            height: popup.size.height,
-            borderRadius: `${popup.style.borderRadius}px`,
-            border: `${popup.style.borderWidth}px solid ${popup.style.borderColor}`,
-            boxShadow: popup.style.boxShadow,
-            fontFamily: popup.style.fontFamily,
-            fontSize: popup.style.fontSize
-          }}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 300 }}
-          drag={popup.closeMethod === 'drag_to_trash' || popup.closeMethod === 'slide_away'}
-          onDragEnd={(event, info) => {
+      <div className={hintModal ? 'pointer-events-none opacity-50' : ''}>
+        {popups.map((popup) => {
+        const popupPosition = popupPositions[popup.id] || { x: 100, y: 100 };
+        const isMinimized = minimizedPopups.has(popup.id);
+        
+        return useModernPopups ? (
+          <ModernPopupIntegration
+            key={popup.id}
+            popup={popup}
+            onInteraction={(action) => {
+              handlePopupInteraction(popup, action);
+            }}
+            position={popupPosition}
+            onPositionChange={hintModal ? undefined : (newPosition) => {
+              setPopupPositions(prev => ({
+                ...prev,
+                [popup.id]: newPosition
+              }));
+            }}
+            onMinimize={hintModal ? undefined : () => {
+              setMinimizedPopups(prev => new Set([...Array.from(prev), popup.id]));
+            }}
+            isMinimized={isMinimized}
+          />
+        ) : (
+          <motion.div
+            key={popup.id}
+            className="absolute z-40 overflow-hidden"
+            style={{
+              left: popup.position.x,
+              top: popup.position.y,
+              width: popup.size.width,
+              height: popup.size.height,
+              borderRadius: `${popup.style.borderRadius}px`,
+              border: `${popup.style.borderWidth}px solid ${popup.style.borderColor}`,
+              boxShadow: popup.style.boxShadow,
+              fontFamily: popup.style.fontFamily,
+              fontSize: popup.style.fontSize
+            }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            drag={popup.closeMethod === 'drag_to_trash' || popup.closeMethod === 'slide_away'}
+            onDragEnd={(event, info) => {
             // For slide_away, check if dragged far enough
             if (popup.closeMethod === 'slide_away') {
               const distance = Math.sqrt(Math.pow(info.offset.x, 2) + Math.pow(info.offset.y, 2));
@@ -2707,13 +3687,13 @@ export default function PopupManicGame() {
                       className={`px-4 py-2 rounded text-sm text-white flex items-center ${activePrograms.includes('meowarebytes') ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400'}`}
                       onClick={(e) => {
                         e.stopPropagation()
-                        // This requires the user to open MeowareBytes
+                        // This requires the user to open Nyantivirus
                         if (activePrograms.includes('meowarebytes')) {
                           handlePopupAction(popup, 'close')
                         } else {
                           // Hint that they need to use the antivirus
                           playSound(false) // Play error sound
-                          alert('You need to run MeowareBytes Antivirus first!')
+                          alert('You need to run Nyantivirus first!')
                         }
                       }}
                     >
@@ -2725,7 +3705,7 @@ export default function PopupManicGame() {
                   </div>
                   
                   <div className="text-xs text-center mt-2 text-gray-500">
-                    Open MeowareBytes Antivirus from the desktop or taskbar
+                    Open Nyantivirus from the desktop or taskbar
                   </div>
                 </div>
               )}
@@ -2776,9 +3756,209 @@ export default function PopupManicGame() {
             </div>
           </div>
         </motion.div>
-      ))}
+      );
+      })}
+      </div>
 
-      {/* Removed trash bin for drag_to_trash popups */}
+      {/* Quiz Modal System */}
+      {quizActive && currentQuiz && quizQuestions.length > 0 && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/95 z-[10000]">
+          <motion.div 
+            className="bg-arcade-bg border-2 border-arcade-cyan p-8 rounded-lg max-w-4xl w-full mx-4 shadow-lg shadow-arcade-cyan/30"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            {/* Quiz Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-arcade-cyan font-mono text-lg glow-heading-cyan">Security Quiz - Level {currentQuiz.level}</h2>
+              <div className="text-arcade-cyan font-mono text-sm">
+                Question {currentQuestionIndex + 1} / {quizQuestions.length}
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="w-full bg-gray-800 rounded-full h-2 mb-6">
+              <div 
+                className="bg-arcade-cyan h-2 rounded-full transition-all duration-300"
+                style={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
+              ></div>
+            </div>
+            
+            {/* Current Question */}
+            {quizQuestions[currentQuestionIndex] && (
+              <div className="bg-gray-800 p-6 rounded-lg mb-6">
+                {/* Question Text */}
+                <h3 className="text-arcade-magenta font-mono text-lg mb-4">
+                  {quizQuestions[currentQuestionIndex].question}
+                </h3>
+                
+                {/* Popup Preview for Context */}
+                <div className="bg-gray-700 p-4 rounded-lg mb-6 border border-arcade-cyan/30">
+                  <div className="text-arcade-cyan font-mono text-sm mb-2">Popup Context:</div>
+                  <div className="bg-white text-black p-3 rounded border-2 border-gray-400 max-w-md">
+                    <div className="font-mono font-semibold text-sm mb-2">
+                      {quizQuestions[currentQuestionIndex].popup.title}
+                    </div>
+                    <div className="font-mono text-xs">
+                      {quizQuestions[currentQuestionIndex].popup.message}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Answer Feedback */}
+                {showAnswerFeedback && (
+                  <div className={`p-4 rounded-lg mb-4 border-2 ${
+                    showAnswerFeedback.isCorrect 
+                      ? 'bg-green-900/50 border-green-400 text-green-300' 
+                      : 'bg-red-900/50 border-red-400 text-red-300'
+                  }`}>
+                    <div className="font-mono text-sm mb-2">
+                      {showAnswerFeedback.isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+                    </div>
+                    {!showAnswerFeedback.isCorrect && (
+                      <div className="font-mono text-xs">
+                        Correct answer: {showAnswerFeedback.correctAnswer}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Question Format: Multiple Choice */}
+                {quizQuestions[currentQuestionIndex].format === 'multiple_choice' && !showAnswerFeedback && (
+                  <div className="space-y-3">
+                    {quizQuestions[currentQuestionIndex].options.map((option: string, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => handleQuizAnswer(option)}
+                        className="w-full text-left p-4 bg-gray-700 hover:bg-arcade-cyan/20 border border-arcade-cyan/30 rounded-lg transition-colors font-mono text-white"
+                      >
+                        <span className="text-arcade-cyan mr-3">{String.fromCharCode(65 + index)}.</span>
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Question Format: Interactive Buttons (Correct Action) */}
+                {quizQuestions[currentQuestionIndex].format === 'interactive_buttons' && !showAnswerFeedback && (
+                  <div className="space-y-3">
+                    <div className="text-arcade-cyan font-mono text-sm mb-4">
+                      Click the correct action button:
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {quizQuestions[currentQuestionIndex].options.map((action: string, index: number) => (
+                        <button
+                          key={index}
+                          onClick={() => handleQuizAnswer(action)}
+                          className="p-4 bg-arcade-magenta text-black hover:bg-arcade-cyan transition-colors rounded-lg font-mono text-sm"
+                        >
+                          {action.replace(/_/g, ' ')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Question Format: Drag and Drop (Categorization) */}
+                {quizQuestions[currentQuestionIndex].format === 'drag_drop' && !showAnswerFeedback && (
+                  <div className="space-y-4">
+                    <div className="text-arcade-cyan font-mono text-sm mb-4">
+                      Select the correct category for this popup:
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {quizQuestions[currentQuestionIndex].options.map((category: string, index: number) => (
+                        <button
+                          key={index}
+                          onClick={() => handleQuizAnswer(category)}
+                          className="p-4 bg-gray-700 hover:bg-arcade-green/20 border-2 border-arcade-green/30 rounded-lg transition-colors text-center"
+                        >
+                          <div className="text-arcade-green font-mono text-sm mb-1">
+                            {category.replace(/_/g, ' ').toUpperCase()}
+                          </div>
+                          <div className="text-gray-300 font-mono text-xs">
+                            Click to select
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Quiz Stats */}
+            <div className="flex justify-between items-center text-arcade-cyan font-mono text-sm">
+              <div>
+                Correct: {quizAnswers.filter(a => a.isCorrect).length} / {quizQuestions.length}
+              </div>
+              <div>
+                Mistakes: {quizAnswers.filter(a => !a.isCorrect).length} / {quizQuestions.length}
+              </div>
+              <div>
+                Quiz Score: {quizAnswers.filter(a => a.isCorrect).length * 10} points
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      
+      {/* Quiz Result Modal */}
+      {quizResult && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gray-900 border-2 border-arcade-cyan rounded-lg p-8 max-w-md w-full mx-4 text-center"
+          >
+            {/* Pass/Fail Header */}
+            <div className={`text-4xl font-mono mb-4 ${
+              quizResult.passed ? 'text-green-400' : 'text-red-400'
+            }`}>
+              {quizResult.passed ? '✓ PASSED!' : '✗ FAILED'}
+            </div>
+            
+            {/* Score Display */}
+            <div className="text-arcade-cyan font-mono text-xl mb-4">
+              {quizResult.percentage}% ({quizResult.correctAnswers}/{quizResult.totalQuestions})
+            </div>
+            
+            {/* Pass/Fail Message */}
+            <div className="text-white font-mono text-sm mb-6">
+              {quizResult.passed ? (
+                <div>
+                  <div className="text-green-300 mb-2">🎉 Excellent work!</div>
+                  <div>You've demonstrated strong cybersecurity awareness. You can now advance to the next level and face more challenging threats!</div>
+                </div>
+              ) : (
+                <div>
+                  <div className="text-red-300 mb-2">📚 Keep Learning!</div>
+                  <div>You need 70% or higher to advance. Don't worry - every security expert started somewhere. Review the popups you've encountered and try again!</div>
+                </div>
+              )}
+            </div>
+            
+            {/* Motivational Message */}
+            <div className="text-arcade-magenta font-mono text-xs mb-4">
+              {quizResult.passed ? (
+                "Ready for the next challenge? Let's keep building your cyber defenses!"
+              ) : (
+                "Remember: Real cybersecurity threats are everywhere. Practice makes perfect!"
+              )}
+            </div>
+            
+            {/* Score Breakdown */}
+            <div className="bg-gray-800 p-4 rounded-lg font-mono text-xs">
+              <div className="text-arcade-cyan mb-2">Quiz Results:</div>
+              <div className="text-green-400">Correct: {quizResult.correctAnswers}</div>
+              <div className="text-red-400">Incorrect: {quizResult.totalQuestions - quizResult.correctAnswers}</div>
+              <div className="text-arcade-cyan">Score: {quizResult.score} points</div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      
+      {/* Tutorial overlay removed - now using educational modal system */}
     </div>
   )
 }
