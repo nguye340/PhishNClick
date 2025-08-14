@@ -1247,7 +1247,7 @@ document.addEventListener('DOMContentLoaded', function() {
     wrongSound.volume = isMuted ? 0 : gameVolume;
   }
   
-  function showPhoneVishingPopup() {
+  async function showPhoneVishingPopup() {
     // Pause the game loop
     stopGameLoop();
     
@@ -1269,22 +1269,103 @@ document.addEventListener('DOMContentLoaded', function() {
     phoneDoItBtn.style.cursor = 'not-allowed';
     phoneSkipBtn.style.cursor = 'not-allowed';
     
-    // Play vishing sound
-    vishingSound.currentTime = 0;
-    vishingSound.volume = isMuted ? 0 : gameVolume;
-    vishingSound.play()
-      .catch(error => console.log('Error playing vishing sound:', error));
-    
-    // Enable buttons when audio ends
-    vishingSound.onended = function() {
-      phoneDoItBtn.disabled = false;
-      phoneSkipBtn.disabled = false;
-      phoneDoItBtn.style.opacity = '1';
-      phoneSkipBtn.style.opacity = '1';
-      phoneDoItBtn.style.cursor = 'pointer';
-      phoneSkipBtn.style.cursor = 'pointer';
-      console.log('Vishing audio ended, buttons enabled');
-    };
+    try {
+      // Clean up any previously playing audio
+      window.voiceCallManager.cleanup();
+      
+      // Get voice call data (first call uses vishing.mp3, subsequent calls use database)
+      const voiceCallData = await window.voiceCallManager.getVoiceCall();
+      
+      // Store current voice call info for button logic
+      window.currentVoiceCall = voiceCallData;
+      
+      // Update phone popup display with caller info
+      window.voiceCallManager.updatePhonePopupDisplay(voiceCallData.caller);
+      
+      console.log('Playing voice call:', {
+        isPhishing: voiceCallData.isPhishing,
+        correctChoice: window.voiceCallManager.getCorrectChoice(voiceCallData.isPhishing),
+        caller: voiceCallData.caller.name,
+        isStatic: voiceCallData.isStatic
+      });
+      
+      // Create audio context if it doesn't exist
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!window.audioContext) {
+        window.audioContext = new AudioContext();
+      }
+      
+      // Create audio element
+      const currentAudio = new Audio(voiceCallData.audioUrl);
+      
+      // Store reference for cleanup
+      window.voiceCallManager.currentAudio = currentAudio;
+      
+      try {
+        // Wait for audio context to be in 'running' state
+        if (window.audioContext.state === 'suspended') {
+          await window.audioContext.resume();
+        }
+        
+        // Create audio source and gain node
+        const source = window.audioContext.createMediaElementSource(currentAudio);
+        const gainNode = window.audioContext.createGain();
+        
+        // Increase volume by 100% (2x) over the base volume
+        const baseVolume = isMuted ? 0 : gameVolume;
+        gainNode.gain.value = baseVolume * 2; // Double the volume
+        
+        // Connect nodes: source -> gain -> destination
+        source.connect(gainNode);
+        gainNode.connect(window.audioContext.destination);
+        
+        // Play the audio
+        currentAudio.currentTime = 0;
+        await currentAudio.play();
+      } catch (error) {
+        console.error('Error setting up Web Audio API, falling back to standard audio:', error);
+        // Fallback to standard audio if Web Audio API fails
+        currentAudio.volume = isMuted ? 0 : Math.min(gameVolume * 1.5, 1.0); // Still boost volume a bit
+        await currentAudio.play();
+      }
+      
+      // Enable buttons when audio ends
+      currentAudio.onended = function() {
+        phoneDoItBtn.disabled = false;
+        phoneSkipBtn.disabled = false;
+        phoneDoItBtn.style.opacity = '1';
+        phoneSkipBtn.style.opacity = '1';
+        phoneDoItBtn.style.cursor = 'pointer';
+        phoneSkipBtn.style.cursor = 'pointer';
+        console.log('Voice call audio ended, buttons enabled');
+      };
+      
+    } catch (error) {
+      console.error('Error loading voice call:', error);
+      
+      // Fallback to original vishing sound
+      vishingSound.currentTime = 0;
+      vishingSound.volume = isMuted ? 0 : gameVolume;
+      vishingSound.play()
+        .catch(err => console.log('Error playing fallback vishing sound:', err));
+      
+      // Set fallback voice call data
+      window.currentVoiceCall = {
+        isPhishing: true,
+        caller: { name: 'Bank Security', number: '+1-800-555-0199' }
+      };
+      
+      // Enable buttons when fallback audio ends
+      vishingSound.onended = function() {
+        phoneDoItBtn.disabled = false;
+        phoneSkipBtn.disabled = false;
+        phoneDoItBtn.style.opacity = '1';
+        phoneSkipBtn.style.opacity = '1';
+        phoneDoItBtn.style.cursor = 'pointer';
+        phoneSkipBtn.style.cursor = 'pointer';
+        console.log('Fallback vishing audio ended, buttons enabled');
+      };
+    }
     
     // Show the phone popup with options
     document.getElementById('phonePopup').style.display = 'block';
@@ -1294,6 +1375,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const vishingSound = new Audio('/games/phish404/audio/vishing.mp3');
   const gameOverSound = new Audio('/games/phish404/audio/losetrumpet.mp3');
   const declineSound = new Audio('/games/phish404/audio/Decline.wav');
+  
+  // Store audio context reference globally
+  window.audioContext = null;
   
   // Shield sound effects
   window.shieldSound = new Audio('/games/phish404/audio/coin-hit.mp3');
@@ -1446,47 +1530,112 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneSkipBtn = document.getElementById('phoneSkip');
     
     if (phoneDoItBtn && phoneSkipBtn) {
-      // "Do what it says" button - lose a life and show vishing result popup
+      // "Do what it says" button - dynamic logic based on voice call type
       phoneDoItBtn.addEventListener('click', function() {
         console.log('Phone "Do what it says" button clicked');
         document.getElementById('phonePopup').style.display = 'none';
         
-        // Play wrong sound for incorrect choice
-        wrongSound.currentTime = 0;
-        wrongSound.play();
+        // Get current voice call data
+        const currentCall = window.currentVoiceCall || { isPhishing: true }; // Default to phishing for safety
+        const correctChoice = window.voiceCallManager.getCorrectChoice(currentCall.isPhishing);
+        const isCorrectChoice = correctChoice === 'doIt';
         
-        // Use the safe decrement function
-        const lifeLost = decrementLife();
+        console.log('Voice call analysis:', {
+          isPhishing: currentCall.isPhishing,
+          correctChoice: correctChoice,
+          playerChoice: 'doIt',
+          isCorrect: isCorrectChoice
+        });
         
-        if (lifeLost) {
-          console.log('Showing vishing result popup after life loss');
-          // Show vishing result popup and let it handle game resumption
-          showVishingResultPopup(true);
-        } else if (gameOver) {
-          console.log('Game over already triggered from phone popup');
-          showGameOver();
+        if (isCorrectChoice) {
+          // Correct choice - play success sound and reward player
+          correctSound.currentTime = 0;
+          correctSound.play();
+          
+          // Add 10 coins for correct answer
+          coinController.coinsCollected += 10;
+          document.getElementById('coinCount').textContent = coinController.coinsCollected;
+          
+          // Increase player level for correct answer
+          increasePlayerLevel();
+          
+          // Show success message and resume game
+          showVishingResultPopup(false); // false = success
         } else {
-          console.error('Failed to process life loss from phone popup');
-          // Still show the vishing result popup even if life decrement failed
-          showVishingResultPopup(true);
+          // Wrong choice - play wrong sound and lose life
+          wrongSound.currentTime = 0;
+          wrongSound.play();
+          
+          // Use the safe decrement function
+          const lifeLost = decrementLife();
+          
+          if (lifeLost) {
+            console.log('Showing vishing result popup after life loss');
+            // Show vishing result popup and let it handle game resumption
+            showVishingResultPopup(true); // true = failure
+          } else if (gameOver) {
+            console.log('Game over already triggered from phone popup');
+            showGameOver();
+          } else {
+            console.error('Failed to process life loss from phone popup');
+            // Still show the vishing result popup even if life decrement failed
+            showVishingResultPopup(true);
+          }
         }
       });
       
-      // "Skip" button - show vishing result popup with success message
+      // "Skip" button - dynamic logic based on voice call type
       phoneSkipBtn.addEventListener('click', function() {
         console.log('Phone "Skip" button clicked');
         document.getElementById('phonePopup').style.display = 'none';
         
-        // Play correct sound for correct choice
-        correctSound.currentTime = 0;
-        correctSound.play();
+        // Get current voice call data
+        const currentCall = window.currentVoiceCall || { isPhishing: true }; // Default to phishing for safety
+        const correctChoice = window.voiceCallManager.getCorrectChoice(currentCall.isPhishing);
+        const isCorrectChoice = correctChoice === 'skip';
         
-        // Add 10 coins for correct answer
-        coinController.coinsCollected += 10;
-        document.getElementById('coinCount').textContent = coinController.coinsCollected;
+        console.log('Voice call analysis:', {
+          isPhishing: currentCall.isPhishing,
+          correctChoice: correctChoice,
+          playerChoice: 'skip',
+          isCorrect: isCorrectChoice
+        });
         
-        // Increase player level for correct answer
-        increasePlayerLevel();
+        if (isCorrectChoice) {
+          // Correct choice - play success sound and reward player
+          correctSound.currentTime = 0;
+          correctSound.play();
+          
+          // Add 10 coins for correct answer
+          coinController.coinsCollected += 10;
+          document.getElementById('coinCount').textContent = coinController.coinsCollected;
+          
+          // Increase player level for correct answer
+          increasePlayerLevel();
+          
+          // Show success message and resume game
+          showVishingResultPopup(false); // false = success
+        } else {
+          // Wrong choice - play wrong sound and lose life
+          wrongSound.currentTime = 0;
+          wrongSound.play();
+          
+          // Use the safe decrement function
+          const lifeLost = decrementLife();
+          
+          if (lifeLost) {
+            console.log('Showing vishing result popup after life loss');
+            // Show vishing result popup and let it handle game resumption
+            showVishingResultPopup(true); // true = failure
+          } else if (gameOver) {
+            console.log('Game over already triggered from phone popup');
+            showGameOver();
+          } else {
+            console.error('Failed to process life loss from phone popup');
+            // Still show the vishing result popup even if life decrement failed
+            showVishingResultPopup(true);
+          }
+        }
         
         // Don't show result popup for correct answers, just resume the game
         resumeGameAfterPopup();
@@ -1749,6 +1898,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (shieldController) shieldController.reset();
     if (attackPowerupController) attackPowerupController.reset();
     if (electricBallController) electricBallController.reset();
+    
+    // Reset voice call manager
+    if (window.voiceCallManager) {
+      window.voiceCallManager.reset();
+      console.log('Voice call manager reset');
+    }
     
     // Update UI
     updateLivesDisplay();

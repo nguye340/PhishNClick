@@ -6,11 +6,17 @@ import seedPopup from '../seeds/seedPopup.js';
 dotenv.config();
 
 // Hardcoded fallback connection string (only for development)
-const connectionString = process.env.MONGO_URI;
+let connectionString = process.env.MONGO_URI;
+
+// Ensure we're using the scenarios database where voice data is stored
+if (connectionString && connectionString.includes('mongodb+srv://') && !connectionString.includes('/scenarios')) {
+  connectionString = connectionString.replace('/?', '/scenarios?');
+  console.log('Updated connection string to use scenarios database');
+}
 
 export const connectDB = async () => {
   try {
-    console.log('Attempting to connect to MongoDB...');
+    console.log('Attempting to connect to MongoDB scenarios database...');
     const conn = await mongoose.connect(connectionString);
     console.log(`MongoDB connected: ${conn.connection.host}`);
     

@@ -1,9 +1,5 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js",
-  "/games/phish404/page": "app/games/phish404/page.js",
-  "/games/popup-manic/page": "app/games/popup-manic/page.js",
-  "/api/popup/random/route": "app/api/popup/random/route.js",
-  "/games/hooked-or-cooked/page": "app/games/hooked-or-cooked/page.js",
   "/assessment/phishing-test/page": "app/assessment/phishing-test/page.js"
 }

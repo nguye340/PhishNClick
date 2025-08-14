@@ -21,6 +21,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
     "gsap": "^3.12.7",
+    "howler": "^2.2.4",
     "lucide-react": "^0.320.0",
     "mongoose": "^8.1.1",
     "next": "^14.2.26",

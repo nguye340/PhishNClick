@@ -5,11 +5,7 @@
     "\\frontend\\src",
     "\\frontend\\src\\components",
     "\\frontend\\src\\components\\assessment",
-    "\\frontend\\src\\components\\ui",
-    "\\src",
-    "\\src\\components",
-    "\\src\\components\\assessment"
+    "\\frontend\\src\\components\\ui"
   ],
-  "SelectedNode": "\\frontend\\src\\components\\assessment\\phishing-test.tsx",
   "PreviewInSolutionExplorer": false
 }

@@ -2,16 +2,28 @@
 
 import { useState, useRef, ReactNode, MouseEvent } from 'react'
 
+interface Position {
+  x: number | string
+  y: number | string
+}
+
+interface Size {
+  width: number | string
+  height: number | string
+}
+
 interface DraggableWindowProps {
   children: ReactNode
-  initialPosition?: { x: number, y: number }
+  initialPosition?: Position
   className?: string
   handleClassName?: string
   onClose?: () => void
   onMinimize?: () => void
   title?: string
-  width?: number
-  height?: number
+  width?: number | string
+  height?: number | string
+  minWidth?: number
+  minHeight?: number
   allowMaximize?: boolean
   isTaskManager?: boolean
 }
@@ -26,6 +38,8 @@ export function DraggableWindow({
   title = "Window",
   width = 600,
   height = 400,
+  minWidth,
+  minHeight,
   allowMaximize = false,
   isTaskManager = false
 }: DraggableWindowProps) {
@@ -79,24 +93,28 @@ export function DraggableWindow({
   // Calculate styles based on maximized state
   const windowStyle = isMaximized 
     ? {
+        position: 'absolute' as const,
         left: '0',
         top: '0',
         width: '100%',
-        height: 'calc(100vh - 40px)', // Leave space for taskbar
+        height: '100%',
         zIndex: 999,
       } 
     : {
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        width: `${width}px`,
-        height: `${height}px`,
+        position: 'absolute' as const,
+        left: typeof position.x === 'number' ? `${position.x}px` : position.x,
+        top: typeof position.y === 'number' ? `${position.y}px` : position.y,
+        width: typeof width === 'string' ? width : `${width}px`,
+        height: typeof height === 'string' ? height : `${height}px`,
+        ...(minWidth !== undefined && { minWidth: `${minWidth}px` }),
+        ...(minHeight !== undefined && { minHeight: `${minHeight}px` }),
         zIndex: isDragging ? 1000 : 100,
       };
 
   return (
     <div
       ref={windowRef}
-      className={`absolute shadow-lg bg-white rounded-md overflow-hidden ${className}`}
+      className={`shadow-lg bg-white rounded-md overflow-hidden ${className}`}
       style={windowStyle}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

@@ -15,32 +15,6 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/games/phish404/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/games/phish404/page.js"
-    ],
-    "/games/hooked-or-cooked/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/games/hooked-or-cooked/page.js"
-    ],
-    "/games/phish-hunt/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/games/phish-hunt/page.js"
-    ],
-    "/games/popup-manic/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/vendors-_app-pages-browser_node_modules_uuid_dist_esm-browser_v4_js-_app-pages-browser_node_m-9e1600.js",
-      "static/chunks/app/games/popup-manic/page.js"
-    ],
     "/assessment/phishing-test/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",

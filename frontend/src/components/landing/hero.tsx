@@ -124,20 +124,22 @@ export function LandingHero() {
                 <Info className="w-4 h-4" />
                 <span className="font-terminal text-sm">About Us</span>
               </button>
-              <button 
+              {/* Temporarily hidden - Login button */}
+              {/* <button 
                 onClick={handleLogin}
                 className={`flex items-center gap-2 px-4 py-2 rounded border border-arcade-cyan text-arcade-cyan hover:bg-arcade-cyan hover:text-black transition-colors group vhs-effect ${isLoginPressed ? 'active' : ''}`}
               >
                 <LogIn className="w-4 h-4" />
                 <span className="font-terminal text-sm">Login</span>
-              </button>
-              <Link 
+              </button> */}
+              {/* Temporarily hidden - Register button */}
+              {/* <Link 
                 href="/auth/register" 
                 className="flex items-center gap-2 px-4 py-2 rounded bg-arcade-magenta text-black hover:bg-opacity-90 transition-colors vhs-effect"
               >
                 <User className="w-4 h-4" />
                 <span className="font-terminal text-sm">Register</span>
-              </Link>
+              </Link> */}
               <button className="hover:text-arcade-cyan transition-colors">
                 <Settings className="w-5 h-5" />
               </button>
@@ -176,14 +178,15 @@ export function LandingHero() {
                   <div className="vhs-noise"></div>
                   <div className="vhs-glitch"></div>
                 </button>
-                <button 
+                {/* Temporarily hidden - Large Login button */}
+                {/* <button 
                   onClick={handleLogin}
                   className={`login-button relative font-arcade text-xl px-10 py-5 border-2 border-arcade-cyan text-arcade-cyan rounded-lg transition-colors group ${isLoginPressed ? 'active' : ''}`}
                 >
                   <span className="relative z-10 vhs-aberration glow-heading">Login</span>
                   <div className="vhs-noise"></div>
                   <div className="vhs-glitch"></div>
-                </button>
+                </button> */}
               </div>
 
               <div className="hero-content flex items-center justify-center gap-12 text-lg font-terminal vhs-text">

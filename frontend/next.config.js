@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: false, // Disable strict mode to reduce potential issues
   swcMinify: true,
+  images: {
+    domains: ['cdn-icons-png.flaticon.com', 'upload.wikimedia.org'],
+  },
   onDemandEntries: {
     // Period (in ms) where the server will keep pages in the buffer
     maxInactiveAge: 60 * 60 * 1000,

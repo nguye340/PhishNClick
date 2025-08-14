@@ -1,0 +1,2 @@
+# This file ensures the temp upload directory exists in git
+# Temporary audio files are stored here during upload processing

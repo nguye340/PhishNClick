@@ -1,5 +1,7 @@
 "node_modules/" 
 node_modules
+"PhishHunt/"
+PhishHunt
 backend/.env
 "backend/.env"
 "*.env"
@@ -17,4 +19,5 @@ backend/.env
 .env.development
 .env.test
 .env.production
+.env.example
 *.env

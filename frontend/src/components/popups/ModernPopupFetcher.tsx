@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { SystemAlert } from '../../components/ui/popups/system-alert'
-import { BrowserNotification } from '../../components/ui/popups/browser-notification'
-import { LoginForm } from '../../components/ui/popups/login-form'
-import { SoftwareInstaller } from '../../components/ui/popups/software-installer'
+import { SystemAlert } from '../ui/popups/system-alert'
+import { BrowserNotification } from '../ui/popups/browser-notification'
+import { LoginForm } from '../ui/popups/login-form'
+import { SoftwareInstaller } from '../ui/popups/software-installer'
 
 // Define the popup data structure
 interface PopupData {
@@ -137,7 +137,7 @@ export default function ModernPopupFetcher({ onPopupInteraction }: ModernPopupFe
           <LoginForm
             title={popup.title}
             message={popup.message}
-            onSubmit={(data) => handleInteraction({ type: 'SUBMIT_FORM', data })}
+            onSubmit={(data: Record<string, string>) => handleInteraction({ type: 'SUBMIT_FORM', data })}
             onClose={() => handleInteraction({ type: 'CLOSE' })}
           />
         )

@@ -10,6 +10,7 @@ import popupEventRoutes from './routes/popupEvent.route.js'; // popupEventRoutes
 import sessionRoutes from './routes/session.routes.js';
 import sessionStatsRoutes from './routes/sessionStats.routes.js';
 import quizResultRoutes from './routes/quizResult.route.js';
+import voiceCallRoutes from './routes/voiceCall.routes.js';
 
 
 // ES Module equivalent of __dirname
@@ -40,6 +41,7 @@ app.use('/api/popupEvent', popupEventRoutes);
 app.use('/api/session', sessionRoutes);
 app.use('/api/sessionStats', sessionStatsRoutes);
 app.use('/api/quiz-results', quizResultRoutes);
+app.use('/api/voice-calls', voiceCallRoutes);
 
 // Connect to database first, then start server
 connectDB().then(() => {
