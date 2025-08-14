@@ -37,6 +37,18 @@
       "static/chunks/vendors-_app-pages-browser_node_modules_uuid_dist_esm-browser_v4_js-_app-pages-browser_node_m-9e1600.js",
       "static/chunks/app/games/popup-manic/page.js"
     ],
+    "/games/phish404/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/games/phish404/page.js"
+    ],
+    "/games/hooked-or-cooked/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/games/hooked-or-cooked/page.js"
+    ],
     "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",

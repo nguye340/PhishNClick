@@ -2314,17 +2314,19 @@ useEffect(() => {
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
+    const taskbarHeight = 64; // Height of the taskbar (16 * 4 = 64px for h-16)
     const gifCount = Math.floor(Math.random() * 15) + 10; // 10-25 GIFs for outbreak
     
     const newGifs: Array<{id: string, x: number, y: number, rotation: number, gifName: string, size: number}> = [];
     for (let i = 0; i < gifCount; i++) {
       const randomGif = availableSillyGifs[Math.floor(Math.random() * availableSillyGifs.length)];
       const randomSize = Math.random() * 100 + 80; // Random size between 80-180px
+      const scaledSize = randomSize * 3; // Account for 300% scaling (3x multiplier)
       
       newGifs.push({
         id: `outbreak-gif-${Date.now()}-${i}`,
-        x: Math.random() * (viewportWidth - randomSize), // Keep within viewport
-        y: Math.random() * (viewportHeight - randomSize),
+        x: Math.random() * (viewportWidth - scaledSize), // Keep within viewport width
+        y: Math.random() * (viewportHeight - scaledSize - taskbarHeight), // Keep above taskbar
         rotation: Math.random() * 360,
         gifName: randomGif,
         size: randomSize
@@ -5063,10 +5065,68 @@ useEffect(() => {
         </div>
       )}
       
+      {/* Windows-Style Virus Notification */}
+      {state.infectedGifs.length > 0 && (
+        <div className="fixed top-4 right-4 z-[9999] w-80 bg-white border border-gray-300 shadow-2xl rounded-lg overflow-hidden animate-slide-in-right">
+          {/* Notification Header */}
+          <div className="bg-red-600 text-white px-4 py-2 flex items-center">
+            <div className="w-4 h-4 bg-white rounded-full mr-2 flex items-center justify-center">
+              <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+            </div>
+            <span className="font-semibold text-sm">Windows Security Alert</span>
+            <button 
+              className="ml-auto text-white hover:bg-red-700 w-6 h-6 rounded flex items-center justify-center text-xs"
+              onClick={() => setInfectedGifs([])}
+            >
+              ×
+            </button>
+          </div>
+          
+          {/* Notification Content */}
+          <div className="p-4">
+            <div className="flex items-start">
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 text-sm mb-1">
+                  Virus Outbreak Detected!
+                </h3>
+                <p className="text-gray-600 text-xs mb-3">
+                  Multiple malicious files have infected your system. Immediate action required to prevent data loss.
+                </p>
+                <div className="flex space-x-2">
+                  <button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center"
+                    onClick={clearVirusOutbreak}
+                  >
+                    <img src="/img/meowareBytes-taskbar.png" alt="" className="w-3 h-3 mr-1" />
+                    Run Nyantivirus
+                  </button>
+                  <button 
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-xs"
+                    onClick={() => setInfectedGifs([])}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress bar animation */}
+          <div className="h-1 bg-gray-200">
+            <div className="h-full bg-red-600 animate-pulse" style={{ width: '100%' }}></div>
+          </div>
+        </div>
+      )}
+
       {/* Virus Warning Overlay */}
       {state.showVirusWarning && (
         <div 
-          className="fixed inset-0 z-[9999] pointer-events-none"
+          className="fixed inset-0 z-[9998] pointer-events-none"
           style={{
             background: 'rgba(255, 0, 0, 0.7)',
             animation: 'glitch 0.2s infinite',
@@ -5184,27 +5244,69 @@ useEffect(() => {
           style={{
             left: gif.x,
             top: gif.y,
-            transform: `rotate(${gif.rotation}deg)`,
-            width: gif.size || 150,
-            height: gif.size || 150,
+            width: (gif.size || 60) * 3, // 500% scale up (60px base * 5 = 300px)
+            height: (gif.size || 60) * 3, // 500% scale up
+            display: 'none' // Start hidden, show only when image loads successfully
           }}
         >
           <img
             src={gif.gifName ? `/silly-gif/${gif.gifName}` : '/silly-gif/silly-gif (1).gif'}
-            alt="Virus GIF"
+            alt=""
             className="w-full h-full object-contain"
             style={{
-              filter: 'drop-shadow(0 0 10px rgba(255, 0, 0, 0.5))'
+              filter: 'drop-shadow(0 0 15px rgba(255, 0, 0, 0.7))',
+              transform: 'scale(1)', // Ensure no additional scaling
+            }}
+            onError={(e) => {
+              // Hide the entire container for broken images
+              const container = (e.target as HTMLImageElement).parentElement;
+              if (container) {
+                container.style.display = 'none';
+              }
+            }}
+            onLoad={(e) => {
+              // Show the container only when image loads successfully
+              const container = (e.target as HTMLImageElement).parentElement;
+              if (container) {
+                container.style.display = 'block';
+              }
             }}
           />
         </div>
       ))}
 
-
+      {/* Desktop Nyantivirus Icon */}
+      <div 
+        className="fixed bottom-20 left-4 w-16 h-20 cursor-pointer z-50 hover:scale-110 transition-transform"
+        onClick={clearVirusOutbreak}
+        title="Nyantivirus - Click to clear virus outbreak"
+      >
+        <div className="w-full h-16 bg-gray-100 rounded-lg flex items-center justify-center shadow-lg border border-gray-300 hover:bg-gray-200">
+          <img 
+            src="/img/meowareBytes-taskbar.png" 
+            alt="Nyantivirus" 
+            className="w-12 h-12 object-contain"
+          />
+        </div>
+        <div className="text-xs text-white text-center mt-1 font-mono bg-black bg-opacity-50 px-1 rounded">Nyantivirus</div>
+      </div>
 
       {/* Taskbar */}
       <div className="fixed bottom-0 left-0 right-0 h-16 bg-gray-800 border-t border-gray-600 flex items-center px-4 z-40">
-        <div className="flex space-x-2">
+        <div className="flex items-center space-x-2">
+          {/* Nyantivirus Taskbar Icon */}
+          <div 
+            className="w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded flex items-center justify-center cursor-pointer transition-colors"
+            onClick={clearVirusOutbreak}
+            title="Nyantivirus - Click to clear virus outbreak"
+          >
+            <img 
+              src="/img/meowareBytes-taskbar.png" 
+              alt="Nyantivirus" 
+              className="w-8 h-8 object-contain"
+            />
+          </div>
+          
           {/* Game Status */}
           <div className="ml-4 flex items-center space-x-4 text-white">
             <span className="text-sm">Score: {state.score}</span>
