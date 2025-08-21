@@ -20,6 +20,8 @@ class DucksHandler{
         this.ducks.forEach(duck => {
             if (duck.isAlive) {
                 duck.flyOut();
+                // Mark as escaped for statistics
+                duck.wasShot = false;
             }
         });
     }

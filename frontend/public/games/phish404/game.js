@@ -367,6 +367,37 @@ document.addEventListener('DOMContentLoaded', function() {
     );
   }
 
+  function decrementLife() {
+    console.log('decrementLife called. Current lives:', lives);
+    
+    if (lives <= 0) {
+      console.log('No lives left to decrement');
+      return false;
+    }
+    
+    // Decrement life
+    lives--;
+    console.log('Life decremented. Remaining lives:', lives);
+    
+    // Update the display
+    updateLivesDisplay();
+    
+    // Check for game over
+    if (lives <= 0) {
+      gameOver = true;
+      console.log('Game over triggered - no lives left');
+      
+      // Show game over screen after a short delay
+      setTimeout(() => {
+        showGameOver();
+      }, 500);
+      
+      return false; // Game over
+    }
+    
+    return true; // Life lost but game continues
+  }
+
   function updateLivesDisplay() {
     console.log('Updating lives display. Current lives:', lives);
     
@@ -1057,6 +1088,84 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
   }
   
+  // Function to show legitimate email education result
+  function showLegitimateEmailResult() {
+    console.log('[LegitimateResult] Showing legitimate email education popup');
+    console.log('[LegitimateResult] Current email data:', currentEmailData);
+    
+    // Update the result popup with legitimate email information (using correct HTML element IDs)
+    const resultTitle = document.getElementById('resultTitle');
+    const phishingIntent = document.getElementById('phishingIntent');
+    const phishingTechnique = document.getElementById('phishingTechnique');
+    const phishingTarget = document.getElementById('phishingTarget');
+    const phishingLabel = document.getElementById('phishingLabel');
+    const resultMessage = document.getElementById('resultMessage');
+    
+    // Clear and update title
+    if (resultTitle) {
+      resultTitle.textContent = 'Good Job!';
+      resultTitle.style.color = '#4CAF50'; // Green for legitimate
+    }
+    
+    // Clear and update email details with legitimate email data
+    if (phishingIntent) {
+      phishingIntent.textContent = currentEmailData?.intent || 'Legitimate Communication';
+      console.log('[LegitimateResult] Updated intent to:', currentEmailData?.intent);
+    }
+    if (phishingTechnique) {
+      phishingTechnique.textContent = currentEmailData?.technique || 'N/A';
+      console.log('[LegitimateResult] Updated technique to:', currentEmailData?.technique);
+    }
+    if (phishingTarget) {
+      phishingTarget.textContent = currentEmailData?.target || 'General';
+      console.log('[LegitimateResult] Updated target to:', currentEmailData?.target);
+    }
+    
+    // Clear and update label
+    if (phishingLabel) {
+      phishingLabel.textContent = 'LEGITIMATE';
+      phishingLabel.style.color = '#4CAF50'; // Green for legitimate
+      console.log('[LegitimateResult] Updated label to: LEGITIMATE');
+    }
+    
+    if (resultMessage) {
+      resultMessage.innerHTML = `
+        That was a <strong>legitimate email</strong>. Here's how to identify safe messages:
+        <ul style="text-align: left; margin: 10px 0;">
+          <li>Check for proper sender domain and spelling</li>
+          <li>Look for personalized greetings with your actual name</li>
+          <li>Verify the content matches expected communications</li>
+          <li>Check for professional formatting and grammar</li>
+          <li>Confirm any requests through official channels</li>
+        </ul>
+        <strong>Stay alert and trust your instincts when something feels off!</strong>
+      `;
+    }
+    
+    // Show the result popup
+    const resultPopup = document.getElementById('resultPopup');
+    if (resultPopup) {
+      resultPopup.style.display = 'block';
+      popupVisible = true;
+      
+      // Set up the continue button
+      const continueButton = resultPopup.querySelector('button');
+      if (continueButton) {
+        const newButton = continueButton.cloneNode(true);
+        continueButton.parentNode.replaceChild(newButton, continueButton);
+        
+        newButton.onclick = function() {
+          console.log('Legitimate result popup continue button clicked');
+          resultPopup.style.display = 'none';
+          popupVisible = false;
+          resumeGameAfterPopup();
+        };
+      }
+    }
+    
+    console.log('[LegitimateResult] Result popup displayed');
+  }
+
   function closeResultPopup() {
     console.log('Closing result popup, lives:', lives);
     document.getElementById('resultPopup').style.display = 'none';
@@ -1230,6 +1339,53 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Email dataset for diverse phishing content
+  const emailDataset = [
+    {"id":"phish-0001","subject":"Urgent: Account Verification Required","body":"Your account will be locked in 24 hours. Verify now at: https://secure-login-verify.com","intent":"Credential Harvesting","technique":"Link Spoofing with Urgency","target":"Banking","spoofed_sender":"security@bankofamerica-alert.com","label":"phishing"},
+    {"id":"phish-0002","subject":"Invoice #3921 Overdue","body":"Your payment is overdue. Download invoice here: [attachment: invoice.exe]","intent":"Malware Delivery","technique":"Attachment with Malicious Payload","target":"SMBs / Finance","spoofed_sender":"billing@vendorpay.com","label":"phishing"},
+    {"id":"phish-0003","subject":"Unusual Activity Detected","body":"Suspicious login from Russia. Reset password now: https://g00gle-security.com","intent":"Credential Harvesting","technique":"Homoglyph Link Spoofing","target":"Google","spoofed_sender":"no-reply@g00gle.com","label":"phishing"},
+    {"id":"phish-0004","subject":"Tax Refund Processing Error","body":"Your refund is delayed. Submit details at: https://irs-gov-refund.org","intent":"Credential Harvesting","technique":"Fake Government Alert","target":"Taxpayers","spoofed_sender":"service@irs-notify.org","label":"phishing"},
+    {"id":"phish-0005","subject":"Your Package Awaits!","body":"Delivery issue detected. Update address via: [attachment: shipping_update.zip]","intent":"Malware Delivery","technique":"Attachment with Malicious Payload","target":"E-commerce","spoofed_sender":"support@fedex-delivery.com","label":"phishing"},
+    {"id":"phish-0006","subject":"Security Alert: Account Compromised","body":"Your social media account was accessed from China. Secure it: https://fb-security.com","intent":"Credential Harvesting","technique":"Urgency & Fake Security Alert","target":"Social Media","spoofed_sender":"alert@facebook-notify.com","label":"phishing"},
+    {"id":"phish-0007","subject":"Exclusive Offer: Free Gift Card","body":"Claim your $200 Amazon gift card: https://amaz0n-rewards.com","intent":"Credential Harvesting","technique":"Fake Reward with Homoglyph","target":"Retail","spoofed_sender":"rewards@amazon-offer.com","label":"phishing"},
+    {"id":"phish-0008","subject":"Healthcare Plan Update","body":"Your insurance plan needs renewal. Confirm details: https://healthcare-login.net","intent":"Credential Harvesting","technique":"Fake Service Update","target":"Healthcare","spoofed_sender":"support@bluecross-plan.com","label":"phishing"},
+    {"id":"phish-0009","subject":"CEO Request: Urgent Wire Transfer","body":"Please process a $10,000 transfer by EOD. Details in attached PDF.","intent":"Financial Scam","technique":"Business Email Compromise","target":"Corporate","spoofed_sender":"ceo@company-internal.com","label":"phishing"},
+    {"id":"phish-0010","subject":"Your Cloud Storage is Full","body":"Free up space or upgrade now: https://dropb0x-upgrade.com","intent":"Credential Harvesting","technique":"Homoglyph Link Spoofing","target":"Cloud Storage","spoofed_sender":"no-reply@dropbox-service.com","label":"phishing"},
+    {"id":"benign-0001","subject":"Weekly Team Meeting","body":"Don't forget our team meeting tomorrow at 2 PM in Conference Room A.","intent":"Legitimate Communication","technique":"N/A","target":"Corporate","spoofed_sender":"manager@company.com","label":"legitimate"},
+    {"id":"benign-0002","subject":"Your Order Has Shipped","body":"Your order #12345 has been shipped and will arrive in 2-3 business days.","intent":"Order Notification","technique":"N/A","target":"E-commerce","spoofed_sender":"orders@amazon.com","label":"legitimate"},
+    {"id":"benign-0003","subject":"Monthly Newsletter","body":"Check out our latest updates and company news in this month's newsletter.","intent":"Newsletter","technique":"N/A","target":"General","spoofed_sender":"newsletter@company.com","label":"legitimate"}
+  ];
+
+  // Current email data for the popup
+  let currentEmailData = null;
+
+  // Function to convert URLs and attachments to clickable elements
+  function makeLinksClickable(text) {
+    // Convert HTTP(S) URLs to clickable links
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    let processedText = text.replace(urlRegex, '<a href="#" class="phishing-link" data-url="$1" style="color: #FF5722; font-weight: bold; text-decoration: underline;">$1</a>');
+    
+    // Convert attachments to clickable elements with file icon
+    const attachmentRegex = /\[attachment:\s*([^\]]+)\]/g;
+    processedText = processedText.replace(attachmentRegex, (match, filename) => {
+      // Determine file type for appropriate icon
+      let fileIcon = '📎'; // Default paperclip
+      if (filename.includes('.exe') || filename.includes('.zip') || filename.includes('.rar')) {
+        fileIcon = '⚠️'; // Warning for potentially dangerous files
+      } else if (filename.includes('.pdf')) {
+        fileIcon = '📄';
+      } else if (filename.includes('.doc') || filename.includes('.docx')) {
+        fileIcon = '📝';
+      } else if (filename.includes('.xls') || filename.includes('.xlsx')) {
+        fileIcon = '📊';
+      }
+      
+      return `<span class="attachment-link" data-filename="${filename}" style="display: inline-block; background: #f0f0f0; border: 1px solid #ccc; padding: 4px 8px; margin: 2px; border-radius: 4px; cursor: pointer; color: #333; font-weight: bold;">${fileIcon} ${filename}</span>`;
+    });
+    
+    return processedText;
+  }
+
   // Email phishing popup
   function showEmailPhishingPopup() {
     // Pause the game loop
@@ -1239,12 +1395,245 @@ document.addEventListener('DOMContentLoaded', function() {
     gameOver = true;
     popupVisible = true; // Set popup visible flag
     
+    // Select random email from dataset
+    currentEmailData = emailDataset[Math.floor(Math.random() * emailDataset.length)];
+    console.log('[EmailPopup] Selected email data:', currentEmailData);
+    
+    // Update email popup content
+    document.getElementById('emailFrom').innerHTML = `From: ${currentEmailData.spoofed_sender}`;
+    document.getElementById('emailSubject').innerHTML = `Subject: ${currentEmailData.subject}`;
+    console.log('[EmailPopup] Updated email popup with:', {
+      sender: currentEmailData.spoofed_sender,
+      subject: currentEmailData.subject,
+      intent: currentEmailData.intent,
+      technique: currentEmailData.technique,
+      target: currentEmailData.target,
+      label: currentEmailData.label
+    });
+    
+    // Process email body to make links clickable
+    const processedBody = makeLinksClickable(currentEmailData.body);
+    document.getElementById('emailBody').innerHTML = `<p>${processedBody}</p>`;
+    
+    // Add click handlers to phishing links and attachments
+    setTimeout(() => {
+      // Handle URL links
+      const phishingLinks = document.querySelectorAll('.phishing-link');
+      phishingLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (currentEmailData.label === 'phishing') {
+            showPhishingResult();
+          } else {
+            // For legitimate emails, just close the popup
+            hideEmailPopup();
+            resumeGame();
+          }
+        });
+      });
+      
+      // Handle attachment clicks
+      const attachmentLinks = document.querySelectorAll('.attachment-link');
+      attachmentLinks.forEach(attachment => {
+        attachment.addEventListener('click', (e) => {
+          e.preventDefault();
+          const filename = attachment.getAttribute('data-filename');
+          console.log('Attachment clicked:', filename);
+          
+          if (currentEmailData.label === 'phishing') {
+            // Show phishing result for malicious attachments
+            showPhishingResult();
+          } else {
+            // For legitimate emails, show a safe download message or just close
+            alert('Safe attachment downloaded: ' + filename);
+            hideEmailPopup();
+            resumeGame();
+          }
+        });
+      });
+    }, 100);
+    
     // Show the email popup with options
     document.getElementById('emailPopup').style.display = 'block';
     
     // Play phishing sound
     wrongSound.currentTime = 0;
     wrongSound.volume = isMuted ? 0 : gameVolume;
+  }
+
+  // Function to show phishing result with details
+  function showPhishingResult() {
+    // Hide email popup
+    document.getElementById('emailPopup').style.display = 'none';
+    
+    // Debug: Log current email data
+    console.log('[PhishingResult] Current email data:', currentEmailData);
+    
+    // Update result popup with phishing details
+    const resultTitle = document.getElementById('resultTitle');
+    const phishingIntent = document.getElementById('phishingIntent');
+    const phishingTechnique = document.getElementById('phishingTechnique');
+    const phishingTarget = document.getElementById('phishingTarget');
+    const phishingLabel = document.getElementById('phishingLabel');
+    
+    if (resultTitle) {
+      resultTitle.innerHTML = 'You have been PHISHED!';
+      resultTitle.style.color = '#FF5555'; // Always red for phishing
+    }
+    if (phishingIntent) {
+      phishingIntent.innerHTML = currentEmailData.intent || 'Unknown Intent';
+      console.log('[PhishingResult] Set intent to:', currentEmailData.intent);
+    }
+    if (phishingTechnique) {
+      phishingTechnique.innerHTML = currentEmailData.technique || 'Unknown Technique';
+      console.log('[PhishingResult] Set technique to:', currentEmailData.technique);
+    }
+    if (phishingTarget) {
+      phishingTarget.innerHTML = currentEmailData.target || 'Unknown Target';
+      console.log('[PhishingResult] Set target to:', currentEmailData.target);
+    }
+    if (phishingLabel) {
+      phishingLabel.innerHTML = (currentEmailData.label || 'unknown').toUpperCase();
+      phishingLabel.style.color = currentEmailData.label === 'phishing' ? '#FF5555' : '#00AA00';
+      console.log('[PhishingResult] Set label to:', currentEmailData.label);
+    }
+    
+    // Update message content for phishing emails
+    const resultMessage = document.getElementById('resultMessage');
+    if (resultMessage) {
+      resultMessage.innerHTML = `
+        <p>That was a <strong>phishing email</strong>. Here's how to spot them:</p>
+        <ul style="padding-left: 20px;">
+          <li>Check the sender's email address for misspellings.</li>
+          <li>Hover over links before clicking to see the real URL.</li>
+          <li>Be suspicious of urgent requests or threats.</li>
+          <li>Look for generic greetings like "Dear Customer" instead of your name.</li>
+          <li>If it feels off, it probably is - <strong>trust your instincts!</strong></li>
+        </ul>
+        <p><strong>Stay alert. Stop. Think twice before you click!</strong></p>
+      `;
+      console.log('[PhishingResult] Updated message content for phishing email');
+    }
+    
+    // Show result popup
+    document.getElementById('resultPopup').style.display = 'block';
+    console.log('[PhishingResult] Result popup displayed');
+  }
+
+  // Function to hide email popup
+  function hideEmailPopup() {
+    document.getElementById('emailPopup').style.display = 'none';
+    popupVisible = false;
+  }
+
+  // Function to show vishing result popup with appropriate content
+  function showVishingResultPopup(isFailure) {
+    console.log('[VishingResult] Showing vishing result popup, isFailure:', isFailure);
+    
+    // Get current voice call data to determine if it was legitimate or vishing
+    const currentCall = window.currentVoiceCall || { isPhishing: true };
+    console.log('[VishingResult] Current call data:', currentCall);
+    
+    // Update the vishing result popup content
+    const vishingResultTitle = document.getElementById('vishingResultTitle');
+    const vishingResultMessage = document.getElementById('vishingResultMessage');
+    
+    if (isFailure) {
+      // Wrong choice - show educational content based on call type
+      if (currentCall.isPhishing) {
+        // Failed to identify vishing call - show vishing education
+        if (vishingResultTitle) {
+          vishingResultTitle.textContent = 'You have been VISHED!';
+          vishingResultTitle.style.color = '#FF5555'; // Red for vishing
+        }
+        
+        if (vishingResultMessage) {
+          vishingResultMessage.innerHTML = `
+            <p>That was a <strong>vishing call</strong>. Here's how to spot them:</p>
+            <ul style="padding-left: 20px;">
+              <li>Never share personal information over the phone with unknown callers.</li>
+              <li>Be suspicious of callers creating urgency or fear.</li>
+              <li>Hang up and call the official number of the company to verify legitimacy.</li>
+              <li>Don't trust caller ID - it can be spoofed.</li>
+              <li>Remember that legitimate organizations won't ask for sensitive information over the phone.</li>
+            </ul>
+            <p><strong>Stay alert. Stop. Think twice before sharing!</strong></p>
+          `;
+        }
+      } else {
+        // Failed to identify legitimate call - show legitimate call education
+        if (vishingResultTitle) {
+          vishingResultTitle.textContent = 'Oops!';
+          vishingResultTitle.style.color = '#FF5555'; // Red for wrong choice
+        }
+        
+        if (vishingResultMessage) {
+          vishingResultMessage.innerHTML = `
+            <p>That was a <strong>legitimate call</strong>. Here's how to identify safe calls:</p>
+            <ul style="padding-left: 20px;">
+              <li>Caller has your correct personal information and account details.</li>
+              <li>Call comes from a verified official number you can independently confirm.</li>
+              <li>No pressure tactics or urgent threats are used.</li>
+              <li>Request is reasonable and matches expected business communications.</li>
+              <li>You can call back through official channels to verify the request.</li>
+            </ul>
+            <p><strong>When in doubt, hang up and call the official number!</strong></p>
+          `;
+        }
+      }
+    } else {
+      // Correct choice - show positive feedback based on call type
+      if (currentCall.isPhishing) {
+        // Correctly identified vishing call
+        if (vishingResultTitle) {
+          vishingResultTitle.textContent = 'Great Job!';
+          vishingResultTitle.style.color = '#4CAF50'; // Green for success
+        }
+        
+        if (vishingResultMessage) {
+          vishingResultMessage.innerHTML = `
+            <p>You correctly identified that <strong>vishing call</strong>! Here's what gave it away:</p>
+            <ul style="padding-left: 20px;">
+              <li>Never share personal information over the phone with unknown callers.</li>
+              <li>Be suspicious of callers creating urgency or fear.</li>
+              <li>Hang up and call the official number of the company to verify legitimacy.</li>
+              <li>Don't trust caller ID - it can be spoofed.</li>
+              <li>Remember that legitimate organizations won't ask for sensitive information over the phone.</li>
+            </ul>
+            <p><strong>Stay alert. Stop. Think twice before sharing!</strong></p>
+          `;
+        }
+      } else {
+        // Correctly identified legitimate call
+        if (vishingResultTitle) {
+          vishingResultTitle.textContent = 'Great Job!';
+          vishingResultTitle.style.color = '#4CAF50'; // Green for success
+        }
+        
+        if (vishingResultMessage) {
+          vishingResultMessage.innerHTML = `
+            <p>You correctly identified that <strong>legitimate call</strong>! Here's how to spot safe calls:</p>
+            <ul style="padding-left: 20px;">
+              <li>Caller has your correct personal information and account details.</li>
+              <li>Call comes from a verified official number you can independently confirm.</li>
+              <li>No pressure tactics or urgent threats are used.</li>
+              <li>Request is reasonable and matches expected business communications.</li>
+              <li>You can call back through official channels to verify the request.</li>
+            </ul>
+            <p><strong>When in doubt, hang up and call the official number!</strong></p>
+          `;
+        }
+      }
+    }
+    
+    // Show the vishing result popup
+    const vishingResultPopup = document.getElementById('vishingResultPopup');
+    if (vishingResultPopup) {
+      vishingResultPopup.style.display = 'block';
+      popupVisible = true;
+      
+      console.log('[VishingResult] Vishing result popup displayed');
+    }
   }
   
   async function showPhoneVishingPopup() {
@@ -1259,15 +1648,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneDoItBtn = document.getElementById('phoneDoIt');
     const phoneSkipBtn = document.getElementById('phoneSkip');
     
-    // Disable the buttons until audio is done playing
-    phoneDoItBtn.disabled = true;
-    phoneSkipBtn.disabled = true;
+    // Keep buttons enabled during the call - users can interrupt anytime
+    phoneDoItBtn.disabled = false;
+    phoneSkipBtn.disabled = false;
     
-    // Add visual indication that buttons are disabled
-    phoneDoItBtn.style.opacity = '0.5';
-    phoneSkipBtn.style.opacity = '0.5';
-    phoneDoItBtn.style.cursor = 'not-allowed';
-    phoneSkipBtn.style.cursor = 'not-allowed';
+    // Ensure buttons are fully visible and clickable
+    phoneDoItBtn.style.opacity = '1';
+    phoneSkipBtn.style.opacity = '1';
+    phoneDoItBtn.style.cursor = 'pointer';
+    phoneSkipBtn.style.cursor = 'pointer';
     
     try {
       // Clean up any previously playing audio
@@ -1279,8 +1668,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Store current voice call info for button logic
       window.currentVoiceCall = voiceCallData;
       
-      // Update phone popup display with caller info
-      window.voiceCallManager.updatePhonePopupDisplay(voiceCallData.caller);
+      // Voice call popup is now ready with simplified UI (no caller info)
       
       console.log('Playing voice call:', {
         isPhishing: voiceCallData.isPhishing,
@@ -1329,15 +1717,15 @@ document.addEventListener('DOMContentLoaded', function() {
         await currentAudio.play();
       }
       
-      // Enable buttons when audio ends
+      // Show audio indicator and update call status when audio starts
+      showAudioIndicator(true);
+      updateCallStatus('PLAYING', '#00d4ff');
+      
+      // Hide audio indicator when audio ends
       currentAudio.onended = function() {
-        phoneDoItBtn.disabled = false;
-        phoneSkipBtn.disabled = false;
-        phoneDoItBtn.style.opacity = '1';
-        phoneSkipBtn.style.opacity = '1';
-        phoneDoItBtn.style.cursor = 'pointer';
-        phoneSkipBtn.style.cursor = 'pointer';
-        console.log('Voice call audio ended, buttons enabled');
+        showAudioIndicator(false);
+        updateCallStatus('WAITING FOR RESPONSE', '#ffaa00');
+        console.log('Voice call audio ended, waiting for user response');
       };
       
     } catch (error) {
@@ -1421,6 +1809,46 @@ document.addEventListener('DOMContentLoaded', function() {
       button.style.margin = '5px';
       button.style.cursor = 'pointer';
     });
+  }
+
+  // Helper functions for improved voice call UI experience
+  function updateCallStatus(status, color) {
+    const callStatusElement = document.getElementById('callStatus');
+    if (callStatusElement) {
+      callStatusElement.textContent = `🔴 ${status}`;
+      callStatusElement.style.background = color;
+    }
+  }
+
+  function showAudioIndicator(show) {
+    const audioIndicator = document.getElementById('audioIndicator');
+    if (audioIndicator) {
+      audioIndicator.style.display = show ? 'block' : 'none';
+    }
+  }
+
+  function updateCallerInfo(callerData) {
+    // Update caller name
+    const callerNameElement = document.getElementById('callerName');
+    if (callerNameElement && callerData && callerData.name) {
+      callerNameElement.textContent = callerData.name;
+    }
+    
+    // Update caller number
+    const callerNumberElement = document.getElementById('callerNumber');
+    if (callerNumberElement && callerData && callerData.number) {
+      callerNumberElement.textContent = callerData.number;
+    }
+    
+    // Update call message if available
+    const callMessageElement = document.getElementById('callMessage');
+    if (callMessageElement) {
+      if (callerData && callerData.message) {
+        callMessageElement.textContent = callerData.message;
+      } else {
+        callMessageElement.textContent = "Incoming call... Listen carefully to identify if this is legitimate or suspicious.";
+      }
+    }
   }
 
   // Initialize the game
@@ -1530,10 +1958,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneSkipBtn = document.getElementById('phoneSkip');
     
     if (phoneDoItBtn && phoneSkipBtn) {
-      // "Do what it says" button - dynamic logic based on voice call type
+      // "Safe to Accept" button - dynamic logic based on voice call type
       phoneDoItBtn.addEventListener('click', function() {
-        console.log('Phone "Do what it says" button clicked');
+        console.log('Phone "Safe to Accept" button clicked');
+        
+        // Stop any playing audio immediately when button is clicked
+        if (window.voiceCallManager && window.voiceCallManager.currentAudio) {
+          window.voiceCallManager.currentAudio.pause();
+          window.voiceCallManager.currentAudio.currentTime = 0;
+          console.log('Voice call audio stopped');
+        }
+        
+        // Hide popup and update call status
         document.getElementById('phonePopup').style.display = 'none';
+        updateCallStatus('ACCEPTED', '#00ff88');
         
         // Get current voice call data
         const currentCall = window.currentVoiceCall || { isPhishing: true }; // Default to phishing for safety
@@ -1587,7 +2025,17 @@ document.addEventListener('DOMContentLoaded', function() {
       // "Skip" button - dynamic logic based on voice call type
       phoneSkipBtn.addEventListener('click', function() {
         console.log('Phone "Skip" button clicked');
+        
+        // Stop any playing audio immediately when button is clicked
+        if (window.voiceCallManager && window.voiceCallManager.currentAudio) {
+          window.voiceCallManager.currentAudio.pause();
+          window.voiceCallManager.currentAudio.currentTime = 0;
+          console.log('Voice call audio stopped');
+        }
+        
+        // Hide popup and update call status
         document.getElementById('phonePopup').style.display = 'none';
+        updateCallStatus('DECLINED', '#ff4444');
         
         // Get current voice call data
         const currentCall = window.currentVoiceCall || { isPhishing: true }; // Default to phishing for safety
@@ -1928,7 +2376,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to show game over screen with flashy effects
   function showGameOver() {
-    console.log('Showing game over screen');
+    console.log('Showing game over screen - triggering React GameOverModal');
     
     // Pause all game elements
     stopGameLoop();
@@ -1952,167 +2400,23 @@ document.addEventListener('DOMContentLoaded', function() {
       backgroundMusic.currentTime = 0;
     }
     
-    // Create or get game over popup
-    let gameOverPopup = document.getElementById('gameOverPopup');
-    if (!gameOverPopup) {
-      gameOverPopup = document.createElement('div');
-      gameOverPopup.id = 'gameOverPopup';
-      document.body.appendChild(gameOverPopup);
-    }
-    
-    // Style the game over popup
-    gameOverPopup.style.position = 'fixed';
-    gameOverPopup.style.top = '0';
-    gameOverPopup.style.left = '0';
-    gameOverPopup.style.width = '100%';
-    gameOverPopup.style.height = '100%';
-    gameOverPopup.style.display = 'flex';
-    gameOverPopup.style.flexDirection = 'column';
-    gameOverPopup.style.justifyContent = 'center';
-    gameOverPopup.style.alignItems = 'center';
-    gameOverPopup.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
-    gameOverPopup.style.color = 'white';
-    gameOverPopup.style.zIndex = '2000'; // Higher z-index to ensure it's on top
-    gameOverPopup.style.fontFamily = '"Press Start 2P", cursive, Arial, sans-serif';
-    gameOverPopup.style.textAlign = 'center';
-    gameOverPopup.style.padding = '20px';
-    gameOverPopup.style.boxSizing = 'border-box';
-    gameOverPopup.style.backdropFilter = 'blur(3px)';
-    
-    // Game over content with pixel art style
-    gameOverPopup.innerHTML = `
-      <div style="
-        background: rgba(20, 20, 30, 0.85);
-        border: 4px solid #ff3366;
-        border-radius: 10px;
-        padding: 30px 40px;
-        box-shadow: 0 0 30px rgba(255, 51, 102, 0.6);
-        max-width: 80%;
-        position: relative;
-        overflow: hidden;
-      ">
-        <!-- Glass overlay effect -->
-        <div style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.1) 0%,
-            rgba(255, 255, 255, 0) 50%,
-            rgba(255, 255, 255, 0.1) 100%
-          );
-          pointer-events: none;
-        "></div>
-        
-        <h1 style="
-          font-size: 3rem;
-          color: #ff3366;
-          text-shadow: 3px 3px 0 #000, 5px 5px 0 #ff3366;
-          margin: 0 0 20px 0;
-          letter-spacing: 3px;
-          position: relative;
-          z-index: 1;
-          text-align: center;
-          width: 100%;
-        ">GAME OVER</h1>
-        
-        <p style="
-          font-size: 1.1rem;
-          margin-bottom: 30px;
-          line-height: 1.5;
-          color: #f0f0f0;
-          position: relative;
-          z-index: 1;
-          text-align: center;
-          width: 100%;
-        ">You've been phished! Better luck next time!</p>
-        
-        <div style="width: 100%; text-align: center; margin: 0 auto;">
-          <button id="restartButton" style="
-            background: linear-gradient(180deg, #4a6cf7 0%, #3a5bd9 100%);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-family: 'Press Start 2P', cursive, Arial, sans-serif;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-            box-shadow: 0 4px 0 #2d46b9, 0 6px 0 #1e3a8a;
-            transition: all 0.1s ease;
-            outline: none;
-            display: inline-block;
-            margin: 0 auto;
-          ">
-            <span style="position: relative; z-index: 2;">PLAY AGAIN</span>
-          <!-- Pixel art glass effect -->
-          <div style="
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(
-              135deg,
-              rgba(255, 255, 255, 0.4) 0%,
-              rgba(255, 255, 255, 0.1) 50%,
-              rgba(255, 255, 255, 0.4) 100%
-            );
-            opacity: 0.6;
-            pointer-events: none;
-          "></div>
-        </button>
-        </div>
-      </div>
-      
-      <style>
-        @keyframes pulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.02); }
-          100% { transform: scale(1); }
-        }
-        #restartButton {
-          animation: pulse 1.5s infinite;
-        }
-        #restartButton:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 0 #2d46b9, 0 8px 0 #1e3a8a;
-        }
-        #restartButton:active {
-          transform: translateY(4px);
-          box-shadow: 0 2px 0 #2d46b9, 0 4px 0 #1e3a8a;
-          background: linear-gradient(180deg, #3a5bd9 0%, #2d46b9 100%);
-        }
-      </style>
-    `;
-    
-    // Add restart button handler
-    const restartButton = document.getElementById('restartButton');
-    if (restartButton) {
-      restartButton.onclick = function() {
-        // Play decline sound on restart
-        declineSound.currentTime = 0;
-        declineSound.volume = isMuted ? 0 : gameVolume;
-        declineSound.play().catch(e => console.log('Error playing decline sound:', e));
-        
-        // Fade out the game over screen
-        gameOverPopup.style.transition = 'opacity 0.5s ease-out';
-        gameOverPopup.style.opacity = '0';
-        
-        // Remove the popup after fade out and reset the game
-        setTimeout(() => {
-          gameOverPopup.remove();
-          resetGame();
-        }, 500);
+    // Send game over message to parent React component to trigger GameOverModal
+    if (window.parent && window.parent !== window) {
+      const gameOverData = {
+        type: 'PHISH404_GAME_OVER',
+        // Use coinController.coinsCollected for score; 'score' variable does not exist here
+        score: (coinController && typeof coinController.coinsCollected === 'number') ? coinController.coinsCollected : 0,
+        // Use playerLevel for level; 'level' variable does not exist here
+        level: (typeof playerLevel === 'number' && playerLevel > 0) ? playerLevel : 1,
+        lives: lives || 0,
+        timestamp: Date.now()
       };
+      console.log('Sending game over message to parent:', gameOverData);
+      window.parent.postMessage(gameOverData, window.location.origin);
     }
+    
+    // Return early - let React GameOverModal handle the UI
+    return;
   }
   
   // Function to handle game resumption after popup
@@ -2154,21 +2458,39 @@ document.addEventListener('DOMContentLoaded', function() {
   const emailCleanBtn = document.getElementById('emailClean');
   if (emailCleanBtn) {
     emailCleanBtn.addEventListener('click', () => {
-      console.log('Email Clean button clicked - wrong choice', new Date().toISOString());
+      console.log('Email Clean button clicked', new Date().toISOString());
       document.getElementById('emailPopup').style.display = 'none';
-      wrongSound.currentTime = 0;
-      wrongSound.play();
       
-      // Use the safe decrement function
-      const lifeLost = decrementLife();
-      
-      if (lifeLost) {
-        console.log('Showing result popup after life loss');
-        showResultPopup(true);
-      } else if (gameOver) {
-        console.log('Game over already triggered');
+      // Check if this is a legitimate or phishing email
+      if (currentEmailData && currentEmailData.label === 'legitimate') {
+        // Correct action for legitimate email
+        console.log('Correct choice - legitimate email marked as clean');
+        correctSound.currentTime = 0;
+        correctSound.play();
+        
+        // Add 10 coins for correct answer
+        coinController.coinsCollected += 10;
+        document.getElementById('coinCount').textContent = coinController.coinsCollected;
+        
+        // Show legitimate email tips
+        showLegitimateEmailResult();
       } else {
-        console.error('Failed to process life loss');
+        // Wrong action for phishing email
+        console.log('Wrong choice - phishing email marked as clean');
+        wrongSound.currentTime = 0;
+        wrongSound.play();
+        
+        // Use the safe decrement function
+        const lifeLost = decrementLife();
+        
+        if (lifeLost) {
+          console.log('Showing result popup after life loss');
+          showPhishingResult();
+        } else if (gameOver) {
+          console.log('Game over already triggered');
+        } else {
+          console.error('Failed to process life loss');
+        }
       }
     });
   } else {
@@ -2190,7 +2512,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (lifeLost) {
         console.log('Showing result popup after phishing link click');
-        showResultPopup(true);
+        showPhishingResult();
       } else if (gameOver) {
         console.log('Game over already triggered from phishing link');
       } else {
@@ -2204,21 +2526,46 @@ document.addEventListener('DOMContentLoaded', function() {
   const emailMaliciousBtn = document.getElementById('emailMalicious');
   if (emailMaliciousBtn) {
     emailMaliciousBtn.addEventListener('click', () => {
-      console.log('Email Malicious button clicked - correct choice');
+      console.log('Email Malicious button clicked');
       document.getElementById('emailPopup').style.display = 'none';
-      correctSound.currentTime = 0;
-      correctSound.play();
       
-      // Add 10 coins for correct answer
-      coinController.coinsCollected += 10;
-      document.getElementById('coinCount').textContent = coinController.coinsCollected;
-      
-      // Increase player level for correct answer
-      increasePlayerLevel();
-      
-      // Don't show result popup for correct answers, just resume the game
+      // Check if this is a legitimate or phishing email
+      if (currentEmailData && currentEmailData.label === 'phishing') {
+        // Correct action for phishing email
+        console.log('Correct choice - phishing email reported');
+        correctSound.currentTime = 0;
+        correctSound.play();
+        
+        // Add 10 coins for correct answer
+        coinController.coinsCollected += 10;
+        document.getElementById('coinCount').textContent = coinController.coinsCollected;
+        
+        // Increase player level for correct answer
+        playerLevel++;
+        console.log(`Player leveled up to level ${playerLevel}`);
+        
+        // Show phishing education result
+        showPhishingResult();
+      } else {
+        // Wrong action for legitimate email
+        console.log('Wrong choice - legitimate email reported as malicious');
+        wrongSound.currentTime = 0;
+        wrongSound.play();
+        
+        // Use the safe decrement function
+        const lifeLost = decrementLife();
+        
+        if (lifeLost) {
+          console.log('Showing result popup after life loss');
+          showLegitimateEmailResult();
+        } else if (gameOver) {
+          console.log('Game over already triggered');
+        } else {
+          console.error('Failed to process life loss');
+        }
+      }
       resumeGameAfterPopup();
-    });
+    });  
   } else {
     console.error('Email Malicious button not found');
   }
@@ -2243,5 +2590,6 @@ document.addEventListener('DOMContentLoaded', function() {
   window.player = player;
   window.lives = lives;
   window.updateLivesDisplay = updateLivesDisplay;
+  window.decrementLife = decrementLife;
   console.log('Game controllers exposed to window scope for game-fixes.js');
 });

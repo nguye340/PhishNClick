@@ -44,7 +44,7 @@ class VoiceCallManager {
   async fetchRandomVoiceCall() {
     try {
       console.log('🔍 Fetching voice call from API...');
-      const response = await fetch('/api/voice/random');
+      const response = await fetch('http://localhost:5000/api/voice-calls/random');
       console.log('📡 API Response status:', response.status);
       
       const result = await response.json();
@@ -136,8 +136,20 @@ class VoiceCallManager {
     // Convert base64 audio to playable URL
     const audioUrl = this.base64ToAudioUrl(voiceCallData.audioBase64);
     
+    // Debug: Log voice call details to identify repetition
+    console.log('🎵 Voice call details:', {
+      filename: voiceCallData.filename || 'unknown',
+      originalName: voiceCallData.originalName || 'unknown',
+      description: voiceCallData.description || 'no description',
+      isPhishing: voiceCallData.isPhishing,
+      caller: voiceCallData.caller,
+      audioBase64Length: voiceCallData.audioBase64 ? voiceCallData.audioBase64.length : 0,
+      audioUrlGenerated: !!audioUrl
+    });
+    
     if (!audioUrl) {
       // Fallback if conversion fails
+      console.log('❌ Audio URL conversion failed, using fallback');
       return {
         audioUrl: '/games/phish404/audio/vishing.mp3',
         isPhishing: true,
@@ -166,7 +178,7 @@ class VoiceCallManager {
   // Get the correct choice for current voice call
   getCorrectChoice(isPhishing) {
     // If phishing: "Skip" is correct
-    // If non-phishing: "Do what it says" is correct
+    // If non-phishing: "Safe to Accept" is correct
     return isPhishing ? 'skip' : 'doIt';
   }
 

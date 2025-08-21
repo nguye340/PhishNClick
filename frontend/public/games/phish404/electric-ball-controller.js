@@ -67,7 +67,7 @@ class ElectricBallController {
     this.impactEffects = [];
     
     // Debug settings
-    this.showHitboxDebug = true; // Set to false to hide hitbox
+    this.showHitboxDebug = false; // Set to false to hide hitbox
     
     console.log('ELECTRIC BALL: Controller initialized');
   }

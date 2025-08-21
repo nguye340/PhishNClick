@@ -21,7 +21,7 @@ export default function Home() {
       <GameModes />
       <Features />
       <ReadyPlayer />
-      <Footer />
+      {/* <Footer /> */}
     </main>
   )
 }

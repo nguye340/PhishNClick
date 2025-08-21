@@ -82,33 +82,112 @@
     </div>
 
     <div id="shootBlocker"></div>
+    
+    <!-- Duck Email Modal -->
+    <div id="duckEmailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+        <div class="email-modal-content" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; border: 2px solid #00ffff; border-radius: 10px; padding: 20px; max-width: 600px; width: 90%;">
+            <div class="email-header" style="border-bottom: 1px solid #00ffff; padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="color: #00ffff; margin: 0;">📧 EMAIL CONTENT</h3>
+                <button id="closeEmailModal" style="float: right; background: #ff4757; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px;">✕</button>
+            </div>
+            <div class="email-body">
+                <div class="email-field">
+                    <strong style="color: #ffd700;">From:</strong>
+                    <span id="emailFrom" style="color: #ffffff; margin-left: 10px;"></span>
+                </div>
+                <div class="email-field" style="margin-top: 10px;">
+                    <strong style="color: #ffd700;">Subject:</strong>
+                    <span id="emailSubject" style="color: #ffffff; margin-left: 10px;"></span>
+                </div>
+                <div class="email-field" style="margin-top: 15px;">
+                    <strong style="color: #ffd700;">Message:</strong>
+                    <div id="emailMessage" style="color: #ffffff; margin-top: 10px; padding: 10px; background: #0f0f23; border-radius: 5px; line-height: 1.4;"></div>
+                </div>
+                <div class="email-field" style="margin-top: 15px;">
+                    <strong style="color: #ffd700;">Threat Level:</strong>
+                    <span id="emailThreatLevel" style="margin-left: 10px; padding: 3px 8px; border-radius: 3px;"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Enlargement Modal -->
+    <div id="emailEnlargeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; border: 3px solid #ff4757; border-radius: 15px; padding: 30px; max-width: 80%; width: 600px; max-height: 80%; overflow-y: auto;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #ff4757; margin: 0; font-size: 24px; font-weight: bold;">MALICIOUS EMAIL DETECTED</h2>
+                <p style="color: #ffd700; margin: 10px 0; font-size: 16px;">You successfully identified this phishing attempt!</p>
+            </div>
+            <div id="enlargedEmailContent" style="background: #0f0f23; padding: 20px; border-radius: 10px; border: 1px solid #00ffff;">
+                <!-- Email content will be populated here -->
+            </div>
+            <button id="closeEnlargeModal" style="display: block; margin: 20px auto 0; background: #00ffff; color: #000; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 8px;">CONTINUE HUNTING</button>
+        </div>
+    </div>
 
     <div id="overlay">
         <div class="resultsBox">
             <h3 style="color:rgb(0, 225, 255)">Game Over!</h3>
-            <table>
-                <tr>
-                    <td>YOUR POINTS</td>
-                    <td id="pointsSummary"></td>
-                </tr>
-                <tr>
-                    <td>ROUND</td>
-                    <td id="roundSummary"></td>
-                </tr>
-                <tr>
-                    <td>SUCCESSFUL REPORTS</td>
-                    <td id="shotsSummary"></td>
-                </tr>
-                <tr>
-                    <td>ACCURACY</td>
-                    <td id="accuracySummary"></td>
-                </tr>
+            
+            <!-- Page 1: Performance Summary -->
+            <div id="reportPage1" class="report-page">
+                <div class="report-section">
+                    <h4 style="color:rgb(255, 215, 0); margin-bottom: 15px; font-size: 18px; font-weight: bold;">PERFORMANCE SUMMARY</h4>
+                    <table style="width: 100%; font-size: 14px; line-height: 1.6;">
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">Your Points</td>
+                            <td id="pointsSummary" style="padding: 8px 0; text-align: right; color: #00ffff;"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">Round Reached</td>
+                            <td id="roundSummary" style="padding: 8px 0; text-align: right; color: #00ffff;"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">Phishing Emails Caught</td>
+                            <td id="shotsSummary" style="padding: 8px 0; text-align: right; color: #00ffff;"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">Accuracy Rate</td>
+                            <td id="accuracySummary" style="padding: 8px 0; text-align: right; color: #00ffff;"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">Total Shots Fired</td>
+                            <td id="totalShotsSummary" style="padding: 8px 0; text-align: right; color: #00ffff;"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; font-weight: bold;">Emails Escaped</td>
+                            <td id="emailsEscapedSummary" style="padding: 8px 0; text-align: right; color: #00ffff;"></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="navigation-buttons" style="margin-top: 25px; text-align: center;">
+                    <button id="nextPageButton" style="background: #ffd700; color: #000; border: none; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 8px; margin-right: 10px;">VIEW ASSESSMENT</button>
+                </div>
+            </div>
 
-            </table>
+            <!-- Page 2: Security Assessment & Tips -->
+            <div id="reportPage2" class="report-page" style="display: none;">
+                <div class="report-section">
+                    <h4 style="color:rgb(0, 255, 127); margin-bottom: 15px; font-size: 18px; font-weight: bold;">SECURITY ASSESSMENT</h4>
+                    <div id="securityAssessment" style="font-size: 14px; line-height: 1.6; margin-bottom: 20px;"></div>
+                </div>
+                
+                <div class="report-section">
+                    <h4 style="color:rgb(255, 105, 180); margin-bottom: 15px; font-size: 18px; font-weight: bold;">IMPROVEMENT RECOMMENDATIONS</h4>
+                    <div id="improvementTips" style="font-size: 14px; line-height: 1.6;"></div>
+                </div>
+                
+                <div class="navigation-buttons" style="margin-top: 25px; text-align: center;">
+                    <button id="prevPageButton" style="background: #666; color: #fff; border: none; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 8px; margin-right: 10px;">BACK TO STATS</button>
+                </div>
+            </div>
 
-            <h3 id="playAgainButton" class="cursorChange" onClick="window.location.reload()">PLAY AGAIN</h3>
-            <h3 id="homeButton" class="cursorChange" onClick="window.location.href='/'">BACK TO HOME</h3>
-        
+            <div class="action-buttons" style="margin-top: 25px; text-align: center;">
+                <h3 id="playAgainButton" class="cursorChange" onClick="window.location.reload()" style="margin: 10px; padding: 12px 20px; background: #00ffff; color: #000; border-radius: 8px; display: inline-block; font-size: 16px;">PLAY AGAIN</h3>
+                <h3 id="nextGameButton" class="cursorChange" onClick="window.location.href='/games/hooked-or-cooked'" style="margin: 10px; padding: 12px 20px; background: rgb(0, 255, 127); color: #000; border-radius: 8px; display: inline-block; font-size: 16px;">NEXT GAME</h3>
+                <h3 id="homeButton" class="cursorChange" onClick="window.parent.location.href='/'" style="margin: 10px; padding: 12px 20px; background: #666; color: #fff; border-radius: 8px; display: inline-block; font-size: 16px;">BACK TO HOME</h3>
+            </div>
         </div>
     </div>
 

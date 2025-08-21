@@ -1083,6 +1083,24 @@
         <button class="btn btn-catch" onclick="restartGame()">🔄 Play Again</button>
         <button class="btn btn-drop" onclick="goHome()">🏠 Home</button>
       </div>
+      
+      <!-- Practice Options Section -->
+      <div class="practice-section" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(255,255,255,0.3);">
+        <h3 style="color: #ffd700; margin-bottom: 15px;">🎯 Need More Practice?</h3>
+        <p style="font-size: 14px; margin-bottom: 15px; color: #e0e0e0;">Sharpen your skills with these training games:</p>
+        <div class="practice-buttons" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+          <button class="btn" style="background: #ff6b6b; border: none; padding: 8px 12px; font-size: 12px;" onclick="window.location.href='/games/popup-manic'">🎮 Popup Manic</button>
+          <button class="btn" style="background: #4ecdc4; border: none; padding: 8px 12px; font-size: 12px;" onclick="window.location.href='/games/phish404'">📧 Phish404</button>
+          <button class="btn" style="background: #45b7d1; border: none; padding: 8px 12px; font-size: 12px;" onclick="window.location.href='/games/phish-hunt'">🦆 Phish Hunt</button>
+        </div>
+        
+        <!-- Quiz Readiness Prompt -->
+        <div class="quiz-prompt" style="background: rgba(0,255,127,0.1); border: 2px solid #00ff7f; border-radius: 10px; padding: 15px; margin-top: 15px;">
+          <h4 style="color: #00ff7f; margin: 0 0 10px 0;">🎓 Ready for Final Assessment?</h4>
+          <p style="font-size: 13px; margin: 0 0 15px 0; color: #e0e0e0;">Test your cybersecurity knowledge with our comprehensive quiz!</p>
+          <button class="btn" style="background: #00ff7f; color: #000; font-weight: bold; padding: 10px 20px;" onclick="window.location.href='/assessment/final-quiz'">📝 Take Final Quiz</button>
+        </div>
+      </div>
     </div>
   </div>
   
@@ -1144,6 +1162,43 @@
       <div class="report-buttons">
         <button class="btn btn-catch" onclick="restartGame()">🔄 Play Again</button>
         <button class="btn btn-drop" onclick="goHome()">🏠 Home</button>
+      </div>
+      
+      <!-- Practice Options Section for Report -->
+      <div class="practice-section" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid rgba(255,255,255,0.2);">
+        <div class="section-title">🎯 Continue Training</div>
+        <p style="font-size: 14px; margin-bottom: 20px; color: #b0b0b0; text-align: center;">Improve your cybersecurity skills with additional practice:</p>
+        
+        <div class="practice-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+          <div class="practice-card" style="background: rgba(255,107,107,0.2); border: 1px solid #ff6b6b; border-radius: 8px; padding: 15px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 8px;">🎮</div>
+            <h4 style="color: #ff6b6b; margin: 0 0 8px 0; font-size: 14px;">Popup Manic</h4>
+            <p style="font-size: 12px; color: #d0d0d0; margin: 0 0 12px 0;">Practice identifying malicious popups</p>
+            <button class="btn" style="background: #ff6b6b; border: none; padding: 6px 12px; font-size: 12px;" onclick="window.location.href='/games/popup-manic'">Practice</button>
+          </div>
+          
+          <div class="practice-card" style="background: rgba(78,205,196,0.2); border: 1px solid #4ecdc4; border-radius: 8px; padding: 15px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 8px;">📧</div>
+            <h4 style="color: #4ecdc4; margin: 0 0 8px 0; font-size: 14px;">Phish404</h4>
+            <p style="font-size: 12px; color: #d0d0d0; margin: 0 0 12px 0;">Advanced email phishing detection</p>
+            <button class="btn" style="background: #4ecdc4; border: none; padding: 6px 12px; font-size: 12px;" onclick="window.location.href='/games/phish404'">Practice</button>
+          </div>
+          
+          <div class="practice-card" style="background: rgba(69,183,209,0.2); border: 1px solid #45b7d1; border-radius: 8px; padding: 15px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 8px;">🦆</div>
+            <h4 style="color: #45b7d1; margin: 0 0 8px 0; font-size: 14px;">Phish Hunt</h4>
+            <p style="font-size: 12px; color: #d0d0d0; margin: 0 0 12px 0;">Hunt down phishing emails quickly</p>
+            <button class="btn" style="background: #45b7d1; border: none; padding: 6px 12px; font-size: 12px;" onclick="window.location.href='/games/phish-hunt'">Practice</button>
+          </div>
+        </div>
+        
+        <!-- Enhanced Quiz Readiness Prompt -->
+        <div class="quiz-prompt" style="background: linear-gradient(135deg, rgba(0,255,127,0.1) 0%, rgba(0,200,100,0.1) 100%); border: 2px solid #00ff7f; border-radius: 12px; padding: 20px; text-align: center;">
+          <div style="font-size: 32px; margin-bottom: 10px;">🎓</div>
+          <h3 style="color: #00ff7f; margin: 0 0 10px 0;">Ready for Your Final Assessment?</h3>
+          <p style="font-size: 14px; margin: 0 0 20px 0; color: #e0e0e0;">Complete your cybersecurity training with our comprehensive 15-question quiz. Test everything you've learned!</p>
+          <button class="btn" style="background: linear-gradient(135deg, #00ff7f 0%, #00cc66 100%); color: #000; font-weight: bold; padding: 12px 25px; font-size: 14px; border-radius: 25px; border: none; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="window.location.href='/assessment/final-quiz'">📝 Take Final Quiz</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2322,7 +2377,7 @@
     }
 
     function goHome() {
-      window.location.href = '/';
+      window.parent.location.href = '/';
     }
     
     function goToLearn() {

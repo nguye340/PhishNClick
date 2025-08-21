@@ -1,0 +1,10 @@
+Vishing Audio Sample Transcript:
+
+"Hello, this is Sarah from your bank's security department. We've detected suspicious activity on your account and need to verify your identity immediately. For your protection, please provide your account number, PIN, and the security code from the back of your card. If you don't verify within the next 10 minutes, we'll have to freeze your account. Can you please give me those details now?"
+
+This is a classic vishing (voice phishing) attack that uses:
+- Urgency and fear tactics
+- Impersonation of a trusted institution
+- Request for sensitive information
+- Threats of account closure
+- Social engineering to bypass security awareness

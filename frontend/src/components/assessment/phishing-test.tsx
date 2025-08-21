@@ -440,20 +440,41 @@ export function PhishingTest({ questions: providedQuestions }: PhishingTestProps
                 FINAL SCORE: {score}/{totalQuestions}
               </p>
 
-              <p className="text-gray-300 mb-8">
+              <p className="text-gray-300 mb-8 font-mono">
                 {score >= totalQuestions / 2 
                   ? "Great job! You're well on your way to becoming a phishing detection expert." 
                   : "You need more practice with identifying phishing attempts. Don't worry, with more training you'll improve!"}
               </p>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="font-arcade text-lg px-8 py-4 bg-arcade-magenta text-black rounded-lg hover:bg-opacity-90 transition-colors hover:cursor-arcade"
-                onClick={handleContinue}
-              >
-                RETURN HOME
-              </motion.button>
+              {/* Encouragement text */}
+              <p className="text-arcade-cyan text-sm font-arcade text-center mb-6">
+                {score >= totalQuestions / 2 
+                  ? "Ready to put your skills to the test? Dive into our interactive training modules!" 
+                  : "Let's improve your skills! Start with our first training module to practice in a safe environment."}
+              </p>
+
+              {/* Action buttons */}
+              <div className="flex flex-col gap-4">
+                {/* Start Training button - primary action */}
+                <motion.button
+                  whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(0, 255, 0, 0.5)" }}
+                  whileTap={{ scale: 0.95 }}
+                  className="font-arcade text-lg px-8 py-4 bg-arcade-green text-black rounded-lg hover:bg-opacity-90 transition-all duration-300 hover:cursor-arcade border-2 border-transparent hover:border-arcade-cyan"
+                  onClick={() => router.push('/games/popup-manic')}
+                >
+                  START TRAINING
+                </motion.button>
+
+                {/* Return Home button - secondary action */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="font-arcade text-lg px-8 py-4 bg-arcade-magenta text-black rounded-lg hover:bg-opacity-90 transition-colors hover:cursor-arcade"
+                  onClick={handleContinue}
+                >
+                  RETURN HOME
+                </motion.button>
+              </div>
             </div>
           </div>
           

@@ -56,11 +56,11 @@ export function DashboardHeader() {
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="w-8 h-8 relative">
             <Image 
-              src="/img/catphish_white_centered.svg" 
-              alt="Phish" 
+              src="/games/phish404/img/cat2.png" 
+              alt="PhishNClick Cat Logo" 
               fill 
-              className="text-arcade-cyan"
-              style={{ filter: "brightness(1.2) hue-rotate(180deg)" }}
+              className="text-arcade-cyan object-contain"
+              style={{ filter: "brightness(1.2)" }}
             />
           </div>
           <span style={{...arcadeFontStyle, ...textStyle}} className="text-arcade-cyan">PHISH N CLICK</span>

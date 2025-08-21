@@ -370,10 +370,10 @@ class VoiceCallController {
     try {
       console.log('Getting random phishing voice...');
       
-      // Use MongoDB aggregation to get a random document
-      const voices = await PhishingVoice.aggregate([{ $sample: { size: 1 } }]);
+      // First get the total count of phishing voices
+      const totalCount = await PhishingVoice.countDocuments({ isActive: { $ne: false } });
       
-      if (!voices || voices.length === 0) {
+      if (totalCount === 0) {
         console.log('No phishing voices found in database');
         return res.status(404).json({
           success: false,
@@ -381,8 +381,25 @@ class VoiceCallController {
         });
       }
       
-      const voice = voices[0];
-      console.log('Found random phishing voice:', voice.originalName);
+      // Generate a truly random index
+      const randomIndex = Math.floor(Math.random() * totalCount);
+      console.log(`🎲 RANDOMIZATION DEBUG: Selecting phishing voice ${randomIndex + 1} of ${totalCount} total voices`);
+      console.log(`🎲 Random calculation: Math.random()=${Math.random().toFixed(4)}, totalCount=${totalCount}, randomIndex=${randomIndex}`);
+      
+      // Use skip() with the random index to get a truly random document
+      const voice = await PhishingVoice.findOne({ isActive: { $ne: false } })
+        .skip(randomIndex)
+        .lean(); // Use lean() for better performance
+      
+      if (!voice) {
+        console.log('No phishing voice found at random index');
+        return res.status(404).json({
+          success: false,
+          message: 'No phishing voice found'
+        });
+      }
+      
+      console.log('Found random phishing voice:', voice.originalName, `(index ${randomIndex})`);
       
       // Increment usage counter
       await PhishingVoice.findByIdAndUpdate(voice._id, {
@@ -392,7 +409,7 @@ class VoiceCallController {
       
       // Map audioData to audioBase64 for frontend compatibility
       const responseData = {
-        ...voice.toObject(),
+        ...voice,
         audioBase64: voice.audioData // Map audioData to audioBase64
       };
       
@@ -418,10 +435,10 @@ class VoiceCallController {
     try {
       console.log('Getting random non-phishing voice...');
       
-      // Use MongoDB aggregation to get a random document
-      const voices = await NonPhishingVoice.aggregate([{ $sample: { size: 1 } }]);
+      // First get the total count of non-phishing voices
+      const totalCount = await NonPhishingVoice.countDocuments({ isActive: { $ne: false } });
       
-      if (!voices || voices.length === 0) {
+      if (totalCount === 0) {
         console.log('No non-phishing voices found in database');
         return res.status(404).json({
           success: false,
@@ -429,8 +446,25 @@ class VoiceCallController {
         });
       }
       
-      const voice = voices[0];
-      console.log('Found random non-phishing voice:', voice.originalName);
+      // Generate a truly random index
+      const randomIndex = Math.floor(Math.random() * totalCount);
+      console.log(`🎲 RANDOMIZATION DEBUG: Selecting non-phishing voice ${randomIndex + 1} of ${totalCount} total voices`);
+      console.log(`🎲 Random calculation: Math.random()=${Math.random().toFixed(4)}, totalCount=${totalCount}, randomIndex=${randomIndex}`);
+      
+      // Use skip() with the random index to get a truly random document
+      const voice = await NonPhishingVoice.findOne({ isActive: { $ne: false } })
+        .skip(randomIndex)
+        .lean(); // Use lean() for better performance
+      
+      if (!voice) {
+        console.log('No non-phishing voice found at random index');
+        return res.status(404).json({
+          success: false,
+          message: 'No non-phishing voice found'
+        });
+      }
+      
+      console.log('Found random non-phishing voice:', voice.originalName, `(index ${randomIndex})`);
       
       // Increment usage counter
       await NonPhishingVoice.findByIdAndUpdate(voice._id, {
@@ -440,7 +474,7 @@ class VoiceCallController {
       
       // Map audioData to audioBase64 for frontend compatibility
       const responseData = {
-        ...voice.toObject(),
+        ...voice,
         audioBase64: voice.audioData // Map audioData to audioBase64
       };
       

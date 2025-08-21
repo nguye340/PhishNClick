@@ -16,5 +16,7 @@ function launchApplication() {
     }
 
     startScreen.hideStartScreen();
+    // Make game instance globally available for pause/resume functionality
+    window.gameInstance = selectedMode;
     selectedMode.startGame();
 }

@@ -13,6 +13,9 @@ class Game{
         this.newRoundTimeout;
         this.totalSuccessfulHits = 0;
         this.totalShotsNumber = 0;
+        // Additional statistics for enhanced reporting
+        this.emailsEscaped = 0;
+        this.gameStartTime = Date.now();
     }
 
     startGame(){
@@ -42,7 +45,7 @@ class Game{
 
     finishRound(){
         this.stopCountdownToRoundEnd();
-        this.shotHandler.disablehooting();
+        this.shotHandler.disableShooting();
         this.ducksHandler.removeRemainingDucks();
         this.dog2.showDogWithKilledDucks(this.ducksHandler.ducksKilledInRound);
         this.newRoundTimeout = setTimeout(() => this.startNewRound(), 2000);        
@@ -61,10 +64,8 @@ class Game{
         if (this.lives < 1) {this.finishGame();}
     }
     
-    finishGame(){
-        window.clearTimeout(this.newRoundTimeout);
-        let accuracy = Math.round(this.totalSuccessfulHits/this.totalShotsNumber*100);
-        displayEndScreen(this.pointsHandler, this.totalSuccessfulHits, accuracy);
+    gameOver(){
+        this.finishGame();
     }
     
     startNewRound(){
@@ -84,6 +85,76 @@ class Game{
     setCountdownToRoundEnd(){
         let timeToRoundEnd = this.duckMovesNumber*1000;
         this.roundEndCountdown = setTimeout(() => this.finishRound(), timeToRoundEnd);
+    }
+    
+    finishGame(){
+        window.clearTimeout(this.newRoundTimeout);
+        let accuracy = Math.round(this.totalSuccessfulHits/this.totalShotsNumber*100) || 0;
+        
+        // Calculate emails escaped (ducks that flew away)
+        this.emailsEscaped = this.ducksHandler.ducks.filter(duck => !duck.isAlive && !duck.wasShot).length;
+        
+        displayEndScreen(
+            this.pointsHandler, 
+            this.totalSuccessfulHits, 
+            accuracy, 
+            this.totalShotsNumber,
+            this.emailsEscaped
+        );
+    }
+
+    pauseGame() {
+        // Store the current state
+        this.isPaused = true;
+        
+        // Stop all duck movements
+        if (this.ducksHandler && this.ducksHandler.ducks) {
+            this.ducksHandler.ducks.forEach(duck => {
+                if (duck.isAlive) {
+                    duck.pauseMovement();
+                }
+            });
+        }
+        
+        // Stop countdown if running
+        if (this.roundEndCountdown) {
+            clearTimeout(this.roundEndCountdown);
+            this.pausedCountdownTime = Date.now();
+        }
+        
+        // Disable shooting
+        this.shotHandler.disableShooting();
+        
+        console.log("Game paused");
+    }
+
+    resumeGame() {
+        if (!this.isPaused) return;
+        
+        this.isPaused = false;
+        
+        // Resume duck movements
+        if (this.ducksHandler && this.ducksHandler.ducks) {
+            this.ducksHandler.ducks.forEach(duck => {
+                if (duck.isAlive) {
+                    duck.resumeMovement();
+                }
+            });
+        }
+        
+        // Resume countdown if it was running
+        if (this.pausedCountdownTime) {
+            const remainingTime = this.roundEndCountdown - (this.pausedCountdownTime - this.roundStartTime);
+            if (remainingTime > 0) {
+                this.roundEndCountdown = setTimeout(() => this.finishRound(), remainingTime);
+            }
+            this.pausedCountdownTime = null;
+        }
+        
+        // Enable shooting
+        this.shotHandler.enableShooting();
+        
+        console.log("Game resumed");
     }
 }
 
@@ -136,7 +207,7 @@ class ExtremeGame extends Game{
     finishRound(){
         this.stopAutoShooting();
         this.stopCountdownToRoundEnd();
-        this.shotHandler.disablehooting();
+        this.shotHandler.disableShooting();
         this.ducksHandler.removeRemainingDucks();
         this.dog2.showDogWithKilledDucks(this.ducksHandler.ducksKilledInRound);
         this.newRoundTimeout = setTimeout(() => this.startNewRound(), 2000);   
