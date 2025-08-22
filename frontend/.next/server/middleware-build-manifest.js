@@ -5,7 +5,11 @@ self.__BUILD_MANIFEST = {
   "devFiles": [],
   "ampDevFiles": [],
   "lowPriorityFiles": [],
-  "rootMainFiles": [],
+  "rootMainFiles": [
+    "static/chunks/webpack.js",
+    "static/chunks/framework.js",
+    "static/chunks/main-app.js"
+  ],
   "pages": {
     "/_app": []
   },
