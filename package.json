@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build": "npm run frontend:build",
     "frontend:dev": "cd frontend && npm run dev",
     "frontend:build": "cd frontend && npm run build",
     "frontend:start": "cd frontend && npm run start",
     "backend:dev": "cd backend && npm run dev",
     "backend:start": "cd backend && npm run start",
     "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
-    "build": "npm run frontend:build",
     "start": "concurrently \"npm run backend:start\" \"npm run frontend:start\"",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "lint": "next lint"
