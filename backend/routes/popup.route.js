@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { getAllPopups, getRandomPopup, createPopup, updatePopup, deletePopup, getPopupsByCategory, getPopupsByCategoryAndSubtype } from '../controllers/popup.controller.js';
 
-import auth from '../middleware/auth.js';
+import auth from '../middleware/auth.middleware.js';
 
 const router = Router();
 

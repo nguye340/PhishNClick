@@ -1,21 +1,16 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
-import Link from "next/link"
+import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
-import { Fish, LogIn, User, Settings, Info } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { FlickeringTitle } from "./flickering-title"
-import Image from "next/image"
-import { AboutUsModal } from "../modals/about-us-modal"
+import { Navbar } from "../layout/navbar"
 
 export function LandingHero() {
   const router = useRouter()
   const [isButtonPressed, setIsButtonPressed] = useState(false)
-  const [isLoginPressed, setIsLoginPressed] = useState(false)
-  const [showAboutModal, setShowAboutModal] = useState(false)
   const coinSoundRef = React.useRef<HTMLAudioElement | null>(null);
 
   // Initialize audio element
@@ -64,30 +59,6 @@ export function LandingHero() {
     setTimeout(cleanupCursor, 950);
   }
 
-  const handleLogin = () => {
-    setIsLoginPressed(true)
-    
-    // Clean up cursor before navigation to prevent double cursor
-    const cleanupCursor = () => {
-      // Remove any existing animation frames
-      const rafIds: number[] = [];
-      let rafId = requestAnimationFrame(function cleanup() {
-        const nextRafId = requestAnimationFrame(cleanup);
-        rafIds.push(nextRafId);
-      });
-      rafIds.push(rafId);
-      
-      // Cancel all animation frames after a short delay
-      setTimeout(() => {
-        rafIds.forEach(id => cancelAnimationFrame(id));
-        // Navigate to the next page
-        router.push("/auth/login");
-      }, 50);
-    };
-    
-    // Navigate after a short delay to allow the animation to play
-    setTimeout(cleanupCursor, 950);
-  }
 
   useGSAP(() => {
     gsap.from(".hero-content", {
@@ -100,52 +71,8 @@ export function LandingHero() {
 
   return (
     <>
+      <Navbar />
       <section className="min-h-screen relative overflow-hidden">
-        {/* Navigation */}
-        <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-arcade-bg/95 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="relative w-8 h-8">
-                <Image 
-                  src="/img/catphish_white.svg" 
-                  alt="Catphish Logo" 
-                  fill 
-                  className="object-contain filter drop-shadow-glow-cyan"
-                />
-              </div>
-              <span className="font-arcade text-arcade-cyan glow-heading">CatPhish</span>
-            </Link>
-
-            <div className="flex items-center gap-6">
-              <button 
-                onClick={() => setShowAboutModal(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded text-arcade-yellow hover:text-arcade-cyan transition-colors"
-              >
-                <Info className="w-4 h-4" />
-                <span className="font-terminal text-sm">About Us</span>
-              </button>
-              {/* Temporarily hidden - Login button */}
-              {/* <button 
-                onClick={handleLogin}
-                className={`flex items-center gap-2 px-4 py-2 rounded border border-arcade-cyan text-arcade-cyan hover:bg-arcade-cyan hover:text-black transition-colors group vhs-effect ${isLoginPressed ? 'active' : ''}`}
-              >
-                <LogIn className="w-4 h-4" />
-                <span className="font-terminal text-sm">Login</span>
-              </button> */}
-              {/* Temporarily hidden - Register button */}
-              {/* <Link 
-                href="/auth/register" 
-                className="flex items-center gap-2 px-4 py-2 rounded bg-arcade-magenta text-black hover:bg-opacity-90 transition-colors vhs-effect"
-              >
-                <User className="w-4 h-4" />
-                <span className="font-terminal text-sm">Register</span>
-              </Link> */}
-              <button className="hover:text-arcade-cyan transition-colors">
-                <Settings className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </nav>
 
         {/* Hero Content */}
         <div className="relative pt-24 flex min-h-screen items-center">
@@ -178,15 +105,6 @@ export function LandingHero() {
                   <div className="vhs-noise"></div>
                   <div className="vhs-glitch"></div>
                 </button>
-                {/* Temporarily hidden - Large Login button */}
-                {/* <button 
-                  onClick={handleLogin}
-                  className={`login-button relative font-arcade text-xl px-10 py-5 border-2 border-arcade-cyan text-arcade-cyan rounded-lg transition-colors group ${isLoginPressed ? 'active' : ''}`}
-                >
-                  <span className="relative z-10 vhs-aberration glow-heading">Login</span>
-                  <div className="vhs-noise"></div>
-                  <div className="vhs-glitch"></div>
-                </button> */}
               </div>
 
               <div className="hero-content flex items-center justify-center gap-12 text-lg font-terminal vhs-text">
@@ -203,11 +121,6 @@ export function LandingHero() {
           </div>
         </div>
       </section>
-      
-      <AboutUsModal 
-        isOpen={showAboutModal} 
-        onClose={() => setShowAboutModal(false)} 
-      />
     </>
   )
 }

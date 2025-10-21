@@ -46,7 +46,8 @@ export default function ModernPopupFetcher({ onPopupInteraction }: ModernPopupFe
       try {
         setLoading(true)
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-        const response = await axios.get(`${baseUrl}/api/popups/random`)
+        console.log('[ModernPopupFetcher] Fetching from:', `${baseUrl}/api/popup/random`)
+        const response = await axios.get(`${baseUrl}/api/popup/random`)
         
         if (response.data && response.data.data) {
           setPopup(response.data.data)

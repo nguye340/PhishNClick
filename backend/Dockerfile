@@ -1,12 +1,17 @@
 # prebuild config
-FROM node:18-bookworm-slim
+FROM node:20-bookworm-slim
 
+ENV NODE_ENV=production
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci
+# Use clean install and omit dev deps for smaller image
+RUN npm ci --omit=dev
 
 COPY . .
 
+EXPOSE 5000
+
 CMD ["npm", "run", "start"]
+#CMD ["node", "server.js"]
