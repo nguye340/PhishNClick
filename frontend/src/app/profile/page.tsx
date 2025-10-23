@@ -1,25 +1,73 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import Image from "next/image"
 import { useAuth } from "@/context/auth.context"
 import axios from "@/lib/axios"
-import { AlertCircle, Loader2, Pencil, ShieldCheck } from "lucide-react"
+import { AlertCircle, Loader2, Pencil, ShieldCheck, Camera, Upload } from "lucide-react"
 
 interface UserProfile {
   id?: string
   name?: string
   email?: string
   role?: string
+  profilePicture?: string
   createdAt?: string
   updatedAt?: string
 }
 
 export default function ProfilePage() {
-  const { auth } = useAuth()
+  const { auth, setAuth } = useAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setError("Please upload an image file")
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be less than 5MB")
+      return
+    }
+
+    try {
+      setUploading(true)
+      setError(null)
+      const formData = new FormData()
+      formData.append("profilePicture", file)
+
+      const response = await axios.post("/api/user/profile/picture", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+
+      // Update profile with new picture URL
+      setProfile((prev) => (prev ? { ...prev, profilePicture: response.data.profilePicture } : null))
+      
+      // Update auth context so navbar reflects the change immediately
+      setAuth((prev: any) => (prev ? { ...prev, profilePicture: response.data.profilePicture } : null))
+    } catch (err) {
+      console.error("Failed to upload profile picture", err)
+      setError("Failed to upload image. Please try again.")
+    } finally {
+      setUploading(false)
+    }
+  }
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -42,17 +90,39 @@ export default function ProfilePage() {
   return (
     <main className="min-h-screen bg-arcade-bg/95 pt-24 pb-16">
       <div className="max-w-4xl mx-auto px-6">
-        <header className="flex items-center gap-6 mb-10">
-          <div className="relative w-20 h-20 rounded-full border-2 border-arcade-cyan bg-black/60 flex items-center justify-center">
-            <Image
-              src="/img/catphish_white.svg"
-              alt="Profile avatar"
-              width={56}
-              height={56}
-              className="object-contain"
+        <header className="flex flex-col items-center gap-6 mb-10">
+          <div className="relative group">
+            <div className="relative w-32 h-32 rounded-full border-4 border-arcade-cyan bg-black/60 flex items-center justify-center overflow-hidden shadow-lg shadow-arcade-cyan/30">
+              <Image
+                src={profile?.profilePicture ? `http://localhost:5000${profile.profilePicture}` : "/img/catphish_white.svg"}
+                alt="Profile avatar"
+                width={128}
+                height={128}
+                className={profile?.profilePicture ? "object-cover w-full h-full" : "object-contain"}
+              />
+              {uploading && (
+                <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-arcade-cyan animate-spin" />
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleImageClick}
+              disabled={uploading}
+              className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-arcade-cyan text-black flex items-center justify-center border-2 border-black shadow-lg hover:bg-arcade-cyan/90 transition-all transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Upload profile picture"
+            >
+              <Camera className="w-5 h-5" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
             />
           </div>
-          <div>
+          <div className="text-center">
             <h1 className="font-arcade text-3xl text-arcade-cyan glow-heading">Player Profile</h1>
             <p className="font-terminal text-base text-gray-300">
               Welcome back, {auth?.name ?? auth?.email ?? "Player"}

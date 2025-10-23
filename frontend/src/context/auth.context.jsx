@@ -11,7 +11,7 @@ export const AuthProvider = ({children}) => {
         const checkAuth = async () => {
             try {
                 const res = await axios.get('/api/auth/refresh');
-                const { role, email, name, user } = res.data || {};
+                const { role, email, name, user, profilePicture } = res.data || {};
                 const derivedEmail = email ?? user?.email ?? null;
                 const derivedName = name ?? user?.name ?? (derivedEmail ? derivedEmail.split('@')[0] : null);
                 setAuth({
@@ -19,6 +19,7 @@ export const AuthProvider = ({children}) => {
                     role,
                     email: derivedEmail,
                     name: derivedName,
+                    profilePicture: profilePicture ?? user?.profilePicture ?? null,
                 });
             } catch (error) {
                 // Silently fail - user can play as guest

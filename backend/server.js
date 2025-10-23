@@ -31,10 +31,14 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json());
 app.use(cors({ 
-  origin: "http://localhost:3000", 
+  origin: ["http://localhost:3000", "http://localhost:3001"], 
   credentials: true
 }));
 app.use(cookieParser());
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 

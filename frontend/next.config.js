@@ -4,6 +4,14 @@ const nextConfig = {
   swcMinify: true,
   images: {
     domains: ['cdn-icons-png.flaticon.com', 'upload.wikimedia.org'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/uploads/**',
+      },
+    ],
   },
   onDemandEntries: {
     // Period (in ms) where the server will keep pages in the buffer

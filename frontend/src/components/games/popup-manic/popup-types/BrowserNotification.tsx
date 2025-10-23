@@ -68,7 +68,7 @@ const BrowserNotification: React.FC<BrowserNotificationProps> = ({
       style={{
         left: position.x,
         top: position.y,
-        zIndex: isActive ? 50 : 40,
+        zIndex: isActive ? 200 : 150,
         cursor: isDragging ? 'grabbing' : 'grab',
       }}
       initial={{ opacity: 0, y: -20 }}

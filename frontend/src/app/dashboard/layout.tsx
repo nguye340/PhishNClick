@@ -16,11 +16,17 @@ export default function DashboardLayout({
   const { auth, loading } = useAuth()
   const [redirecting, setRedirecting] = useState(false)
 
+  const allowedRoles = ["admin", "user"]
+
   useEffect(() => {
     if (!loading && !auth?.accessToken) {
       setRedirecting(true)
       const redirectTarget = encodeURIComponent(pathname || "/dashboard")
       router.replace(`/auth/login?redirect=${redirectTarget}`)
+    }
+
+    if (!loading && auth?.accessToken && !allowedRoles.includes(auth.role)) {
+      router.replace("/unauthorized") // Redirect if wrong role
     }
   }, [auth?.accessToken, loading, pathname, router])
 

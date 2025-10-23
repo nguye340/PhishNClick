@@ -27,19 +27,25 @@ const PhoneCallUI: React.FC<PhoneCallUIProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
-  // Play ringtone when ringing starts
+  // Play ringtone ONCE only when call starts - no looping, no duplication
   useEffect(() => {
     const playRingtone = async () => {
       if (isRinging && ringtoneRef.current) {
         try {
-          ringtoneRef.current.loop = true;
-          ringtoneRef.current.volume = 0.3; // Set moderate volume
+          // CRITICAL: Check if already playing to prevent duplication
+          if (!ringtoneRef.current.paused) {
+            console.log('Ringtone already playing, skipping duplicate');
+            return;
+          }
+          
+          ringtoneRef.current.loop = false; // Play ONCE only
+          ringtoneRef.current.volume = 0.05; // Very low volume (was 0.3)
           ringtoneRef.current.currentTime = 0; // Reset to beginning
+          
           await ringtoneRef.current.play();
-          console.log('Ringtone started playing');
+          console.log('Ringtone playing ONCE');
         } catch (error) {
           console.log('Ringtone play failed (likely due to autoplay policy):', error);
-          // Fallback: try to play on user interaction
         }
       } else if (!isRinging && ringtoneRef.current) {
         ringtoneRef.current.pause();
@@ -81,14 +87,27 @@ const PhoneCallUI: React.FC<PhoneCallUIProps> = ({
     setActive();
   };
   
-  // Handle mouse move for dragging
+  // Handle mouse move for dragging with boundary checking
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDragging && onPositionChange) {
-      const newPosition = {
-        x: e.clientX - dragStartPosition.x,
-        y: e.clientY - dragStartPosition.y
-      };
-      onPositionChange(newPosition);
+      const popupWidth = 300; // Phone popup width (w-72 = 288px)
+      const popupHeight = 400; // Phone popup height
+      
+      // Calculate new position
+      let newX = e.clientX - dragStartPosition.x;
+      let newY = e.clientY - dragStartPosition.y;
+      
+      // Boundary checking - keep popup on screen
+      const minX = 0;
+      const minY = 0;
+      const maxX = window.innerWidth - popupWidth;
+      const maxY = window.innerHeight - popupHeight;
+      
+      // Clamp position within bounds
+      newX = Math.max(minX, Math.min(maxX, newX));
+      newY = Math.max(minY, Math.min(maxY, newY));
+      
+      onPositionChange({ x: newX, y: newY });
     }
   };
   
@@ -155,7 +174,7 @@ const PhoneCallUI: React.FC<PhoneCallUIProps> = ({
       style={{
         left: position.x,
         top: position.y,
-        zIndex: isActive ? 50 : 40,
+        zIndex: isActive ? 200 : 150,
         cursor: isDragging ? 'grabbing' : 'grab',
       }}
       initial={{ opacity: 0, scale: 0.9 }}

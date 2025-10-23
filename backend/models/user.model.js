@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
     email:    { type: String, required: true, unique: true },
     password_hash: { type: String }, // Not required if using OAuth
     role: { type: String, enum: ['admin', 'user'], default: 'user' },
+    profilePicture: { type: String }, // URL or path to profile picture
     // oauth_provider: { type: String, enum: ['google', 'github', 'none'], default: 'none' },
     // oauth_id: { type: String }, // Used for third-party login
     // account_type: { type: String, enum: ['guest', 'personal', 'organization'], default: 'personal' },

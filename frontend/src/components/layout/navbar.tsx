@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Info, LogIn, LogOut, User, UserCircle, ChevronDown, LayoutDashboard, BadgeInfo } from "lucide-react"
+import { Info, LogIn, LogOut, User, UserCircle, ChevronDown, LayoutDashboard, BadgeInfo, Shield } from "lucide-react"
 import { AboutUsModal } from "../modals/about-us-modal"
 import { useAuth } from "@/context/auth.context"
 import axios from "@/lib/axios"
@@ -113,7 +113,19 @@ export function Navbar() {
                   className="flex items-center gap-3 rounded-lg border border-white/10 bg-black/30 px-4 py-2 text-left hover:border-arcade-cyan/60 transition-all"
                   onClick={() => setIsProfileOpen((prev) => !prev)}
                 >
-                  <UserCircle className="w-6 h-6 text-arcade-cyan" />
+                  {auth?.profilePicture ? (
+                    <div className="relative w-8 h-8 rounded-full border-2 border-arcade-cyan overflow-hidden flex-shrink-0">
+                      <Image
+                        src={`http://localhost:5000${auth.profilePicture}`}
+                        alt="Profile"
+                        width={32}
+                        height={32}
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                  ) : (
+                    <UserCircle className="w-8 h-8 text-arcade-cyan" />
+                  )}
                   <div className="flex flex-col">
                     <span className="font-terminal text-base text-white leading-none">{displayName}</span>
                     <span className="text-sm text-arcade-yellow leading-none">{roleLabel}</span>
@@ -145,6 +157,18 @@ export function Navbar() {
                         <LayoutDashboard className="w-4 h-4" />
                         Dashboard
                       </button>
+                      {auth?.role === "admin" && (
+                        <button
+                          onClick={() => {
+                            setIsProfileOpen(false)
+                            router.push("/admin")
+                          }}
+                          className="flex items-center gap-2 rounded-md border border-arcade-magenta/40 px-3 py-2 text-base font-terminal text-arcade-magenta hover:bg-arcade-magenta/10 transition-colors"
+                        >
+                          <Shield className="w-4 h-4" />
+                          Admin Panel
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setIsProfileOpen(false)

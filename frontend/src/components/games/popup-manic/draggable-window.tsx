@@ -98,7 +98,7 @@ export function DraggableWindow({
         top: '0',
         width: '100%',
         height: '100%',
-        zIndex: 999,
+        zIndex: 10000,
       } 
     : {
         position: 'absolute' as const,
@@ -108,7 +108,7 @@ export function DraggableWindow({
         height: typeof height === 'string' ? height : `${height}px`,
         ...(minWidth !== undefined && { minWidth: `${minWidth}px` }),
         ...(minHeight !== undefined && { minHeight: `${minHeight}px` }),
-        zIndex: isDragging ? 1000 : 100,
+        zIndex: isDragging ? 10001 : 10000,
       };
 
   return (

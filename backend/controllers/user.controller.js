@@ -1,4 +1,11 @@
 import User from "../models/user.model.js";
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export const getUsers = async (req, res) => 
 {
@@ -59,6 +66,7 @@ export const getProfile = async (req, res) =>
             name: user.username,
             email: user.email,
             role: user.role,
+            profilePicture: user.profilePicture,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
         });
@@ -66,6 +74,61 @@ export const getProfile = async (req, res) =>
     catch (error)
     {
         console.error("Error fetching user profile:", error);
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+export const uploadProfilePicture = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        // SECURITY: Validate file signature (magic numbers) to prevent malware
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const { validateFileSignature } = await import('../config/upload.config.js');
+        const actualFileType = validateFileSignature(fileBuffer);
+        
+        if (!actualFileType) {
+            // File signature doesn't match any allowed image type - potential malware
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ 
+                error: "Invalid file format. File signature verification failed." 
+            });
+        }
+
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            // Clean up uploaded file if user not found
+            fs.unlinkSync(req.file.path);
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Delete old profile picture if it exists
+        if (user.profilePicture) {
+            const oldPicturePath = path.join(__dirname, '..', user.profilePicture);
+            if (fs.existsSync(oldPicturePath)) {
+                fs.unlinkSync(oldPicturePath);
+            }
+        }
+
+        // Store relative path from backend root
+        const relativePath = `/uploads/profiles/${req.file.filename}`;
+        user.profilePicture = relativePath;
+        await user.save();
+
+        return res.status(200).json({
+            message: "Profile picture uploaded successfully",
+            profilePicture: relativePath
+        });
+    } catch (error) {
+        // Clean up uploaded file on error
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        console.error("Error uploading profile picture:", error);
         return res.status(500).json({ error: error.message });
     }
 }

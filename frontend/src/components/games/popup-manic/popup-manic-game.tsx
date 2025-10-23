@@ -6,11 +6,24 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Fish, LogIn, User, Settings, Info } from "lucide-react"
 import { AboutUsModal } from "../../modals/about-us-modal"
-import { GameOverModal } from "../../modals/game-over-modal"
 import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
 import { DraggableWindow } from './draggable-window'
 import ModernPopupIntegration from './modern-popup-integration';
+import { 
+  GameMechanics, 
+  initializeGameMechanics,
+  handleCorrectAction,
+  handleIncorrectAction,
+  getCurrentDifficulty,
+  generatePopupBehavior,
+  setComboTimer,
+  calculateGameSummary,
+  PopupBehavior,
+} from './game-mechanics'
+import { GameHUD, ScorePopup, BadgeNotification, DifficultyUpNotification, VirusOutbreakHint } from './game-hud'
+import { AnimatedPopup, TrapGIF, InfectionOverlay, FreezeEffect, SlowMotionEffect, InfectedGIF } from './animated-popup'
+import { GameSummaryModal } from './game-summary-modal'
 
 // Default dimensions for legacy popups
 const DEFAULT_POPUP_SIZE = {
@@ -573,9 +586,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, popups: [...state.popups, action.payload] };
     case 'REMOVE_POPUP':
       console.log('[REDUCER] Removing popup from state:', action.payload);
+      // Clean up popup position when removing
+      const newPopupPositions = { ...state.popupPositions };
+      delete newPopupPositions[action.payload];
       return { 
         ...state, 
-        popups: state.popups.filter(popup => popup.id !== action.payload) 
+        popups: state.popups.filter(popup => popup.id !== action.payload),
+        popupPositions: newPopupPositions
       };
     case 'SET_ACTIVE_PROGRAMS':
       return { ...state, activePrograms: action.payload };
@@ -803,6 +820,20 @@ const removePopup = (id: string) =>
 
 // Note: removePopupById helper exists later in the file and operates on a popup object.
 
+// NEW GAME MECHANICS STATE
+const [mechanics, setMechanics] = useState<GameMechanics>(initializeGameMechanics());
+const [popupBehaviors, setPopupBehaviors] = useState<Map<string, PopupBehavior>>(new Map());
+const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+const [popupSpawnTimes, setPopupSpawnTimes] = useState<Map<string, number>>(new Map());
+const [scorePopups, setScorePopups] = useState<Array<{id: string, x: number, y: number, value: number, isCombo: boolean}>>([]);
+const [showBadge, setShowBadge] = useState<string | null>(null);
+const [showDifficultyUp, setShowDifficultyUp] = useState<number | null>(null);
+const [showInfection, setShowInfection] = useState(false);
+const [trapGIFs, setTrapGIFs] = useState<Array<{id: string, x: number, y: number}>>([]);
+const [sillyGifs, setSillyGifs] = useState<Array<{id: string, x: number, y: number, url: string, size: number}>>([]);
+const [draggingPopups, setDraggingPopups] = useState<Set<string>>(new Set()); // Track which popups are being dragged
+const [showGameSummary, setShowGameSummary] = useState(false);
+
 // Hidden malware system state
 const [hiddenMalware, setHiddenMalware] = useState({
   active: false,
@@ -814,6 +845,39 @@ const [hiddenMalware, setHiddenMalware] = useState({
 });
 const [safeMode, setSafeMode] = useState(false);
 const [suspiciousFiles, setSuspiciousFiles] = useState<Array<{id: string, name: string, icon: string, x: number, y: number}>>([]);
+const [infectionEndsAt, setInfectionEndsAt] = useState<number | null>(null);
+const [nowTs, setNowTs] = useState<number>(Date.now());
+
+useEffect(() => {
+  if (!infectionEndsAt) return;
+  const t = setInterval(() => setNowTs(Date.now()), 120);
+  return () => clearInterval(t);
+}, [infectionEndsAt]);
+
+// Crash the system if infection countdown completes without quarantine
+useEffect(() => {
+  if (!infectionEndsAt) return;
+  if (nowTs >= infectionEndsAt) {
+    setInfectionEndsAt(null)
+    setSystemCrashed(true)
+    setGameOver(true)
+    setGameActive(false)
+    setHintModal({ active: false, popup: null, slide: 0, currentSlide: 0 })
+    if (crashSoundRef.current) { try { crashSoundRef.current.currentTime = 0; crashSoundRef.current.play() } catch {} }
+    // Show game summary after crash
+    setTimeout(() => setShowGameSummary(true), 3000)
+  }
+}, [nowTs, infectionEndsAt])
+
+// Request to show the end-game summary; delays if infection countdown is active
+const requestShowSummary = React.useCallback(() => {
+  if (!infectionEndsAt || nowTs >= infectionEndsAt) {
+    setShowGameSummary(true)
+  } else {
+    const delay = Math.max(0, infectionEndsAt - nowTs + 50)
+    setTimeout(() => setShowGameSummary(true), delay)
+  }
+}, [infectionEndsAt, nowTs])
 
 // Audio refs
 const systemAlertSound1Ref = useRef<HTMLAudioElement | null>(null);
@@ -841,15 +905,15 @@ useEffect(() => {
   notificationSoundRef.current = new Audio('/sounds/notification.mp3');
   notificationSoundRef.current.volume = 0.5;
 
-  // Virus outbreak alert sound - play only once
+  // Virus outbreak alert sound - play ONCE only
   virusAlertSoundRef.current = new Audio('/sounds/alert-369027.mp3');
   virusAlertSoundRef.current.volume = 0.6;
-  virusAlertSoundRef.current.loop = false; // Play only once during outbreak
+  virusAlertSoundRef.current.loop = false; // Play once and stop
 
-  // Virus outbreak siren sound - very small volume
+  // Virus outbreak siren sound - play ONCE only
   virusSirenSoundRef.current = new Audio('/sounds/siren-alert-96052.mp3');
-  virusSirenSoundRef.current.volume = 0.1; // Very small volume as requested
-  virusSirenSoundRef.current.loop = true; // Loop during outbreak
+  virusSirenSoundRef.current.volume = 0.1;
+  virusSirenSoundRef.current.loop = false; // Play once and stop
 
   // Cheerful sound for clearing virus outbreak
   cheerfulSoundRef.current = new Audio('/sounds/cartoon-sfx-cheerful-wow-wah-cute-adorable-surprised-338343.mp3');
@@ -898,6 +962,16 @@ React.useEffect(() => {
   };
 }, [])
 
+// Track cursor position for avoiding popups
+useEffect(() => {
+  const handleMouseMove = (e: MouseEvent) => {
+    setCursorPosition({ x: e.clientX, y: e.clientY });
+  };
+  
+  window.addEventListener('mousemove', handleMouseMove);
+  return () => window.removeEventListener('mousemove', handleMouseMove);
+}, []);
+
 // ...
   const [updatingSoftware, setUpdatingSoftware] = useState(false)
   const [softwareUpdateProgress, setSoftwareUpdateProgress] = useState<{[key: string]: number}>({
@@ -910,6 +984,10 @@ React.useEffect(() => {
   const [firecatOpen, setFirecatOpen] = useState(false);
   const [taskManagerOpen, setTaskManagerOpen] = useState(false);
   const [updateWindowOpen, setUpdateWindowOpen] = useState(false);
+  const [notepadOpen, setNotepadOpen] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialFocus, setTutorialFocus] = useState<string | null>(null);
   const [firecatUrl, setFirecatUrl] = useState('https://www.meowgle.com')
   const [browserHistory, setBrowserHistory] = useState<string[]>(['https://www.meowgle.com'])
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState(0)
@@ -921,6 +999,73 @@ React.useEffect(() => {
     { name: 'Purr-mail', url: 'https://mail.purr.com' },
     { name: 'Whisker News', url: 'https://www.whiskernews.com' }
   ])
+
+  // Tutorial content for onboarding
+  const tutorialContent = React.useMemo(() => ([
+    {
+      title: 'Nyantivirus (Critical)',
+      lines: [
+        'Run Scan often: checks system health, finds malware, and quarantines threats.',
+        'Quarantine removes malicious popups, infected GIFs, and suspicious files immediately.',
+        'Keep it Updated: open Software Update Center to update Nyantivirus.',
+        'Requires Internet for updates.'
+      ]
+    },
+    {
+      title: 'Software Update Center',
+      lines: [
+        'Keeps core apps updated (Nyantivirus, Windows Security, Firecat).',
+        'Click Update All. If WiFi is off, updates are blocked with an error.',
+        'Update regularly to reduce infections.'
+      ]
+    },
+    {
+      title: 'Task Manager',
+      lines: [
+        'Check system health (CPU/Memory/Disk/Network).',
+        'Find and end suspicious background tasks (e.g., coolbeans, totallysafe).',
+        'Use it to stop runaway malware processes.'
+      ]
+    },
+    {
+      title: 'WiFi / Internet',
+      lines: [
+        'Turning WiFi off can slow ads for a moment.',
+        'But you cannot update Nyantivirus or use Firecat when offline.'
+      ]
+    },
+    {
+      title: 'Firecat Browser',
+      lines: [
+        'Requires Internet connection.',
+        'Used for browsing educational links. Disabled when offline.'
+      ]
+    },
+    {
+      title: 'Notes / Manuals (Notepad)',
+      lines: [
+        'Open anytime to review the step-by-step containment checklist.',
+        'Contains tips on scanning, quarantining, updating and using Task Manager.'
+      ]
+    }
+  ]), [])
+  
+  // Tutorial is shown AFTER user presses Start Game. No pre-start auto-open.
+  useEffect(() => {
+    // intentionally empty
+  }, [])
+
+  // Tutorial helper: just spotlight the relevant icon (no app auto-open)
+  const openRelevantAppForStep = React.useCallback(() => {
+    const map = ['meowarebytes', 'updatesoftware', 'taskmanager', 'wifi', 'firecat', 'notepad'] as const
+    setTutorialFocus(map[Math.min(map.length - 1, Math.max(0, tutorialStep))])
+  }, [tutorialStep])
+
+  // Keep spotlight in sync with current tutorial step
+  useEffect(() => {
+    if (!showTutorial) return
+    openRelevantAppForStep()
+  }, [tutorialStep, showTutorial, openRelevantAppForStep])
   
   // Task Manager state
   const [taskManagerTab, setTaskManagerTab] = useState<'processes' | 'performance'>('processes')
@@ -934,6 +1079,32 @@ React.useEffect(() => {
   const [startMenuOpen, setStartMenuOpen] = useState(false)
   const [wifiMenuOpen, setWifiMenuOpen] = useState(false)
   const [wifiStatus, setWifiStatus] = useState<'connected' | 'poor' | 'disconnected'>('connected')
+
+  // Software Update Center: drive progress while updatingSoftware is true
+  useEffect(() => {
+    if (!updatingSoftware) return
+    const tick = setInterval(() => {
+      setSoftwareUpdateProgress(prev => {
+        const next = { ...prev }
+        Object.keys(next).forEach((k) => {
+          if (next[k] < 100) {
+            // Nyantivirus a bit faster to emphasize urgency
+            const inc = k === 'Nyantivirus' ? 4 + Math.floor(Math.random() * 4) : 2 + Math.floor(Math.random() * 3)
+            next[k] = Math.min(100, next[k] + inc)
+          }
+        })
+        return next
+      })
+    }, 220)
+    return () => clearInterval(tick)
+  }, [updatingSoftware])
+
+  // Stop updating when all reach 100%
+  useEffect(() => {
+    if (!updatingSoftware) return
+    const done = Object.values(softwareUpdateProgress).every(v => v >= 100)
+    if (done) setUpdatingSoftware(false)
+  }, [softwareUpdateProgress, updatingSoftware])
   
   // Tutorial system removed - now using educational modal system
   const [seenPopupCategories, setSeenPopupCategories] = useState<Set<string>>(new Set())
@@ -998,7 +1169,8 @@ React.useEffect(() => {
       }, randomDelay);
     };
 
-    const virusTimer = scheduleVirusOutbreak();
+    let virusTimer: any = null; // Disabled: random virus outbreaks
+    // virusTimer = scheduleVirusOutbreak();
 
     return () => {
       if (virusTimer) {
@@ -1013,9 +1185,10 @@ React.useEffect(() => {
       return;
     }
 
-    // Faster spawning: lower base and min interval
-    const spawnInterval = Math.max(500, 2500 - (state.level * 250)); // Faster spawning at higher levels
-    console.log(`[GameLoop] Starting popup spawn timer, interval: ${spawnInterval}ms`);
+    // Use difficulty-based spawn interval from new mechanics
+    const difficulty = getCurrentDifficulty(mechanics);
+    const spawnInterval = difficulty.spawnInterval;
+    console.log(`[GameLoop] Starting popup spawn timer, interval: ${spawnInterval}ms, difficulty level: ${mechanics.difficulty + 1}`);
 
     const spawnTimer = setInterval(async () => {
       // Don't spawn if too many popups already exist
@@ -1054,9 +1227,28 @@ React.useEffect(() => {
             ...state.popupPositions,
             [randomPopup.id]: popupPosition
           });
+          
+          // Generate behavior for new mechanics
+          const difficulty = getCurrentDifficulty(mechanics);
+          const behavior = generatePopupBehavior(randomPopup.id, difficulty);
+          setPopupBehaviors(prev => new Map(prev).set(randomPopup.id, behavior));
+          setPopupSpawnTimes(prev => new Map(prev).set(randomPopup.id, Date.now()));
+          
+          // Spawn trap GIF if this is a trap popup
+          if (behavior.isTrap) {
+            const trapX = popupPosition.x + (randomPopup.size?.width || 450) / 2 - 50;
+            const trapY = popupPosition.y + (randomPopup.size?.height || 350) / 2 - 50;
+            setTrapGIFs(prev => [...prev, { id: `trap-${randomPopup.id}`, x: trapX, y: trapY }]);
+
+            // Also spawn a clickable infected GIF near the trap starting at level >= 3
+            if (state.level >= 3) {
+              spawnSillyGifNear(trapX, trapY);
+            }
+          }
+          
           playPopupSound();
           
-          console.log(`[GameLoop] Spawned popup ${randomPopup.id} at position:`, popupPosition);
+          console.log(`[GameLoop] Spawned popup ${randomPopup.id} at position:`, popupPosition, 'behavior:', behavior.type);
         } else {
           // Fallback to generating a random popup if API fails
           const fallbackPopup = generateFallbackPopup();
@@ -1068,9 +1260,27 @@ React.useEffect(() => {
             ...state.popupPositions,
             [fallbackPopup.id]: popupPosition
           });
+          
+          // Generate behavior for fallback popup too
+          const difficulty = getCurrentDifficulty(mechanics);
+          const behavior = generatePopupBehavior(fallbackPopup.id, difficulty);
+          setPopupBehaviors(prev => new Map(prev).set(fallbackPopup.id, behavior));
+          setPopupSpawnTimes(prev => new Map(prev).set(fallbackPopup.id, Date.now()));
+          
+          if (behavior.isTrap) {
+            const trapX = popupPosition.x + (fallbackPopup.size?.width || 450) / 2 - 50;
+            const trapY = popupPosition.y + (fallbackPopup.size?.height || 350) / 2 - 50;
+            setTrapGIFs(prev => [...prev, { id: `trap-${fallbackPopup.id}`, x: trapX, y: trapY }]);
+
+            // Also spawn a clickable infected GIF near the trap starting at level >= 3
+            if (state.level >= 3) {
+              spawnSillyGifNear(trapX, trapY);
+            }
+          }
+          
           playPopupSound();
           
-          console.log(`[GameLoop] Spawned fallback popup ${fallbackPopup.id} at position:`, popupPosition);
+          console.log(`[GameLoop] Spawned fallback popup ${fallbackPopup.id} at position:`, popupPosition, 'behavior:', behavior.type);
         }
       } catch (error) {
         console.error('[GameLoop] Error spawning popup:', error);
@@ -1081,7 +1291,53 @@ React.useEffect(() => {
       console.log(`[GameLoop] Clearing spawn timer`);
       clearInterval(spawnTimer);
     };
-  }, [state.gameActive, state.gameOver, state.systemCrashed, state.level, state.popups.length])
+  }, [state.gameActive, state.gameOver, state.systemCrashed, state.level, state.popups.length, mechanics.difficulty])
+
+  // Infected GIF assets (subset paths from public/silly-gif)
+  const SILLY_GIF_URLS = React.useMemo(
+    () => [
+      '/silly-gif/silly-gif (1).gif','/silly-gif/silly-gif (2).gif','/silly-gif/silly-gif (3).gif','/silly-gif/silly-gif (4).gif','/silly-gif/silly-gif (5).gif',
+      '/silly-gif/silly-gif (6).gif','/silly-gif/silly-gif (7).gif','/silly-gif/silly-gif (8).gif','/silly-gif/silly-gif (9).gif','/silly-gif/silly-gif (10).gif'
+    ],
+    []
+  )
+
+  // Spawn a clickable infected GIF near given coordinates
+  function spawnSillyGifNear(x: number, y: number) {
+    const url = SILLY_GIF_URLS[Math.floor(Math.random() * SILLY_GIF_URLS.length)] || '/silly-gif/silly-gif (1).gif'
+    const size = 96 + Math.floor(Math.random() * 48)
+    const offsetX = (Math.random() - 0.5) * 160
+    const offsetY = (Math.random() - 0.5) * 120
+    const gx = Math.max(16, Math.min(window.innerWidth - size - 16, x + offsetX))
+    const gy = Math.max(16, Math.min(window.innerHeight - size - 80, y + offsetY))
+    const id = `gif-${Date.now()}-${Math.random().toString(36).slice(2,8)}`
+    setSillyGifs(prev => [...prev, { id, x: gx, y: gy, url, size }])
+  }
+
+  // Handle infected GIF click (triggers infection like trap)
+  function handleInfectedGifClick(gifId: string) {
+    setShowInfection(true)
+    setTimeout(() => setShowInfection(false), 3000)
+    const newMechanics = handleIncorrectAction(mechanics, true)
+    setMechanics(newMechanics)
+    setSillyGifs(prev => prev.filter(g => g.id !== gifId))
+    // Trigger full-system infection visuals and countdown
+    setMalwareDetected(true)
+    try { startFullSystemInfection() } catch {}
+    if (newMechanics.lives === 0) {
+      if (crashSoundRef.current) {
+        try { crashSoundRef.current.currentTime = 0; crashSoundRef.current.play() } catch {}
+      }
+      setGameOver(true)
+      setGameActive(false)
+      setTimeout(requestShowSummary, 3000)
+    }
+  }
+
+  // Disable random virus outbreak scheduling – infection appears only on bomb/GIF clicks
+  useEffect(() => {
+    return () => {}
+  }, [])
 
   // Desktop icons configuration - organized in two columns
   const leftColumnIcons: DesktopIcon[] = [
@@ -1223,6 +1479,28 @@ React.useEffect(() => {
   const [antivirusModalOpen, setAntivirusModalOpen] = useState(false)
   const [antivirusModalStep, setAntivirusModalStep] = useState<'confirm' | 'scanning' | 'done'>('confirm')
   const [antivirusProgress, setAntivirusProgress] = useState(0)
+  const [antivirusResult, setAntivirusResult] = useState<'healthy' | 'unhealthy' | 'infected' | null>(null)
+
+  const computeAntivirusResult = (): 'healthy' | 'unhealthy' | 'infected' => {
+    // Gate only on AV update and connectivity first
+    const nyanProg = (softwareUpdateProgress || {})['Nyantivirus'] ?? 0
+    if (nyanProg < 100 || wifiStatus !== 'connected') {
+      return 'unhealthy'
+    }
+    // If AV is updated and system shows active threats, report infected
+    if (
+      (state.infectedGifs && state.infectedGifs.length > 0) ||
+      (hiddenMalware as any)?.active ||
+      malwareDetected ||
+      (trapGIFs && trapGIFs.length > 0) ||
+      (sillyGifs && sillyGifs.length > 0)
+    ) {
+      return 'infected'
+    }
+    // Otherwise, if there are suspicious files lingering, still show unhealthy
+    if ((suspiciousFiles?.length ?? 0) > 0) return 'unhealthy'
+    return 'healthy'
+  }
 
   const startAntivirusScan = () => {
     setAntivirusModalStep('scanning')
@@ -1232,20 +1510,22 @@ React.useEffect(() => {
     const interval = setInterval(() => {
       setAntivirusProgress(prev => {
         const elapsed = Date.now() - start
-        const base = Math.min(100, prev + 5 + Math.random() * 8)
+        const base = Math.min(100, Math.round(prev + 5 + Math.random() * 8))
         const capped = elapsed > 1600 ? Math.min(100, Math.max(base, 92)) : base
         if (capped >= 100) {
           clearInterval(interval)
           // complete scan and clean
           setTimeout(() => {
+            const result = computeAntivirusResult()
+            setAntivirusResult(result)
             setAntivirusModalStep('done')
-            // Clear all virus-related state
-            setInfectedGifs([])
-            setIsInfected(false)
-            setShowVirusWarning(false)
-            // Optional cheerful sound
+            // Play a cheerful tone on successful scan completion
             if (cheerfulSoundRef.current) {
               try { cheerfulSoundRef.current.currentTime = 0; cheerfulSoundRef.current.play() } catch {}
+            }
+            // If system is infected but no outbreak visuals yet, trigger full infection visuals & countdown
+            if (result === 'infected' && (!state.infectedGifs || state.infectedGifs.length === 0)) {
+              try { startFullSystemInfection() } catch {}
             }
           }, 250)
           return 100
@@ -1259,6 +1539,7 @@ React.useEffect(() => {
     setAntivirusModalOpen(false)
     setAntivirusModalStep('confirm')
     setAntivirusProgress(0)
+    setAntivirusResult(null)
   }
 
   // Quiz result modal state
@@ -1281,6 +1562,10 @@ React.useEffect(() => {
     ensureAudio()
     setShowInstructions(false)
     setGameActive(true)
+    // Start guided tutorial after game starts
+    setShowTutorial(true)
+    setTutorialStep(0)
+    setTutorialFocus('meowarebytes') // Nyantivirus first
     setScore(0)
     setLevel(1)
     setMistakes(0)
@@ -1391,23 +1676,51 @@ React.useEffect(() => {
     console.log(`Generating position for UI type: ${uiType}`);
     console.log(`Current popup positions:`, Object.keys(state.popupPositions).length, Object.values(state.popupPositions));
     
-    // Default popup dimensions
-    const popupWidth = 350;
-    const popupHeight = 250;
+    // Default popup dimensions - UPDATED to match actual sizes
+    let popupWidth = 450;  // DEFAULT_POPUP_SIZE
+    let popupHeight = 350; // DEFAULT_POPUP_SIZE
+
+    // Adjust dimensions based on UI type
+    if (uiType === 'phone_call_ui') {
+      popupWidth = 300;  // ~w-72
+      popupHeight = 400;
+    } else if (uiType === 'chat_message') {
+      popupWidth = 380;
+      popupHeight = 500;
+    } else if (uiType === 'video_player_overlay' || uiType === 'video') {
+      popupWidth = 640;
+      popupHeight = 400;
+    } else if (uiType === 'browser_notification') {
+      popupWidth = 320;
+      popupHeight = 160;
+    } else if (uiType === 'system_alert' || uiType === 'system_notification') {
+      popupWidth = 400;
+      popupHeight = 300;
+    }
     
-    // Special handling for chat messages - always bottom right
+    // Special handling for phone popups - always visible on right side
+    if (uiType === 'phone_call_ui') {
+      const phoneX = Math.max(50, window.innerWidth - popupWidth - 80); // Right side with margin
+      const phoneY = Math.max(50, Math.min(window.innerHeight / 3, window.innerHeight - popupHeight - 100)); // Upper-middle area
+      return {
+        x: phoneX,
+        y: phoneY
+      };
+    }
+    
+    // Special handling for chat messages - bottom right
     if (uiType === 'chat_message') {
       return {
-        x: Math.max(50, window.innerWidth - chatWidth - 20), // Adjusted for larger chat width
-        y: Math.max(50, window.innerHeight - chatHeight - 20) // Adjusted for larger chat height
+        x: Math.max(32, window.innerWidth - popupWidth - 32),
+        y: Math.max(32, window.innerHeight - popupHeight - 120) // keep above taskbar
       };
     }
     
     // Special handling for video popups - center screen for visibility
-    if (uiType === 'video') {
+    if (uiType === 'video_player_overlay' || uiType === 'video') {
       return {
-        x: Math.max(50, (window.innerWidth - videoWidth) / 2), // Center horizontally
-        y: Math.max(50, (window.innerHeight - videoHeight) / 3) // Position in upper third of screen
+        x: Math.max(32, (window.innerWidth - popupWidth) / 2),
+        y: Math.max(32, (window.innerHeight - popupHeight) / 3)
       };
     }
     
@@ -1424,100 +1737,42 @@ React.useEffect(() => {
       };
     }
     
-    // For other popups, use a fixed grid system with predefined positions
-    // This ensures better distribution and prevents clumping
-    
-    // Calculate available screen space
-    const maxX = window.innerWidth - popupWidth - 50; // popup width + padding
-    const maxY = window.innerHeight - popupHeight - 80; // popup height + padding
-    
-    // Avoid taskbar area at bottom of screen
-    const taskbarHeight = 60;
-    const availableY = maxY - taskbarHeight;
-    
-    // Create a grid with fixed cell sizes much larger than popup dimensions
-    // This ensures popups are well-separated
-    const gridCellWidth = popupWidth * 2.2; // 220% of popup width - increased for more spacing
-    const gridCellHeight = popupHeight * 2.2; // 220% of popup height - increased for more spacing
-    
-    // Calculate number of cells that fit in the screen
-    const gridColumns = Math.max(3, Math.floor(maxX / gridCellWidth));
-    const gridRows = Math.max(3, Math.floor(availableY / gridCellHeight));
-    
-    // Define fixed positions for popups based on a grid
-    // This ensures they are evenly distributed across the screen
-    const fixedPositions: {x: number, y: number}[] = [];
-    
-    // Create a grid of fixed positions
-    for (let col = 0; col < gridColumns; col++) {
-      for (let row = 0; row < gridRows; row++) {
-        fixedPositions.push({
-          x: Math.max(50, col * gridCellWidth + (gridCellWidth - popupWidth) / 2),
-          y: Math.max(50, row * gridCellHeight + (gridCellHeight - popupHeight) / 2)
-        });
-      }
-    }
-    
-    // Get all existing positions
+    // General case: pick a random, non-overlapping spot within viewport
+    const margin = 32;
+    const taskbarHeight = 80;
+    const minX = margin;
+    const minY = margin;
+    const maxX = Math.max(minX, window.innerWidth - popupWidth - margin);
+    const maxY = Math.max(minY, window.innerHeight - popupHeight - (margin + taskbarHeight));
+
     const existingPositions = Object.values(state.popupPositions);
     const allOccupiedPositions = [...existingPositions, ...extraOccupiedPositions];
 
-    // Find all available fixed positions that aren't already occupied
-    const availablePositions = fixedPositions.filter(fixedPos => {
-      return !allOccupiedPositions.some(existingPos => {
-        // Check if this fixed position is already occupied
-        return Math.abs(existingPos.x - fixedPos.x) < popupWidth * 0.5 &&
-               Math.abs(existingPos.y - fixedPos.y) < popupHeight * 0.5;
-      });
-    });
+    const minSeparationX = popupWidth * 0.6;
+    const minSeparationY = popupHeight * 0.6;
 
-    // Debug log
-    console.log('[PopupManic] Available grid positions:', availablePositions.length, availablePositions);
+    // Try up to 40 random positions to avoid clustering
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const candidate = {
+        x: Math.floor(minX + Math.random() * (maxX - minX + 1)),
+        y: Math.floor(minY + Math.random() * (maxY - minY + 1)),
+      };
 
-    // If we have available positions, choose one randomly
-    if (availablePositions.length > 0) {
-      // Add a small random offset to the fixed position for visual variety
-      const selectedPos = availablePositions[Math.floor(Math.random() * availablePositions.length)];
-      const jitterX = (Math.random() - 0.5) * popupWidth * 0.2; // Small random offset
-      const jitterY = (Math.random() - 0.5) * popupHeight * 0.2; // Small random offset
-      
-      const finalPosition = {
-        x: Math.max(50, Math.min(maxX, selectedPos.x + jitterX)),
-        y: Math.max(50, Math.min(availableY, selectedPos.y + jitterY))
-      };
-      
-      console.log(`Selected position from ${availablePositions.length} available:`, finalPosition);
-      return finalPosition;
+      const collides = allOccupiedPositions.some(pos =>
+        Math.abs(pos.x - candidate.x) < minSeparationX &&
+        Math.abs(pos.y - candidate.y) < minSeparationY
+      );
+
+      if (!collides) return candidate;
     }
-    
-    // Fallback: If all fixed positions are occupied, find the position furthest from all occupied popups
-    console.log(`[PopupManic] No available fixed positions, using fallback positioning`);
-    let bestPos = {x: 0, y: 0};
-    let maxMinDistance = 0;
-    // Try 30 random positions and pick the one furthest from all occupied popups
-    for (let i = 0; i < 30; i++) {
-      const testPos = {
-        x: Math.max(50, Math.random() * maxX),
-        y: Math.max(50, Math.random() * availableY)
-      };
-      // Find minimum distance to any occupied popup
-      let minDistance = Number.MAX_VALUE;
-      for (const pos of allOccupiedPositions) {
-        const distance = Math.sqrt(
-          Math.pow(pos.x - testPos.x, 2) +
-          Math.pow(pos.y - testPos.y, 2)
-        );
-        minDistance = Math.min(minDistance, distance);
-      }
-      // If this position is better than our current best, update it
-      if (minDistance > maxMinDistance) {
-        maxMinDistance = minDistance;
-        bestPos = testPos;
-      }
-    }
-    console.log(`[PopupManic] Fallback position selected:`, bestPos, `with min distance:`, maxMinDistance);
-    return bestPos;
-  };
+
+    // Fallback: pick a deterministic spread along a diagonal
+    const diagonalIndex = (existingPositions.length + extraOccupiedPositions.length) % 5;
+    return {
+      x: Math.min(maxX, minX + diagonalIndex * Math.max(50, (maxX - minX) / 4)),
+      y: Math.min(maxY, minY + diagonalIndex * Math.max(40, (maxY - minY) / 4)),
+    };
+  }
   
   // Video dimensions for video popups - defined as module-level constants
   
@@ -2501,16 +2756,18 @@ React.useEffect(() => {
     setIsInfected(true);
     setShowVirusWarning(true);
     
-    // Play virus outbreak sounds only if game is active
+    // Play virus outbreak sounds ONCE only if game is active and not already playing
     if (!state.gameOver && !state.paused) {
-      if (virusAlertSoundRef.current) {
+      if (virusAlertSoundRef.current && virusAlertSoundRef.current.paused) {
         virusAlertSoundRef.current.currentTime = 0;
         virusAlertSoundRef.current.play().catch(err => console.error('Error playing virus alert sound:', err));
+        console.log('[VirusOutbreak] Playing alert sound ONCE');
       }
       
-      if (virusSirenSoundRef.current) {
+      if (virusSirenSoundRef.current && virusSirenSoundRef.current.paused) {
         virusSirenSoundRef.current.currentTime = 0;
         virusSirenSoundRef.current.play().catch(err => console.error('Error playing virus siren sound:', err));
+        console.log('[VirusOutbreak] Playing siren sound ONCE');
       }
     } else {
       console.log('[VirusOutbreak] Skipping audio playback - game is over or paused');
@@ -2719,9 +2976,8 @@ React.useEffect(() => {
   // Spawn suspicious files on desktop
   const spawnSuspiciousFiles = () => {
     const files = [
-      { name: 'PawsomeGame.exe', icon: '/img/malware-taskbar.png' },
-      { name: 'SecuredFile.txt.exe', icon: '/img/innocent-txt-taskbar.png' },
-      { name: 'Payroll.docx', icon: '/img/safedocxexe-taskbar.png' }
+      { name: 'cool-beans.exe', icon: '/img/malware-taskbar.png' },
+      { name: 'totally_safe.docx.exe', icon: '/img/safedocxexe-taskbar.png' },
     ]
     
     const newFiles = files.map((file, index) => ({
@@ -2733,12 +2989,92 @@ React.useEffect(() => {
     }))
     
     setSuspiciousFiles(newFiles)
+
+    // Auto-run one of them stealthily after a short delay
+    setTimeout(() => {
+      const pick = newFiles[Math.floor(Math.random() * newFiles.length)]
+      if (pick) {
+        startMaliciousProcess(pick.name)
+      }
+    }, 8000)
   }
   
   // Crash applications (disable them)
   const crashApplications = () => {
     console.log('[HiddenMalware] All applications have been disabled by malware')
     // Applications will be disabled in their click handlers based on hiddenMalware.phase
+  }
+  
+  // Start a malicious background process (shows in taskbar and Task Manager)
+  const startMaliciousProcess = (name: string) => {
+    const key = name.includes('cool') ? 'coolbeans' : 'totallysafe'
+    if (!state.activePrograms.includes(key)) {
+      setActivePrograms([...state.activePrograms, key])
+      setMalwareDetected(true)
+      // Increase resource usage subtly
+      setSystemResources(prev => ({
+        cpu: Math.min(95, prev.cpu + 10),
+        memory: Math.min(95, prev.memory + 12),
+        disk: Math.min(95, prev.disk + 8),
+        network: Math.min(95, prev.network + 10)
+      }))
+    }
+  }
+
+  // Spawn suspicious files on desktop
+  const spawnSuspiciousFile = () => {
+    const fileNames = [
+      { name: 'free_money.exe', icon: '/img/malware-taskbar.png' },
+      { name: 'totally_safe.docx.exe', icon: '/img/safedocxexe-taskbar.png' },
+      { name: 'cool-beans.exe', icon: '/img/malware-taskbar.png' },
+      { name: 'prize_winner.exe', icon: '/img/malware-taskbar.png' },
+      { name: 'urgent_update.exe', icon: '/img/malware-taskbar.png' }
+    ]
+    
+    const randomFile = fileNames[Math.floor(Math.random() * fileNames.length)]
+    const newFile = {
+      id: uuidv4(),
+      name: randomFile.name,
+      icon: randomFile.icon,
+      x: 150 + Math.random() * 300,
+      y: 150 + Math.random() * 300
+    }
+    
+    setSuspiciousFiles(prev => [...prev, newFile])
+    console.log('[SuspiciousFile] Spawned:', newFile.name)
+  }
+
+  // Opening a suspicious file triggers a full system infection
+  const openSuspiciousFile = (fileId: string) => {
+    const file = suspiciousFiles.find(f => f.id === fileId)
+    if (!file) return
+    startMaliciousProcess(file.name)
+    startFullSystemInfection()
+    // Remove the file after clicking it
+    setSuspiciousFiles(prev => prev.filter(f => f.id !== fileId))
+  }
+
+  // Full-system infection: spawn many silly GIFs and start countdown
+  const startFullSystemInfection = () => {
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const gifCount = 40
+    const generated: Array<{id: string, x: number, y: number, rotation: number, gifName?: string, size?: number}> = []
+    for (let i = 0; i < gifCount; i++) {
+      const n = 1 + Math.floor(Math.random() * 20)
+      generated.push({
+        id: `gif-${Date.now()}-${i}`,
+        x: Math.random() * (viewportWidth - 200),
+        y: Math.random() * (viewportHeight - 260),
+        rotation: 0,
+        gifName: `silly-gif (${n}).gif`,
+        size: 70 + Math.floor(Math.random() * 40)
+      })
+    }
+    setInfectedGifs([...(state.infectedGifs || []), ...generated])
+    setInfectionEndsAt(Date.now() + 20000)
+    if (virusAlertSoundRef.current) { try { virusAlertSoundRef.current.currentTime = 0; virusAlertSoundRef.current.play() } catch {} }
+    if (virusSirenSoundRef.current) { try { virusSirenSoundRef.current.currentTime = 0; virusSirenSoundRef.current.play() } catch {} }
   }
   
   // Perform Nyantivirus quick scan
@@ -2773,9 +3109,38 @@ React.useEffect(() => {
     if (hiddenMalware.quarantineInProgress || hiddenMalware.phase >= 3) return
     
     console.log('[Nyantivirus] Starting quarantine process...')
-    setHiddenMalware(prev => ({ ...prev, quarantineInProgress: true }))
+    setAntivirusModalStep('scanning')
+    setAntivirusProgress(0)
     
-    // Simulate quarantine time (5 seconds)
+    // Immediately clear all infected GIFs and threats
+    setInfectedGifs([])
+    setIsInfected(false)
+    setShowVirusWarning(false)
+    setInfectionEndsAt(null)
+    setSuspiciousFiles([])
+    setTrapGIFs([])
+    setSillyGifs([])
+    setMalwareDetected(false)
+    
+    // Stop virus sounds
+    if (virusAlertSoundRef.current) virusAlertSoundRef.current.pause()
+    if (virusSirenSoundRef.current) virusSirenSoundRef.current.pause()
+    
+    // Animate progress bar
+    const start = Date.now()
+    const interval = setInterval(() => {
+      setAntivirusProgress(prev => {
+        const elapsed = Date.now() - start
+        const newProgress = Math.min(100, (elapsed / 2000) * 100)
+        if (newProgress >= 100) {
+          clearInterval(interval)
+          return 100
+        }
+        return newProgress
+      })
+    }, 50)
+    
+    // Show success after 2 seconds
     setTimeout(() => {
       // Remove only malicious popups
       const maliciousPopupIds = state.popups.filter(p => p.type === 'malicious').map(p => p.id)
@@ -2791,14 +3156,28 @@ React.useEffect(() => {
         quarantineInProgress: false
       })
       
-      // Clear suspicious files
-      setSuspiciousFiles([])
-      
       // Restore WiFi
       setWifiStatus('connected')
       
+      // Kill any malicious background tasks
+      setActivePrograms(state.activePrograms.filter(p => p !== 'coolbeans' && p !== 'totallysafe'))
+      
+      // Show success result
+      setAntivirusResult('healthy')
+      setAntivirusModalStep('done')
+      
+      // Play success sound
+      if (cheerfulSoundRef.current) {
+        try { cheerfulSoundRef.current.currentTime = 0; cheerfulSoundRef.current.play() } catch {}
+      }
+      
       console.log('[Nyantivirus] Quarantine complete - all malware removed')
-    }, 5000)
+      
+      // Auto-close modal after 3 seconds
+      setTimeout(() => {
+        closeAntivirusModal()
+      }, 3000)
+    }, 2000)
   }
   
   // Enter Safe Mode
@@ -2830,28 +3209,27 @@ React.useEffect(() => {
     setWifiStatus('connected')
   }
   
-  // Clear virus outbreak when Nyantivirus is clicked
+  
+
+  // Open Nyantivirus modal (used by icons/taskbar). If outbreak is active, also stop sounds.
   const clearVirusOutbreak = () => {
     if (state.infectedGifs.length > 0) {
       console.log('[VirusOutbreak] Nyantivirus activated! Preparing scan modal...');
-      
       // Stop virus outbreak sounds immediately
       if (virusAlertSoundRef.current) {
         virusAlertSoundRef.current.pause();
         virusAlertSoundRef.current.currentTime = 0;
-        console.log('[VirusOutbreak] Stopped virus alert sound');
       }
-      
       if (virusSirenSoundRef.current) {
         virusSirenSoundRef.current.pause();
         virusSirenSoundRef.current.currentTime = 0;
-        console.log('[VirusOutbreak] Stopped virus siren sound');
       }
-      // Open antivirus modal flow
-      setAntivirusModalOpen(true)
-      setAntivirusModalStep('confirm')
-      setAntivirusProgress(0)
     }
+    // Always open modal so users can test states
+    setAntivirusModalOpen(true)
+    setAntivirusModalStep('confirm')
+    setAntivirusProgress(0)
+    setAntivirusResult(null)
   };
 
   // Make clearVirusOutbreak available globally for existing desktop icon
@@ -3145,10 +3523,34 @@ React.useEffect(() => {
   const rebootSystem = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     
+    // Play window startup sound if available
+    if (cheerfulSoundRef.current) {
+      try {
+        cheerfulSoundRef.current.currentTime = 0;
+        cheerfulSoundRef.current.play().catch(err => console.log('Startup sound error:', err));
+      } catch {}
+    }
+    
     // Stop all sounds
     if (systemAlertSound1Ref.current) systemAlertSound1Ref.current.pause();
     if (systemAlertSound2Ref.current) systemAlertSound2Ref.current.pause();
     if (crashSoundRef.current) crashSoundRef.current.pause();
+    if (virusAlertSoundRef.current) virusAlertSoundRef.current.pause();
+    if (virusSirenSoundRef.current) virusSirenSoundRef.current.pause();
+    
+    // Full reset
+    setMechanics(initializeGameMechanics());
+    setPopupBehaviors(new Map());
+    setPopupSpawnTimes(new Map());
+    setTrapGIFs([]);
+    setSillyGifs([]);
+    setInfectedGifs([]);
+    setInfectionEndsAt(null);
+    setScorePopups([]);
+    setShowBadge(null);
+    setShowDifficultyUp(null);
+    setShowInfection(false);
+    setEncounteredPopups([]);
     
     // Reset all state using the reducer
     dispatch({ type: 'SET_SCORE', payload: 0 });
@@ -3161,12 +3563,47 @@ React.useEffect(() => {
     dispatch({ type: 'SET_SHOW_INSTRUCTIONS', payload: true });
     dispatch({ type: 'SET_POPUPS', payload: [] });
     dispatch({ type: 'SET_ACTIVE_PROGRAMS', payload: [] });
-    dispatch({ type: 'SET_USE_MODERN_POPUPS', payload: false });
+    dispatch({ type: 'SET_USE_MODERN_POPUPS', payload: true });
     
     // Reset hint modal
     dispatch({
       type: 'SET_HINT_MODAL',
       payload: { active: false, popup: null, slide: 0, currentSlide: 0 }
+    });
+    
+    // Close all windows
+    setAntivirusModalOpen(false);
+    setTaskManagerOpen(false);
+    setUpdateWindowOpen(false);
+    setFirecatOpen(false);
+    setSuspiciousFiles([]);
+    setMalwareDetected(false);
+    setWifiStatus('connected');
+    setIsInfected(false);
+    setShowVirusWarning(false);
+    
+    // Clear all visual elements
+    setPopupPositions({});
+    setMinimizedPopups(new Set());
+    setInteractedPopups(new Set());
+    setDraggingPopups(new Set());
+    
+    // Reset hidden malware
+    setHiddenMalware({
+      active: false,
+      phase: 0,
+      detectedPopups: [],
+      scanInProgress: false,
+      scanResults: null,
+      quarantineInProgress: false
+    });
+    
+    // Reset system resources
+    setSystemResources({
+      cpu: 30,
+      memory: 45,
+      disk: 20,
+      network: 15
     });
     
     // Reset other state objects
@@ -3233,23 +3670,65 @@ React.useEffect(() => {
     const isCorrectAction = checkCorrectAction(popup, userAction);
     
     if (isCorrectAction) {
-      // Correct action - award points and close popup
+      // Correct action - use new mechanics for scoring
       playCorrectSound();
-      const newScore = state.score + 10;
-      setScore(newScore);
       
-      // Check if player should level up (every 100 points)
-      if (newScore > 0 && newScore % 100 === 0) {
-        const newLevel = Math.floor(newScore / 100) + 1;
+      // Calculate reaction time
+      const spawnTime = popupSpawnTimes.get(popup.id) || Date.now();
+      const reactionTime = Date.now() - spawnTime;
+      
+      // Update mechanics with combo and scoring
+      const oldDifficulty = mechanics.difficulty;
+      const oldCombo = mechanics.combo;
+      const oldBadgeCount = mechanics.badges.length;
+      const newMechanics = setComboTimer(handleCorrectAction(mechanics, reactionTime));
+      setMechanics(newMechanics);
+      
+      // Update legacy score state for compatibility
+      setScore(newMechanics.score);
+      
+      // Show score popup with combo multiplier
+      const multiplier = Math.min(newMechanics.combo, 5);
+      const points = 10 * multiplier;
+      const popupPos = state.popupPositions[popup.id] || { x: 0, y: 0 };
+      const scoreId = `score-${Date.now()}`;
+      setScorePopups(prev => [...prev, {
+        id: scoreId,
+        x: popupPos.x + 225, // center of popup
+        y: popupPos.y + 175,
+        value: points,
+        isCombo: multiplier > 1,
+      }]);
+      setTimeout(() => {
+        setScorePopups(prev => prev.filter(s => s.id !== scoreId));
+      }, 1000);
+      
+      // Check for new badges
+      if (newMechanics.badges.length > oldBadgeCount) {
+        const newBadge = newMechanics.badges[newMechanics.badges.length - 1];
+        setShowBadge(newBadge);
+        setTimeout(() => setShowBadge(null), 3000);
+      }
+      
+      // Check for difficulty increase
+      if (newMechanics.difficulty > oldDifficulty) {
+        setShowDifficultyUp(newMechanics.difficulty + 1);
+        setTimeout(() => setShowDifficultyUp(null), 3000);
+      }
+      
+      // Check if player should level up every 100 points
+      if (newMechanics.score > 0 && newMechanics.score % 100 === 0) {
+        const newLevel = Math.floor(newMechanics.score / 100) + 1;
         setLevel(newLevel);
-        
-        // Show level pass message
         setLevelPassMessage({show: true, level: newLevel});
-        
-        // Hide message after 5 minutes (much longer duration)
         setTimeout(() => {
           setLevelPassMessage({show: false, level: 0});
-        }, 300000); // 300 seconds = 5 minutes
+        }, 300000);
+      }
+      
+      // Spawn suspicious files at certain score milestones (every 200 points starting at 400)
+      if (newMechanics.score > 0 && newMechanics.score >= 400 && newMechanics.score % 200 === 0) {
+        spawnSuspiciousFile();
       }
       
       // Track encountered popup for quiz system and trigger quiz if needed
@@ -3257,14 +3736,13 @@ React.useEffect(() => {
         const exists = prev.find(p => p.id === popup.id);
         const updatedPopups = exists ? prev : [...prev, popup];
         
-        // Check if quiz should be triggered (every 100 points)
-        if (newScore > 0 && newScore % 100 === 0 && updatedPopups.length >= 5) {
-          // Trigger quiz at score milestones
-          console.log('[QUIZ] Triggering security quiz at score:', newScore);
+        // Check if quiz should be triggered (every 1000 points)
+        if (newMechanics.score > 0 && newMechanics.score % 1000 === 0 && updatedPopups.length >= 5) {
+          console.log('[QUIZ] Triggering security quiz at score:', newMechanics.score);
           const quizQuestions = generateQuizQuestions(updatedPopups);
           const currentQuiz = {
-            level: Math.floor(newScore / 100),
-            score: newScore,
+            level: Math.floor(newMechanics.score / 100),
+            score: newMechanics.score,
             questions: quizQuestions
           };
           
@@ -3274,18 +3752,34 @@ React.useEffect(() => {
           dispatch({ type: 'SET_CURRENT_QUESTION_INDEX', payload: 0 });
           dispatch({ type: 'SET_QUIZ_ANSWERS', payload: [] });
           dispatch({ type: 'SET_QUIZ_SCORE', payload: 0 });
-          
-          // Pause the game during quiz
           setPaused(true);
         }
         
         return updatedPopups;
       });
       
+      // Clean up behavior and spawn time
+      setPopupBehaviors(prev => {
+        const next = new Map(prev);
+        next.delete(popup.id);
+        return next;
+      });
+      setPopupSpawnTimes(prev => {
+        const next = new Map(prev);
+        next.delete(popup.id);
+        return next;
+      });
+      
       removePopupById(popup);
     } else {
-      // Incorrect action - increment mistakes and show educational hint modal
+      // Incorrect action - use new mechanics for losing life
       playWrongSound();
+      
+      // Update mechanics (lose life and reset combo)
+      const newMechanics = handleIncorrectAction(mechanics, true);
+      setMechanics(newMechanics);
+      
+      // Update legacy mistakes state for compatibility
       const newMistakes = state.mistakes + 1;
       setMistakes(newMistakes);
       
@@ -3302,8 +3796,8 @@ React.useEffect(() => {
         }
       });
       
-      // Check if game should end due to too many mistakes
-      if (newMistakes >= 5) {
+      // Check if game should end (either 0 lives OR 5 mistakes)
+      if (newMechanics.lives === 0 || newMistakes >= 5) {
         // Play crash sound when system crashes
         if (crashSoundRef.current) {
           crashSoundRef.current.currentTime = 0;
@@ -3311,6 +3805,9 @@ React.useEffect(() => {
         }
         setGameOver(true);
         setGameActive(false);
+        
+        // Show game summary after a delay
+        setTimeout(requestShowSummary, 1000);
       }
       
       setHintModal({ active: true, popup, slide: 1, currentSlide: 0 });
@@ -3319,14 +3816,45 @@ React.useEffect(() => {
     }
   };
 
+  // Handle trap GIF click
+  const handleTrapClick = (trapId: string) => {
+    console.log('[TRAP] Trap GIF clicked:', trapId);
     
-  
+    // Show infection overlay
+    setShowInfection(true);
+    setTimeout(() => setShowInfection(false), 3000);
+    
+    // Update mechanics (lose life)
+    const newMechanics = handleIncorrectAction(mechanics, true);
+    setMechanics(newMechanics);
+    
+    // Remove trap
+    setTrapGIFs(prev => prev.filter(t => t.id !== trapId));
+    
+    // Check for game over
+    if (newMechanics.lives === 0) {
+      if (crashSoundRef.current) {
+        crashSoundRef.current.currentTime = 0;
+        crashSoundRef.current.play().catch(err => console.error('Error playing crash sound:', err));
+      }
+      setGameOver(true);
+      setGameActive(false);
+      
+      setTimeout(requestShowSummary, 3000);
+    }
+  };
 
+  // Handle game restart - always show blue screen to properly reset
+  const handlePlayAgain = () => {
+    setShowGameSummary(false);
+    // Always show blue screen for clean reset
+    setSystemCrashed(true);
+  };
 
   return (
     <>
       {/* Game Area */}
-      <div className="relative w-full h-screen bg-blue-900 overflow-hidden">
+      <div className="relative w-full h-screen bg-blue-900 overflow-hidden select-none">
         {/* Desktop background - not selectable */}
         <div className="absolute inset-0 w-full h-full select-none pointer-events-none">
           <Image 
@@ -3339,15 +3867,40 @@ React.useEffect(() => {
           />
         </div>
 
-        {/* Desktop Icons - Make them more visible */}
-        <div className="absolute top-6 left-6 z-[100] grid grid-cols-1 gap-6">
+        {/* Suspicious files that appear on the desktop (clicking starts infection) */}
+        {suspiciousFiles.map(file => (
+          <div
+            key={file.id}
+            className="absolute flex flex-col items-center cursor-pointer group"
+            style={{ left: file.x, top: file.y, zIndex: 120 }}
+            title={`Open ${file.name}`}
+            onClick={() => openSuspiciousFile(file.id)}
+          >
+            <div className="w-16 h-16 mb-2 group-hover:scale-110 transition-transform bg-white/20 border border-white/30 rounded-lg p-2 backdrop-blur-sm shadow-lg">
+              <Image src={file.icon} alt={file.name} width={48} height={48} draggable="false" />
+            </div>
+            <span className="text-white text-xs font-arcade text-center drop-shadow-lg bg-black/30 px-2 py-1 rounded max-w-[140px] truncate">
+              {file.name}
+            </span>
+          </div>
+        ))}
+
+        {/* Desktop Icons - Make them clickable */}
+        <div className={`${showTutorial ? 'fixed z-[12050]' : 'absolute z-[100]'} top-6 left-6 inline-grid grid-cols-1 gap-6 pointer-events-none relative`}>
+          {/* Local dimmer to keep only spotlight icon bright during tutorial */}
+          {showTutorial && (
+            <div className="absolute inset-0 bg-black/60 rounded-lg pointer-events-none" style={{ zIndex: 1 }}></div>
+          )}
           {/* Firecat Browser Icon */}
           <div 
-            className="flex flex-col items-center cursor-pointer group"
+            className={`relative flex flex-col items-start cursor-pointer group pointer-events-auto w-32 ${showTutorial ? (tutorialFocus === 'firecat' ? 'z-[12100] ring-4 ring-arcade-cyan animate-pulse' : 'opacity-20 pointer-events-none') : ''}`}
             onClick={() => {
               setFirecatOpen(true);
               if (!state.activePrograms.includes('firecat')) {
                 setActivePrograms([...state.activePrograms, 'firecat']);
+              }
+              if (showTutorial && tutorialFocus === 'firecat') {
+                setTutorialStep(s => Math.min(tutorialContent.length - 1, s + 1));
               }
             }}
           >
@@ -3356,117 +3909,23 @@ React.useEffect(() => {
                 src="/img/firecat-taskbar.png" 
                 alt="Firecat Browser" 
                 width={48} 
-                height={48} 
+                height={48}
                 draggable="false"
               />
             </div>
-
-          {/* Antivirus Modal */}
-          {antivirusModalOpen && (
-            <div className="fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-              <div className="bg-white w-full max-w-md rounded-lg shadow-xl border border-gray-300" onClick={(e) => e.stopPropagation()}>
-                <div className="px-5 py-3 border-b border-gray-200">
-                  <h2 className="text-gray-800 text-lg font-semibold">Nyantivirus</h2>
-                </div>
-                <div className="p-5 space-y-4">
-                  {antivirusModalStep === 'confirm' && (
-                    <p className="text-gray-700 text-sm">
-                      Scan complete. Quarantined? Click Yes to start quarantine.
-                    </p>
-                  )}
-
-          {/* Quiz Result Modal */}
-          {quizResultModal.open && (
-            <div className="fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-              <div className="bg-white w-full max-w-md rounded-lg shadow-xl border border-gray-300" onClick={(e) => e.stopPropagation()}>
-                <div className="px-5 py-3 border-b border-gray-200">
-                  <h2 className="text-gray-800 text-lg font-semibold">Quiz Result</h2>
-                </div>
-                <div className="p-5 space-y-3">
-                  <p className="text-gray-700 text-sm">
-                    {quizResultModal.passed ? 'Quiz passed' : 'Quiz failed'}
-                  </p>
-                  <p className="text-gray-700 text-sm">
-                    {quizResultModal.correctCount}/5 correct ({quizResultModal.percentage}%).
-                  </p>
-                </div>
-                <div className="px-5 py-3 border-t border-gray-200 flex justify-end" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    className="px-4 py-2 text-sm rounded bg-arcade-cyan text-black hover:opacity-90"
-                    onClick={(e) => { e.stopPropagation(); dismissQuizResultModal(); }}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-                  {antivirusModalStep === 'scanning' && (
-                    <div>
-                      <p className="text-gray-700 text-sm mb-3">Quarantining detected items. Please wait.</p>
-                      <div className="w-full h-3 bg-gray-200 rounded">
-                        <div
-                          className="h-3 bg-arcade-cyan rounded"
-                          style={{ width: `${antivirusProgress}%`, transition: 'width 120ms linear' }}
-                        />
-                      </div>
-                      <div className="mt-2 text-right text-xs text-gray-600">{antivirusProgress}%</div>
-                    </div>
-                  )}
-                  {antivirusModalStep === 'done' && (
-                    <p className="text-gray-700 text-sm">Scan complete. All malware removed.</p>
-                  )}
-                </div>
-                <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                  {antivirusModalStep === 'confirm' && (
-                    <>
-                      <button
-                        className="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
-                        onClick={(e) => { e.stopPropagation(); closeAntivirusModal(); }}
-                      >
-                        No
-                      </button>
-                      <button
-                        className="px-4 py-2 text-sm rounded bg-arcade-cyan text-black hover:opacity-90"
-                        onClick={(e) => { e.stopPropagation(); startAntivirusScan(); }}
-                      >
-                        Yes
-                      </button>
-                    </>
-                  )}
-                  {antivirusModalStep === 'scanning' && (
-                    <button
-                      className="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700 cursor-not-allowed opacity-60"
-                      disabled
-                    >
-                      Working
-                    </button>
-                  )}
-                  {antivirusModalStep === 'done' && (
-                    <button
-                      className="px-4 py-2 text-sm rounded bg-arcade-cyan text-black hover:opacity-90"
-                      onClick={(e) => { e.stopPropagation(); closeAntivirusModal(); }}
-                    >
-                      Close
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-            <span className="text-white text-sm font-arcade text-center drop-shadow-lg bg-black/30 px-2 py-1 rounded">Firecat</span>
+            <span className="block w-full text-white text-sm font-arcade text-left leading-tight drop-shadow-lg bg-black/30 px-2 py-1 rounded whitespace-normal break-words min-h-[2.5rem]">Firecat</span>
           </div>
 
           {/* Nyantivirus Icon */}
           <div 
-            className="flex flex-col items-center cursor-pointer group"
+            className={`relative flex flex-col items-start cursor-pointer group pointer-events-auto w-32 ${showTutorial ? (tutorialFocus === 'meowarebytes' ? 'z-[12100] ring-4 ring-arcade-cyan animate-pulse' : 'opacity-20 pointer-events-none') : ''}`}
             onClick={() => {
               if (!state.activePrograms.includes('meowarebytes')) {
                 setActivePrograms([...state.activePrograms, 'meowarebytes']);
               }
-              // If system shows infection, open antivirus flow
-              if (state.infectedGifs && state.infectedGifs.length > 0) {
-                clearVirusOutbreak();
+              clearVirusOutbreak();
+              if (showTutorial && tutorialFocus === 'meowarebytes') {
+                setTutorialStep(s => Math.min(tutorialContent.length - 1, s + 1));
               }
             }}
           >
@@ -3479,16 +3938,19 @@ React.useEffect(() => {
                 draggable="false"
               />
             </div>
-            <span className="text-white text-sm font-arcade text-center drop-shadow-lg bg-black/30 px-2 py-1 rounded">Nyantivirus</span>
+            <span className="block w-full text-white text-sm font-arcade text-left leading-tight drop-shadow-lg bg-black/30 px-2 py-1 rounded whitespace-normal break-words min-h-[2.5rem]">Nyantivirus</span>
           </div>
 
           {/* Task Manager Icon */}
           <div 
-            className="flex flex-col items-center cursor-pointer group"
+            className={`relative flex flex-col items-start cursor-pointer group pointer-events-auto w-32 ${showTutorial ? (tutorialFocus === 'taskmanager' ? 'z-[12100] ring-4 ring-arcade-cyan animate-pulse' : 'opacity-20 pointer-events-none') : ''}`}
             onClick={() => {
               setTaskManagerOpen(true);
               if (!state.activePrograms.includes('taskmanager')) {
                 setActivePrograms([...state.activePrograms, 'taskmanager']);
+              }
+              if (showTutorial && tutorialFocus === 'taskmanager') {
+                setTutorialStep(s => Math.min(tutorialContent.length - 1, s + 1));
               }
             }}
           >
@@ -3501,16 +3963,19 @@ React.useEffect(() => {
                 draggable="false"
               />
             </div>
-            <span className="text-white text-sm font-arcade text-center drop-shadow-lg bg-black/30 px-2 py-1 rounded">Task Manager</span>
+            <span className="block w-full text-white text-sm font-arcade text-left leading-tight drop-shadow-lg bg-black/30 px-2 py-1 rounded whitespace-normal break-words min-h-[2.5rem]">Task Manager</span>
           </div>
 
           {/* Update Software Icon */}
           <div 
-            className="flex flex-col items-center cursor-pointer group"
+            className={`relative flex flex-col items-start cursor-pointer group pointer-events-auto w-32 ${showTutorial ? (tutorialFocus === 'updatesoftware' ? 'z-[12100] ring-4 ring-arcade-cyan animate-pulse' : 'opacity-20 pointer-events-none') : ''}`}
             onClick={() => {
               setUpdateWindowOpen(true);
               if (!state.activePrograms.includes('updatesoftware')) {
                 dispatch({ type: 'SET_ACTIVE_PROGRAMS', payload: [...state.activePrograms, 'updatesoftware'] });
+              }
+              if (showTutorial && tutorialFocus === 'updatesoftware') {
+                setTutorialStep(s => Math.min(tutorialContent.length - 1, s + 1));
               }
             }}
           >
@@ -3523,12 +3988,42 @@ React.useEffect(() => {
                 draggable="false"
               />
             </div>
-            <span className="text-white text-sm font-arcade text-center drop-shadow-lg bg-black/30 px-2 py-1 rounded">Updates</span>
+            <span className="block w-full text-white text-sm font-arcade text-left leading-tight drop-shadow-lg bg-black/30 px-2 py-1 rounded whitespace-normal break-words min-h-[2.5rem]">Updates</span>
+          </div>
+
+          {/* Notes / Manuals (Notepad) */}
+          <div 
+            className={`relative flex flex-col items-start cursor-pointer group pointer-events-auto w-32 ${showTutorial ? (tutorialFocus === 'notepad' ? 'z-[12100] ring-4 ring-arcade-cyan animate-pulse' : 'opacity-20 pointer-events-none') : ''}`}
+            onClick={() => {
+              setNotepadOpen(true);
+              if (!state.activePrograms.includes('notepad')) {
+                setActivePrograms([...state.activePrograms, 'notepad']);
+              }
+              if (showTutorial && tutorialFocus === 'notepad') {
+                // Last step completes tutorial
+                if (tutorialStep >= tutorialContent.length - 1) {
+                  setShowTutorial(false)
+                } else {
+                  setTutorialStep(s => Math.min(tutorialContent.length - 1, s + 1));
+                }
+              }
+            }}
+          >
+            <div className="w-16 h-16 mb-2 group-hover:scale-110 transition-transform bg-white/20 border border-white/30 rounded-lg p-2 backdrop-blur-sm shadow-lg">
+              <Image 
+                src="/img/notepad-taskbar.png" 
+                alt="Notes / Manuals" 
+                width={48} 
+                height={48} 
+                draggable="false"
+              />
+            </div>
+            <span className="block w-full text-white text-sm font-arcade text-left leading-tight drop-shadow-lg bg-black/30 px-2 py-1 rounded whitespace-normal break-words min-h-[2.5rem]">Notes / Manuals</span>
           </div>
         </div>
 
         {/* Start Game Instructions */}
-        {state.showInstructions && !state.gameActive && (
+        {state.showInstructions && !state.gameActive && !showTutorial && (
           <div className="absolute inset-0 bg-black/80 z-[9999] flex items-center justify-center">
             <div className="bg-arcade-bg border-2 border-arcade-cyan rounded-lg p-8 max-w-2xl mx-4">
               <h1 className="text-3xl font-arcade text-arcade-cyan mb-6 text-center">POPUP MANIC</h1>
@@ -3541,7 +4036,7 @@ React.useEffect(() => {
                   <p>• <span className="text-arcade-red">MALICIOUS popups:</span> Force close using X button or drag to trash</p>
                   <p>• <span className="text-arcade-cyan">SCORING:</span> +10 points for correct actions</p>
                   <p>• <span className="text-arcade-magenta">MISTAKES:</span> Game ends after 5 mistakes</p>
-                  <p>• <span className="text-arcade-yellow">QUIZ:</span> Educational quiz every 100 points</p>
+                  <p>• <span className="text-arcade-yellow">QUIZ:</span> Educational quiz every 1000 points</p>
                 </div>
                 
                 <div className="text-xs text-gray-300 mt-4">
@@ -3561,21 +4056,110 @@ React.useEffect(() => {
             </div>
           </div>
         )}
+
+        {/* Tutorial Overlay (shown after Start Game) */}
+        {showTutorial && state.gameActive && (
+          <>
+            {/* Dark background layer */}
+            <div className="fixed inset-0 bg-black/90 z-[11000]" />
+
+            {/* Foreground card layer above spotlighted icons */}
+            <div className="fixed inset-0 z-[13000] flex items-center justify-center pointer-events-none">
+              <div className="bg-arcade-bg border-2 border-arcade-cyan rounded-xl p-6 max-w-3xl w-full mx-4 pointer-events-auto">
+                <div className="flex items-start justify-between mb-4">
+                  <h2 className="font-arcade text-2xl text-arcade-cyan">Onboarding Guide</h2>
+                  <button className="font-arcade text-sm text-white/80 hover:text-white" onClick={() => setShowTutorial(false)}>Skip</button>
+                </div>
+                {tutorialStep === 0 && (
+                  <div className="mb-4 p-4 rounded border border-arcade-magenta/60 bg-arcade-magenta/20">
+                    <div className="font-arcade text-arcade-magenta text-lg mb-1">IMPORTANT</div>
+                    <div className="text-white font-terminal text-sm">
+                      Keep <span className="text-arcade-cyan font-semibold">Nyantivirus</span> <span className="font-semibold">UPDATED</span> via <span className="text-arcade-cyan">Software Update Center</span> (<span className="font-semibold">Update All</span>), then <span className="font-semibold">RUN SCAN OFTEN</span> to detect and quarantine threats quickly.
+                    </div>
+                  </div>
+                )}
+                <div className="bg-black/60 border border-arcade-cyan/40 rounded p-4 text-white font-terminal mb-4">
+                  <div className="text-lg font-arcade text-arcade-cyan mb-2">{tutorialContent[tutorialStep].title}</div>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {tutorialContent[tutorialStep].lines.map((l, i) => (
+                      <li key={i}>{l}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="font-arcade text-sm text-white/70">Step {tutorialStep + 1} / {tutorialContent.length}</div>
+                  <div className="flex gap-2">
+                    {tutorialStep > 0 && (
+                      <button className="bg-gray-700 hover:bg-gray-600 text-white font-arcade px-4 py-2 rounded" onClick={() => setTutorialStep(s => Math.max(0, s - 1))}>Back</button>
+                    )}
+                    <button className="bg-arcade-cyan text-black hover:bg-arcade-cyan/80 font-arcade px-4 py-2 rounded" onClick={openRelevantAppForStep}>Highlight this icon</button>
+                    {tutorialStep < tutorialContent.length - 1 ? (
+                      <button className="bg-arcade-magenta hover:bg-arcade-magenta/80 text-white font-arcade px-4 py-2 rounded" onClick={() => setTutorialStep(s => Math.min(tutorialContent.length - 1, s + 1))}>Next</button>
+                    ) : (
+                      <button className="bg-arcade-green hover:bg-arcade-green/80 text-black font-arcade px-4 py-2 rounded" onClick={() => { setShowTutorial(false); }}>Finish</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       
-      {/* System crash overlay */}
-      {state.systemCrashed && (
-        <div className="absolute inset-0 bg-blue-800 z-[9999] flex flex-col items-center justify-center text-white p-8">
-          <div className="max-w-2xl w-full bg-blue-900 border-4 border-white p-8 rounded-lg shadow-2xl">
-            <h2 className="text-4xl font-arcade mb-6 text-center">SYSTEM CRASH</h2>
-            <div className="mb-6">
-              <p className="text-xl mb-4">Your system has crashed due to excessive popup overload!</p>
-              <p className="mb-4">Too many popups (22) were active simultaneously, causing a catastrophic system failure.</p>
-              <p className="mb-4">This is a common result of malware infections that generate excessive popups.</p>
+      {/* Notepad / Manuals Window */}
+      {notepadOpen && (
+        <DraggableWindow
+          title="Notepad - Manuals & Tips"
+          initialPosition={{ x: 120, y: 220 }}
+          width={520}
+          height={480}
+          className="bg-arcade-bg border border-arcade-cyan rounded-md shadow-xl z-[10000]"
+          handleClassName="bg-arcade-cyan/30"
+          onClose={() => {
+            setNotepadOpen(false)
+            setActivePrograms(state.activePrograms.filter((p: string) => p !== 'notepad'))
+          }}
+          onMinimize={() => {
+            setNotepadOpen(false)
+          }}
+        >
+          <div className="p-4 text-white font-terminal space-y-4">
+            <div className="font-arcade text-xl text-arcade-cyan">Threat Containment Checklist</div>
+            <ol className="list-decimal pl-5 space-y-2 text-sm">
+              <li>Open <span className="text-arcade-cyan">Nyantivirus</span> → Run Scan → Quarantine threats.</li>
+              <li>Open <span className="text-arcade-cyan">Software Update Center</span> → Update All.</li>
+              <li>Open <span className="text-arcade-cyan">Task Manager</span> → End suspicious tasks (e.g., coolbeans, totallysafe).</li>
+              <li>Optionally toggle <span className="text-arcade-cyan">WiFi</span> off to slow ads. Remember: Updates and Firecat need internet.</li>
+              <li>Repeat scans until system stays clean.</li>
+            </ol>
+            <div className="font-arcade text-xl text-arcade-cyan pt-2">Quick Tips</div>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>Scan frequently. Quarantine clears infected GIFs and malicious popups immediately.</li>
+              <li>Keep Nyantivirus updated for best protection.</li>
+              <li>Use Task Manager to verify CPU/Memory spikes from malware.</li>
+              <li>Firecat shows an offline screen when WiFi is off.</li>
+            </ul>
+          </div>
+        </DraggableWindow>
+      )}
+
+      {/* Blue Screen of Death - Shows for clean game reset */}
+      {state.systemCrashed && !showGameSummary && (
+        <div className="absolute inset-0 bg-blue-900 z-[99999] flex flex-col items-center justify-center text-white p-8">
+          <div className="max-w-2xl w-full bg-blue-800 border-4 border-white p-8 rounded-lg shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">💀</div>
+              <h2 className="text-4xl font-arcade mb-4">SYSTEM CRASHED</h2>
+              <div className="text-xl font-terminal mb-2">Game Over - System Overload</div>
+            </div>
+            <div className="mb-6 font-terminal text-base">
+              <p className="mb-4">Your system has been overwhelmed by malware and security threats.</p>
+              <p className="mb-4">Too many popups, infections, and security mistakes caused a catastrophic failure.</p>
+              <p className="mb-4 text-arcade-cyan">Click the button below to reboot and start fresh.</p>
             </div>
             <div className="text-center">
               <button 
                 onClick={rebootSystem}
-                className="bg-arcade-cyan hover:bg-arcade-cyan/80 text-black font-arcade py-3 px-8 rounded-lg text-xl transition-colors"
+                className="bg-arcade-cyan hover:bg-arcade-cyan/80 text-black font-arcade py-4 px-12 rounded-lg text-2xl transition-colors shadow-lg"
               >
                 REBOOT SYSTEM
               </button>
@@ -3593,7 +4177,7 @@ React.useEffect(() => {
           height="80vh"
           minWidth={700}
           minHeight={500}
-          className="bg-arcade-bg border border-arcade-cyan rounded-md shadow-xl z-40 flex flex-col"
+          className="bg-arcade-bg border border-arcade-cyan rounded-md shadow-xl z-[10000] flex flex-col"
           handleClassName="bg-arcade-cyan/30 flex-shrink-0"
           onClose={() => {
             setFirecatOpen(false)
@@ -3651,8 +4235,17 @@ React.useEffect(() => {
           
           {/* Browser content - Responsive */}
           <div className="bg-white p-4 flex-1 overflow-auto relative">
-            <div className="w-full h-full min-h-0 overflow-auto" style={{ 
-              transform: 'scale(var(--browser-zoom, 1))', 
+            {wifiStatus !== 'connected' ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">📡</div>
+                  <h2 className="text-2xl font-arcade text-gray-800 mb-2">No Internet Connection</h2>
+                  <p className="text-gray-600 font-terminal">Check your WiFi connection to browse the web</p>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full h-full min-h-0 overflow-auto" style={{ 
+                transform: 'scale(var(--browser-zoom, 1))', 
               transformOrigin: '0 0', 
               width: 'calc(100% / var(--browser-zoom, 1))', 
               height: 'calc(100% / var(--browser-zoom, 1))' 
@@ -3959,6 +4552,7 @@ React.useEffect(() => {
                 </div>
               )}
             </div>
+            )}
           </div>
         </DraggableWindow>
       )}
@@ -3970,7 +4564,7 @@ React.useEffect(() => {
           initialPosition={{ x: 200, y: 150 }}
           width={600}
           height={500}
-          className="bg-arcade-bg border border-arcade-cyan rounded-md shadow-xl z-40"
+          className="bg-arcade-bg border border-arcade-cyan rounded-md shadow-xl z-[10000]"
           handleClassName="bg-arcade-cyan/30"
           onClose={() => {
             setTaskManagerOpen(false)
@@ -4236,7 +4830,7 @@ React.useEffect(() => {
           initialPosition={{ x: 250, y: 150 }}
           width={500}
           height={400}
-          className="bg-arcade-bg border border-arcade-cyan rounded-md shadow-xl z-40"
+          className="bg-arcade-bg border border-arcade-cyan rounded-md shadow-xl z-[10000]"
           handleClassName="bg-arcade-cyan/30"
           onClose={() => {
             setUpdateWindowOpen(false)
@@ -4275,19 +4869,26 @@ React.useEffect(() => {
             ))}
             
             <div className="flex justify-end mt-6">
+              {wifiStatus !== 'connected' && (
+                <div className="text-red-400 text-sm font-terminal mr-4 flex items-center">
+                  ⚠️ No internet connection
+                </div>
+              )}
               <button 
-                className={`font-arcade text-sm px-4 py-2 rounded ${!updatingSoftware ? 'bg-arcade-cyan text-black hover:bg-arcade-cyan/80' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}`}
+                className={`font-arcade text-sm px-4 py-2 rounded ${!updatingSoftware && wifiStatus === 'connected' ? 'bg-arcade-cyan text-black hover:bg-arcade-cyan/80' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}`}
                 onClick={() => {
-                  if (!updatingSoftware) {
+                  if (!updatingSoftware && wifiStatus === 'connected') {
                     setUpdatingSoftware(true)
                     setSoftwareUpdateProgress({
                       'Firecat Browser': 0,
                       'Nyantivirus': 0,
                       'Windows Security': 0
                     })
+                  } else if (wifiStatus !== 'connected') {
+                    alert('Unable to install updates - check your internet connection!')
                   }
                 }}
-                disabled={updatingSoftware}
+                disabled={updatingSoftware || wifiStatus !== 'connected'}
               >
                 {updatingSoftware ? 'Updating...' : 'Update All'}
               </button>
@@ -4295,12 +4896,108 @@ React.useEffect(() => {
           </div>
         </DraggableWindow>
       )}
+
+      {/* Antivirus Modal */}
+      {antivirusModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl shadow-2xl border-2 border-arcade-cyan bg-gradient-to-b from-black via-gray-900 to-black" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b-2 border-gray-800">
+              <h2 className="font-arcade text-3xl text-arcade-cyan tracking-wider">NYANTIVIRUS</h2>
+              <div className="text-xs text-gray-400 font-terminal">Real-time protection and quarantine</div>
+            </div>
+            <div className="p-6 space-y-4 text-gray-200 font-terminal">
+              {antivirusModalStep === 'confirm' && (
+                <p className="text-base">Run a quick scan to check your system status.</p>
+              )}
+
+              {antivirusModalStep === 'scanning' && (
+                <div>
+                  <p className="text-base mb-3 text-arcade-cyan">Scanning system. Please wait…</p>
+                  <div className="w-full h-3 bg-gray-800 rounded">
+                    <div className="h-3 bg-arcade-cyan rounded" style={{ width: `${antivirusProgress}%`, transition: 'width 120ms linear' }} />
+                  </div>
+                  <div className="mt-2 text-right text-sm text-gray-400">{Math.round(antivirusProgress)}%</div>
+                </div>
+              )}
+
+              {antivirusModalStep === 'done' && (
+                <div className="space-y-3">
+                  {antivirusResult === 'healthy' && (
+                    <>
+                      <div className="text-green-400 text-base font-semibold">System healthy. No threats found.</div>
+                      <div className="text-gray-400 text-sm">You're up to date and connected.</div>
+                    </>
+                  )}
+
+                  {antivirusResult === 'unhealthy' && (
+                    <>
+                      <div className="text-yellow-400 text-lg font-semibold">System needs attention. No active threats found.</div>
+                      <ul className="text-gray-400 text-base list-disc pl-5 space-y-2 mt-3">
+                        {(softwareUpdateProgress['Nyantivirus'] ?? 0) < 100 && (
+                          <li>Ensure Nyantivirus is up to date.</li>
+                        )}
+                        {wifiStatus !== 'connected' && (
+                          <li>Check your internet connection.</li>
+                        )}
+                        {(suspiciousFiles?.length ?? 0) > 0 && (
+                          <li>Remove suspicious files on desktop.</li>
+                        )}
+                      </ul>
+                    </>
+                  )}
+
+                  {antivirusResult === 'infected' && (
+                    <>
+                      <div className="text-red-400 text-base font-semibold">Threats detected! Quarantine recommended.</div>
+                      <div className="text-gray-400 text-sm">Click Quarantine to remove detected items.</div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t-2 border-gray-800 flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+              {antivirusModalStep === 'confirm' && (
+                <>
+                  <button className="px-4 py-2 text-sm rounded border-2 border-gray-700 text-gray-300 hover:bg-gray-800 font-terminal" onClick={(e) => { e.stopPropagation(); closeAntivirusModal(); }}>Cancel</button>
+                  <button className="px-4 py-2 text-sm rounded bg-arcade-cyan text-black hover:opacity-90 font-arcade" onClick={(e) => { e.stopPropagation(); startAntivirusScan(); }}>Run Quick Scan</button>
+                </>
+              )}
+              {antivirusModalStep === 'scanning' && (
+                <button className="px-4 py-2 text-sm rounded border-2 border-gray-700 text-gray-400 cursor-not-allowed opacity-60" disabled>Scanning…</button>
+              )}
+              {antivirusModalStep === 'done' && (
+                <>
+                  {antivirusResult === 'infected' && (
+                    <button className="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-500 font-arcade" onClick={(e) => { e.stopPropagation(); quarantineMalware(); }}>Quarantine</button>
+                  )}
+                  {antivirusResult === 'unhealthy' && (softwareUpdateProgress['Nyantivirus'] ?? 0) < 100 && (
+                    <button 
+                      className="px-4 py-2 text-sm rounded bg-arcade-cyan text-black hover:opacity-90 font-arcade" 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        closeAntivirusModal();
+                        setUpdateWindowOpen(true);
+                        if (!state.activePrograms.includes('updatesoftware')) {
+                          dispatch({ type: 'SET_ACTIVE_PROGRAMS', payload: [...state.activePrograms, 'updatesoftware'] });
+                        }
+                      }}
+                    >
+                      Update Nyantivirus
+                    </button>
+                  )}
+                  <button className="px-4 py-2 text-sm rounded border-2 border-gray-700 text-gray-300 hover:bg-gray-800 font-terminal" onClick={(e) => { e.stopPropagation(); closeAntivirusModal(); }}>Close</button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Game HUD as Windows taskbar at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-arcade-bg/90 backdrop-blur-sm p-2 z-50 flex justify-between items-center border-t border-gray-700">
+      <div className={`fixed bottom-0 left-0 right-0 bg-arcade-bg/90 backdrop-blur-sm p-2 ${showTutorial && tutorialFocus === 'wifi' ? 'z-[12050]' : 'z-[200]'} flex justify-between items-center border-t border-gray-700 pointer-events-auto`}>
         <div className="flex items-center relative">
           <div 
-            className={`bg-arcade-cyan/20 p-1.5 rounded mr-4 flex items-center cursor-pointer ${startMenuOpen ? 'bg-arcade-cyan/40' : ''}`}
+            className={`bg-arcade-cyan/20 p-1.5 rounded mr-4 flex items-center cursor-pointer ${startMenuOpen ? 'bg-arcade-cyan/40' : ''} ${showTutorial && tutorialFocus === 'wifi' ? 'opacity-20 pointer-events-none' : ''}`}
             onClick={() => setStartMenuOpen(!startMenuOpen)}
           >
             <Image 
@@ -4315,11 +5012,14 @@ React.useEffect(() => {
           </div>
           
           {/* WiFi icon with tooltip and dropdown */}
-          <div className="flex items-center justify-center mx-2 cursor-pointer hover:bg-arcade-cyan/20 p-1 rounded relative"
+          <div className={`flex items-center justify-center mx-2 cursor-pointer hover:bg-arcade-cyan/20 p-1 rounded relative ${showTutorial && tutorialFocus === 'wifi' ? 'z-[12100] ring-4 ring-arcade-cyan animate-pulse' : ''}`}
             onClick={() => {
               setWifiMenuOpen(!wifiMenuOpen)
               // Close start menu if open
               if (startMenuOpen) setStartMenuOpen(false)
+              if (showTutorial && tutorialFocus === 'wifi') {
+                setTutorialStep(s => Math.min(tutorialContent.length - 1, s + 1))
+              }
             }}
           >
             <div className="group">
@@ -4369,7 +5069,7 @@ React.useEffect(() => {
           </div>
           
           {/* Bell icon */}
-          <div className="flex items-center justify-center mx-2 cursor-pointer hover:bg-arcade-cyan/20 p-1 rounded">
+          <div className={`flex items-center justify-center mx-2 cursor-pointer hover:bg-arcade-cyan/20 p-1 rounded ${showTutorial && tutorialFocus === 'wifi' ? 'opacity-20 pointer-events-none' : ''}`}>
             <Image 
               src="/img/bell-rmb.png" 
               alt="Notifications" 
@@ -4380,7 +5080,7 @@ React.useEffect(() => {
           </div>
           
           {/* Running programs in taskbar */}
-          <div className="flex items-center ml-2">
+          <div className={`flex items-center ml-2 ${showTutorial && tutorialFocus === 'wifi' ? 'opacity-20 pointer-events-none' : ''}`}>
             {state.activePrograms.includes('firecat') && (
               <div 
                 className={`flex items-center justify-center mx-1 cursor-pointer hover:bg-arcade-cyan/20 p-1 rounded`}
@@ -4482,64 +5182,69 @@ React.useEffect(() => {
               >
                 Back to Homepage
               </div>
-              <div 
-                className="p-2 font-arcade text-sm text-arcade-cyan hover:bg-arcade-cyan/20 cursor-pointer"
-                onClick={async () => {
-                  try {
-                    // Fetch a random popup from the database
-                    const apiPopup = await fetchRandomPopup();
-                    
-                    if (apiPopup) {
-                      // Transform the API popup to match our Popup interface
-                      const randomPopup = transformPopupFromAPI(apiPopup);
+              {/* Spawn Random Popup - Hidden from players */}
+              {false && (
+                <div 
+                  className="p-2 font-arcade text-sm text-arcade-cyan hover:bg-arcade-cyan/20 cursor-pointer"
+                  onClick={async () => {
+                    try {
+                      // Fetch a random popup from the database
+                      const apiPopup = await fetchRandomPopup();
                       
-                      // Generate position first and store it
-                      const popupPosition = generateRandomPosition(randomPopup.ui_type);
-                      
-                      // Add the popup to the state using the addPopup action
-                      addPopup(randomPopup);
-                      setPopupPositions({
-                        ...state.popupPositions,
-                        [randomPopup.id]: popupPosition
-                      });
-                      
-                      console.log(`[RENDER] Popup ${randomPopup.id} position:`, popupPosition, 'from popupPositions:', state.popupPositions[randomPopup.id]);
-                    } else {
-                      // Try one more time with a different API call approach
-                      try {
-                        // Try to get any popup regardless of type
-                        console.log('First API call failed, trying again with different parameters...');
-                        const fallbackPopup = generateFallbackPopup();
-                        const fallbackPosition = generateRandomPosition(fallbackPopup.ui_type);
-                        setPopupPositions({...state.popupPositions, [fallbackPopup.id]: fallbackPosition});
-                        addPopup(fallbackPopup);
-                      } catch (fallbackError) {
-                        console.error('Fallback popup generation failed:', fallbackError);
+                      if (apiPopup) {
+                        // Transform the API popup to match our Popup interface
+                        const randomPopup = transformPopupFromAPI(apiPopup);
+                        
+                        // Generate position first and store it
+                        const popupPosition = generateRandomPosition(randomPopup.ui_type);
+                        
+                        // Add the popup to the state using the addPopup action
+                        addPopup(randomPopup);
+                        setPopupPositions({
+                          ...state.popupPositions,
+                          [randomPopup.id]: popupPosition
+                        });
+                        
+                        console.log(`[RENDER] Popup ${randomPopup.id} position:`, popupPosition, 'from popupPositions:', state.popupPositions[randomPopup.id]);
+                      } else {
+                        // Try one more time with a different API call approach
+                        try {
+                          // Try to get any popup regardless of type
+                          console.log('First API call failed, trying again with different parameters...');
+                          const fallbackPopup = generateFallbackPopup();
+                          const fallbackPosition = generateRandomPosition(fallbackPopup.ui_type);
+                          setPopupPositions({...state.popupPositions, [fallbackPopup.id]: fallbackPosition});
+                          addPopup(fallbackPopup);
+                        } catch (fallbackError) {
+                          console.error('Fallback popup generation failed:', fallbackError);
+                        }
                       }
+                    } catch (error) {
+                      console.error('Error fetching popup:', error);
+                      // Use fallback popup
+                      const fallbackPopup = generateFallbackPopup();
+                      const fallbackPosition = generateRandomPosition(fallbackPopup.ui_type);
+                      setPopupPositions({...state.popupPositions, [fallbackPopup.id]: fallbackPosition});
+                      addPopup(fallbackPopup);
                     }
-                  } catch (error) {
-                    console.error('Error fetching popup:', error);
-                    // Use fallback popup
-                    const fallbackPopup = generateFallbackPopup();
-                    const fallbackPosition = generateRandomPosition(fallbackPopup.ui_type);
-                    setPopupPositions({...state.popupPositions, [fallbackPopup.id]: fallbackPosition});
-                    addPopup(fallbackPopup);
-                  }
-                }}
-              >
-                Spawn Random Popup
-              </div>
+                  }}
+                >
+                  Spawn Random Popup
+                </div>
+              )}
             </div>
           )}
         </div>
         
-        {/* Score and Mistakes Display - RIGHT SIDE OF TASKBAR */}
-        <div className="flex items-center">
-          <div className="text-arcade-cyan font-arcade text-sm">
-            <span className="mr-6">SCORE: {state.score}</span>
-            <span className="mr-6">LEVEL: {state.level}</span>
-            <span className="text-arcade-red">MISTAKES: {state.mistakes}/5</span>
-          </div>
+        {/* Active Power-Up Status - RIGHT SIDE OF TASKBAR */}
+        <div className="flex items-center text-arcade-cyan font-arcade text-sm">
+          {mechanics.activePowerUp ? (
+            <span>
+              POWER-UP: {mechanics.activePowerUp.type?.toUpperCase()}
+            </span>
+          ) : (
+            <span>POWER-UP: NONE</span>
+          )}
         </div>
       </div>
 
@@ -4555,7 +5260,7 @@ React.useEffect(() => {
       ></div>
 
       {/* Render popups */}
-      <div className="relative z-10">
+      <div className="fixed inset-0 z-[150] pointer-events-none">
         {state.popups.map((popup, index) => {
           // Ensure popup has an ID
           if (!popup.id) {
@@ -4573,57 +5278,113 @@ React.useEffect(() => {
             }
           }
           
-          const popupPos = state.popupPositions[popup.id] || { x: 100, y: 100 };
+          // Ensure each popup has a stored position; if missing, assign one now
+          let popupPos = state.popupPositions[popup.id] as { x: number; y: number } | undefined;
+          if (!popupPos) {
+            const assigned = generateRandomPosition(popup.ui_type);
+            setPopupPositions({ ...state.popupPositions, [popup.id]: assigned });
+            popupPos = assigned;
+          }
           const isMinimized = state.minimizedPopups.has(popup.id);
           const isActive = state.activePopupId === popup.id;
         
           // Debug log for each popup
           if (state.popups.length > 0) {
             console.log(`[PopupManic] Rendering popup ${popup.id} (${popup.ui_type}) at position:`, popupPos, 'minimized:', isMinimized);
-        }
-                return state.useModernPopups ? (
-          <ModernPopupIntegration
-            key={popup.id}
-            popup={popup}
-            onInteraction={(action) => {
-              handlePopupInteraction(popup, action);
-            }}
-              position={popupPos}
-              onPositionChange={state.hintModal.active ? undefined : (newPosition) => {
-                const newPositions = { ...state.popupPositions, [popup.id]: newPosition } as Record<string, { x: number; y: number }>;
+          }
+          
+          // Get behavior for this popup
+          const behavior = popupBehaviors.get(popup.id) || { id: popup.id, type: 'static', speed: 1, scale: 1, rotation: 0 };
+          
+          const revealActive = mechanics.activePowerUp?.type === 'reveal-all';
+          const revealColor = popup.is_malicious ? '#ef4444' : '#22c55e';
+          return state.useModernPopups ? (
+            <AnimatedPopup
+              key={popup.id}
+              behavior={behavior}
+              initialX={popupPos.x}
+              initialY={popupPos.y}
+              width={popup.size?.width || 450}
+              height={popup.size?.height || 350}
+              cursorPosition={cursorPosition}
+              isPaused={state.paused || state.hintModal.active || draggingPopups.has(popup.id)}
+              isFrozen={mechanics.activePowerUp?.type === 'freeze'}
+              isSlowMo={mechanics.activePowerUp?.type === 'slow-mo'}
+              onPositionUpdate={(x, y) => {
+                const newPositions = { ...state.popupPositions, [popup.id]: { x, y } };
                 setPopupPositions(newPositions);
               }}
-              onMinimize={state.hintModal.active ? undefined : () => {
-                const newSet = new Set<string>([...Array.from(state.minimizedPopups), popup.id]);
-                setMinimizedPopups(newSet);
+              onBehaviorUpdate={(newBehavior) => {
+                setPopupBehaviors(prev => new Map(prev).set(popup.id, newBehavior));
               }}
-            isMinimized={isMinimized}
-            isActive={isActive}
-            onClick={() => {
-              // Only set active popup if game is active and hint modal is not showing
-              if (state.gameActive && !state.hintModal.active && !state.systemCrashed) {
-                setActivePopupId(popup.id);
-              }
-            }}
-            style={{
-              zIndex: isActive ? 50 : 40,
-              boxShadow: isActive ? '0 0 0 2px #ff00ff, 0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 8px rgba(0, 0, 0, 0.2)',
-              transition: 'box-shadow 0.2s ease, z-index 0.1s'
-            }}
-          />
+            >
+              <div style={{
+                border: revealActive ? `4px solid ${revealColor}` : 'none',
+                borderRadius: '8px',
+                boxShadow: revealActive ? `0 0 20px ${revealColor}` : 'none',
+                transition: 'all 0.3s ease'
+              }}>
+                <ModernPopupIntegration
+                  popup={popup}
+                  onInteraction={(action) => {
+                    handlePopupInteraction(popup, action);
+                  }}
+                  position={{ x: 0, y: 0 }}
+                  onPositionChange={state.hintModal.active ? undefined : (newPosition) => {
+                    const newPositions = { ...state.popupPositions, [popup.id]: newPosition } as Record<string, { x: number; y: number }>;
+                    setPopupPositions(newPositions);
+                  }}
+                  onDragStart={() => {
+                    // Add popup to dragging set when drag starts
+                    setDraggingPopups(prev => new Set(prev).add(popup.id));
+                  }}
+                  onDragEnd={() => {
+                    // Remove popup from dragging set when drag ends
+                    setDraggingPopups(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(popup.id);
+                      return newSet;
+                    });
+                  }}
+                  onMinimize={state.hintModal.active ? undefined : () => {
+                    const newSet = new Set<string>([...Array.from(state.minimizedPopups), popup.id]);
+                    setMinimizedPopups(newSet);
+                }}
+                isMinimized={isMinimized}
+                isActive={isActive}
+                onClick={() => {
+                // Only set active popup if game is active and hint modal is not showing
+                if (state.gameActive && !state.hintModal.active && !state.systemCrashed) {
+                  setActivePopupId(popup.id);
+                }
+              }}
+              style={{
+                zIndex: isActive ? 100 : 50,
+                boxShadow: revealActive
+                  ? `0 0 0 3px ${revealColor}, 0 0 14px ${revealColor}55`
+                  : (isActive ? '0 0 0 2px #ff00ff, 0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 8px rgba(0, 0, 0, 0.2)'),
+                transition: 'box-shadow 0.2s ease, z-index 0.1s'
+              }}
+            />
+              </div>
+            </AnimatedPopup>
         ) : (
           <motion.div
             key={popup.id}
             className={`absolute overflow-hidden ${isActive ? 'ring-2 ring-arcade-magenta' : ''}`}
             style={{
-              zIndex: isActive ? 50 : 40,
+              zIndex: isActive ? 100 : 50,
                 left: popupPos.x,
                 top: popupPos.y,
               width: popup.ui_type === 'system_alert' && popup.is_malicious ? 550 : (popup.size?.width || DEFAULT_POPUP_SIZE.width),
               height: popup.ui_type === 'system_alert' && popup.is_malicious ? 400 : (popup.size?.height || DEFAULT_POPUP_SIZE.height),
               borderRadius: `${popup.style?.borderRadius || 8}px`,
-              border: `${popup.style?.borderWidth || 1}px solid ${popup.style?.borderColor || '#ccc'}`,
-              boxShadow: popup.style?.boxShadow || '0 4px 8px rgba(0, 0, 0, 0.2)',
+              border: revealActive
+                ? `3px solid ${revealColor}`
+                : `${popup.style?.borderWidth || 1}px solid ${popup.style?.borderColor || '#ccc'}`,
+              boxShadow: revealActive
+                ? `0 0 14px ${revealColor}55`
+                : (popup.style?.boxShadow || '0 4px 8px rgba(0, 0, 0, 0.2)'),
               backgroundColor: (popup.style as any)?.backgroundColor || popup.style?.bodyColor || '#ffffff',
               color: (popup.style as any)?.color || '#000000',
               fontFamily: popup.ui_type === 'system_alert' && popup.is_malicious ? 'Segoe UI, system-ui, sans-serif' : (popup.style?.fontFamily || 'Arial, sans-serif'),
@@ -5323,9 +6084,14 @@ React.useEffect(() => {
         </div>
       )}
       
+      {/* Virus Outbreak Hint Popup - Show while infection countdown is active */}
+      {infectionEndsAt && nowTs < infectionEndsAt && (
+        <VirusOutbreakHint onOpenNyantivirus={clearVirusOutbreak} />
+      )}
+      
       {/* Windows-Style Virus Notification */}
       {state.infectedGifs.length > 0 && (
-        <div className="fixed bottom-4 right-4 z-[9999] w-80 bg-gray-800 border border-gray-600 shadow-2xl rounded-lg overflow-hidden animate-slide-in-right">
+        <div className="fixed bottom-4 right-4 z-[13000] w-80 bg-gray-800 border border-gray-600 shadow-2xl rounded-lg overflow-hidden animate-slide-in-right ring-4 ring-arcade-cyan">
           {/* Notification Header */}
           <div className="bg-gray-900 text-white px-4 py-2 flex items-center border-b border-gray-700">
             <div className="w-4 h-4 bg-blue-500 rounded-full mr-2 flex items-center justify-center">
@@ -5359,7 +6125,7 @@ React.useEffect(() => {
                 </p>
                 <div className="flex space-x-2">
                   <button 
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center transition-colors"
+                    className="bg-arcade-cyan hover:bg-arcade-cyan/80 text-black px-3 py-1 rounded text-xs font-medium flex items-center transition-colors ring-4 ring-arcade-cyan animate-pulse shadow-[0_0_20px_#00FFFF80]"
                     onClick={clearVirusOutbreak}
                   >
                     <img src="/img/meowareBytes-taskbar.png" alt="" className="w-3 h-3 mr-1" />
@@ -5537,8 +6303,8 @@ React.useEffect(() => {
           style={{
             left: gif.x,
             top: gif.y,
-            width: (gif.size || 60) * 3, // 500% scale up (60px base * 5 = 300px)
-            height: (gif.size || 60) * 3, // 500% scale up
+            width: (gif.size || 60) * 5, // 5x scale outbreak GIFs
+            height: (gif.size || 60) * 5,
             display: 'none' // Start hidden, show only when image loads successfully
           }}
         >
@@ -5574,7 +6340,7 @@ React.useEffect(() => {
 
       {/* Educational Hint Modal */}
       {state.hintModal.active && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/90 z-[9999]">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/90 z-[8999]">
           <motion.div 
             className="bg-arcade-bg border-2 border-arcade-cyan p-6 rounded-lg max-w-2xl w-full mx-4 shadow-lg shadow-arcade-cyan/30"
             initial={{ scale: 0.8, opacity: 0 }}
@@ -5679,19 +6445,144 @@ React.useEffect(() => {
         </div>
       )}
 
-      {/* Game Over Modal */}
-      <GameOverModal
-        isOpen={state.gameOver}
-        currentGame="popup-manic"
-        score={state.score}
-        level={state.level}
-        mistakes={state.mistakes}
-        onRestart={restartGame}
-        customStats={[
-          { label: 'Popups Closed', value: Math.floor(state.score / 10) + state.mistakes, color: 'text-arcade-cyan' },
-          { label: 'Correct Actions', value: Math.floor(state.score / 10), color: 'text-arcade-green' }
-        ]}
-      />
+      {/* NEW GAME MECHANICS UI */}
+      {/* Game HUD */}
+      {state.gameActive && !state.systemCrashed && (
+        <GameHUD 
+          mechanics={mechanics}
+          onPowerUpActivate={(powerUp) => {
+            if (powerUp.type === 'auto-report') {
+              // One-shot: automatically close one malicious popup (scores as correct)
+              const target = state.popups.find(p => (p as any).is_malicious || p.type === 'malicious')
+              if (target) {
+                try {
+                  handlePopupInteraction(target as any, 'close')
+                } catch {
+                  // fallback to legacy handler
+                  handlePopupAction(target as any, 'close')
+                }
+              }
+              setMechanics(prev => ({
+                ...prev,
+                activePowerUp: null,
+                powerUps: prev.powerUps.filter(p => p.id !== powerUp.id),
+              }))
+              return
+            }
+
+            // Timed power-ups (freeze, slow-mo, reveal-all)
+            setMechanics(prev => ({
+              ...prev,
+              activePowerUp: powerUp,
+              powerUps: prev.powerUps.map(p => p.id === powerUp.id ? { ...p, active: true } : p),
+            }))
+
+            if (powerUp.duration > 0) {
+              setTimeout(() => {
+                setMechanics(prev => ({
+                  ...prev,
+                  activePowerUp: null,
+                  powerUps: prev.powerUps.filter(p => p.id !== powerUp.id),
+                }))
+              }, powerUp.duration * 1000)
+            }
+          }}
+        />
+      )}
+
+      {/* Trap GIFs */}
+      {trapGIFs.map(trap => (
+        <TrapGIF
+          key={trap.id}
+          x={trap.x}
+          y={trap.y}
+          onClick={() => handleTrapClick(trap.id)}
+        />
+      ))}
+
+      {/* Infected GIFs (from public/silly-gif) */}
+      {sillyGifs.map(g => (
+        <InfectedGIF key={g.id} x={g.x} y={g.y} url={g.url} size={g.size} onClick={() => handleInfectedGifClick(g.id)} />
+      ))}
+
+      {/* Score Popups */}
+      <AnimatePresence>
+        {scorePopups.map(score => (
+          <ScorePopup
+            key={score.id}
+            x={score.x}
+            y={score.y}
+            value={score.value}
+            isCombo={score.isCombo}
+          />
+        ))}
+      </AnimatePresence>
+
+      {/* Badge Notification */}
+      <AnimatePresence>
+        {showBadge && <BadgeNotification badge={showBadge} />}
+      </AnimatePresence>
+
+      {/* Difficulty Up Notification */}
+      <AnimatePresence>
+        {showDifficultyUp && <DifficultyUpNotification level={showDifficultyUp} />}
+      </AnimatePresence>
+
+      {/* Infection Overlay */}
+      <AnimatePresence>
+        {showInfection && <InfectionOverlay />}
+      </AnimatePresence>
+
+      {/* Power-Up Effects */}
+      <AnimatePresence>
+        {mechanics.activePowerUp?.type === 'freeze' && <FreezeEffect />}
+        {mechanics.activePowerUp?.type === 'slow-mo' && <SlowMotionEffect />}
+      </AnimatePresence>
+
+      {/* Infection countdown bar with warning (shows during full-system infection) */}
+      {infectionEndsAt && nowTs < infectionEndsAt && (
+        <div className="fixed top-0 left-0 right-0 z-[10000] flex items-center justify-center pointer-events-none">
+          <div className="bg-black/95 border-4 border-red-500 rounded-b-2xl shadow-2xl px-8 py-6 flex items-center gap-6 max-w-5xl w-full mx-4">
+            <img src="/silly-gif/theoffic-staycalm.gif" alt="Stay Calm" className="h-20 w-auto rounded hidden sm:block" />
+            <div className="text-white font-terminal flex-1">
+              <div className="text-2xl font-bold mb-3">
+                <strong className="text-red-500">⚠️ SYSTEM INFECTION DETECTED!</strong>
+              </div>
+              <div className="text-lg mb-4">
+                Quarantine the threat before your system crashes!
+              </div>
+              <div className="h-8 bg-gray-800 rounded-lg overflow-hidden border-2 border-red-500">
+                <div 
+                  className="h-full bg-gradient-to-r from-red-600 via-orange-500 to-red-600 transition-all duration-100" 
+                  style={{ width: `${Math.max(0, ((infectionEndsAt - nowTs) / 20000) * 100)}%` }} 
+                />
+              </div>
+              <div className="text-right text-sm mt-2 text-red-400 font-bold">
+                {Math.ceil((infectionEndsAt - nowTs) / 1000)}s remaining
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Game Summary Modal */}
+      {showGameSummary && (
+        <GameSummaryModal
+          isOpen={showGameSummary}
+          onClose={() => setShowGameSummary(false)}
+          onPlayAgain={handlePlayAgain}
+          onNextGame={() => {
+            // Navigate to phish404 game
+            window.location.href = '/games/phish404'
+          }}
+          onBackToHome={() => {
+            window.location.href = '/'
+          }}
+          summary={calculateGameSummary(mechanics)}
+        />
+      )}
+
+      {/* Old Game Over Modal removed - using Game Summary Modal instead */}
       </div>
     </>
   );

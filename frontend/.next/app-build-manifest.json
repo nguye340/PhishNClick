@@ -15,28 +15,6 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/games/phish404/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/games/phish404/page.js"
-    ],
-    "/assessment/phishing-test/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/vendors-_app-pages-browser_node_modules_rive-app_react-canvas_dist_index_js-_app-pages-browse-98706f.js",
-      "static/chunks/app/assessment/phishing-test/page.js"
-    ],
-    "/assessment/phishing-test/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/assessment/phishing-test/layout.js"
-    ],
     "/auth/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",
@@ -44,26 +22,27 @@
       "static/chunks/commons.js",
       "static/chunks/app/auth/login/page.js"
     ],
-    "/dashboard/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/dashboard/page.js"
-    ],
-    "/dashboard/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/dashboard/layout.js"
-    ],
     "/games/popup-manic/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",
       "static/chunks/main-app.js",
       "static/chunks/commons.js",
+      "static/chunks/vendors-_app-pages-browser_node_modules_lucide-react_dist_esm_icons_alert-triangle_js-_app-pa-d016ac.js",
       "static/chunks/app/games/popup-manic/page.js"
+    ],
+    "/admin/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/admin/page.js"
+    ],
+    "/admin/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/admin/layout.js"
     ],
     "/profile/page": [
       "static/chunks/webpack.js",
@@ -79,11 +58,26 @@
       "static/chunks/commons.js",
       "static/chunks/app/profile/layout.js"
     ],
-    "/_not-found/page": [
+    "/games/phish404/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/commons.js",
+      "static/chunks/app/games/phish404/page.js"
+    ],
+    "/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/dashboard/page.js"
+    ],
+    "/dashboard/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/dashboard/layout.js"
     ]
   }
 }

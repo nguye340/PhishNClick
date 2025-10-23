@@ -25,7 +25,7 @@ export default function LoginPage() {
 
     try {
       const res = await axios.post("/api/auth/login", form)
-      const { role, email, name, user } = res.data
+      const { role, email, name, user, profilePicture } = res.data
       const derivedEmail = email ?? user?.email ?? form.email
       const derivedName = name ?? user?.name ?? derivedEmail?.split("@")[0] ?? "Player"
       setAuth({
@@ -33,8 +33,15 @@ export default function LoginPage() {
         role,
         email: derivedEmail,
         name: derivedName,
+        profilePicture: profilePicture ?? user?.profilePicture ?? null,
       })
-      router.push("/dashboard")
+      
+      // Redirect admins to admin dashboard, regular users to normal dashboard
+      if (role === "admin") {
+        router.push("/admin")
+      } else {
+        router.push("/dashboard")
+      }
     } catch (err) {
       setError("Login failed. Please check your credentials.")
       console.error(err)

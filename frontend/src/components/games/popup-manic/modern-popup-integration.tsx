@@ -10,6 +10,8 @@ interface ModernPopupIntegrationProps {
   onInteraction: (action: string) => void;
   position: { x: number; y: number };
   onPositionChange?: (newPosition: { x: number; y: number }) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
   onMinimize?: () => void;
   isMinimized?: boolean;
   isActive?: boolean;
@@ -25,6 +27,8 @@ export default function ModernPopupIntegration({
   onInteraction,
   position,
   onPositionChange,
+  onDragStart,
+  onDragEnd,
   onMinimize,
   isMinimized = false,
   isActive = false,
@@ -43,6 +47,7 @@ export default function ModernPopupIntegration({
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('drag-handle')) {
       setIsDragging(true);
+      if (onDragStart) onDragStart(); // Notify parent that dragging started
       const rect = windowRef.current?.getBoundingClientRect();
       if (rect) {
         setDragOffset({
@@ -55,21 +60,29 @@ export default function ModernPopupIntegration({
 
   const handleMouseMove = (e: MouseEvent) => {
     if (isDragging && onPositionChange) {
+      const popupWidth = windowRef.current?.offsetWidth ||  (popup.size?.width ?? 400);
+      const popupHeight = windowRef.current?.offsetHeight || (popup.size?.height ?? 300);
+
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
       
-      // Keep window within screen bounds
-      const maxX = window.innerWidth - 320;
-      const maxY = window.innerHeight - 200;
-      
+      // Keep window within screen bounds with 16px margin
+      const horizontalMargin = 16;
+      const verticalMargin = 16;
+      const maxX = Math.max(horizontalMargin, window.innerWidth - popupWidth - horizontalMargin);
+      const maxY = Math.max(verticalMargin, window.innerHeight - popupHeight - verticalMargin);
+
       onPositionChange({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY))
+        x: Math.max(horizontalMargin, Math.min(newX, maxX)),
+        y: Math.max(verticalMargin, Math.min(newY, maxY))
       });
     }
   };
 
   const handleMouseUp = () => {
+    if (isDragging && onDragEnd) {
+      onDragEnd(); // Notify parent that dragging ended
+    }
     setIsDragging(false);
   };
 
@@ -112,22 +125,22 @@ export default function ModernPopupIntegration({
     ...popup,
     size: popup.size || { width: 400, height: 300 }
   };
+
+  const popupWidth = popupWithDefaults.size.width;
+  const popupHeight = popupWithDefaults.size.height;
   
   switch (popup.ui_type) {
     case 'browser_notification':
       console.log('[ModernPopupIntegration] Rendering BrowserNotification');
       return (
-        <div className="fixed" style={{ zIndex: 9999, left: position.x, top: position.y, border: '2px solid red' }}>
-
-          <BrowserNotification
-            popup={popupWithDefaults}
-            onInteraction={(action) => onInteraction(action)}
-            position={position}
-            onPositionChange={onPositionChange}
-            isActive={isActive}
-            setActive={handleClick}
-          />
-        </div>
+        <BrowserNotification
+          popup={popupWithDefaults}
+          onInteraction={(action) => onInteraction(action)}
+          position={position}
+          onPositionChange={onPositionChange}
+          isActive={isActive}
+          setActive={handleClick}
+        />
       );
       
     case 'chat_message':
@@ -171,15 +184,14 @@ export default function ModernPopupIntegration({
       return (
         <div 
           ref={windowRef}
-          className={`fixed bg-gray-900 border rounded-lg shadow-2xl z-50 backdrop-blur-sm overflow-hidden select-none ${isActive ? 'border-arcade-magenta' : 'border-gray-600'}`}
+          className={`absolute bg-gray-900 border rounded-lg shadow-2xl z-50 backdrop-blur-sm overflow-visible select-none ${isActive ? 'border-arcade-magenta' : 'border-gray-600'}`}
           style={{
             left: position.x,
             top: position.y,
-            minWidth: '380px',
-            maxWidth: '520px',
+            width: popupWidth,
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
             cursor: isDragging ? 'grabbing' : 'default',
-            zIndex: isActive ? 50 : 40
+            zIndex: isActive ? 200 : 150
           }}
           onClick={handleClick}
         >
@@ -252,7 +264,7 @@ export default function ModernPopupIntegration({
           </div>
           
           {/* Popup content */}
-          <div className="p-6">
+          <div className="p-6" style={{ maxHeight: '60vh', overflow: 'auto' }}>
             <div className="mb-2 flex items-center gap-3">
               {/* Brand icon next to title */}
               {popup.brand_elements?.logo_url ? (
@@ -277,23 +289,22 @@ export default function ModernPopupIntegration({
               {popup.message || popup.content || 'This is a security notification.'}
             </p>
           </div>
-          
-          <div className="flex gap-3 justify-end">
+          </div>
+          <div className="px-6 py-4 border-t border-gray-700 bg-gray-800 flex gap-3 justify-end">
             <button
               onClick={() => onInteraction('close')}
-              className="px-5 py-2.5 bg-gray-700 text-gray-200 rounded-md text-base font-bold hover:bg-gray-600 active:bg-gray-800 transition-all duration-200 transform hover:scale-105 active:scale-95"
+              className="px-5 py-2.5 bg-gray-700 text-gray-200 rounded-md text-base font-bold hover:bg-gray-600 active:bg-gray-800 transition-all duration-200"
               style={{ fontFamily: 'monospace, "Courier New", Courier', imageRendering: 'pixelated' }}
             >
               Cancel
             </button>
             <button
               onClick={() => onInteraction('click:unsafe')}
-              className="px-5 py-2.5 bg-red-600 text-white rounded-md text-base font-bold hover:bg-red-500 active:bg-red-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-red-500/25"
+              className="px-5 py-2.5 bg-red-600 text-white rounded-md text-base font-bold hover:bg-red-500 active:bg-red-700 transition-all duration-200 shadow-lg hover:shadow-red-500/25"
               style={{ fontFamily: 'monospace, "Courier New", Courier', imageRendering: 'pixelated' }}
             >
               {popup.buttons?.[0]?.text || 'Continue'}
             </button>
-          </div>
           </div>
         </div>
       );

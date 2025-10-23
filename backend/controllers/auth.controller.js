@@ -94,11 +94,13 @@ export const login = async (req, res) => {
             role: user.role,
             email: user.email,
             name: user.username,
+            profilePicture: user.profilePicture,
             user: { 
                 id: user._id, 
                 username: user.username, 
                 email: user.email, 
-                role: user.role 
+                role: user.role,
+                profilePicture: user.profilePicture
             },
         });
     } catch (error) {
@@ -146,11 +148,13 @@ export const refreshToken = async (req, res) => {
             role: user.role,
             email: user.email,
             name: user.username,
+            profilePicture: user.profilePicture,
             user: { 
                 id: user._id, 
                 username: user.username, 
                 email: user.email, 
-                role: user.role 
+                role: user.role,
+                profilePicture: user.profilePicture
             },
         });
     } 
