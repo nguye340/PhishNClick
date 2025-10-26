@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "@/lib/axios";
+import { clearEvents } from "@/lib/telemetry";
 
 const AuthContext = createContext();
 
@@ -40,6 +41,24 @@ export const AuthProvider = ({children}) => {
         };
         checkAuth();
     }, []);
+
+    useEffect(() => {
+        if (typeof window === "undefined" || loading) {
+            return;
+        }
+
+        const storage = window.localStorage;
+        const currentUserId = auth?.userId ? `user:${auth.userId}` : "guest";
+        const previousId = storage.getItem("phishnclick.telemetry.user");
+
+        // Only clear localStorage on user change (backend handles per-user isolation)
+        if (previousId && previousId !== currentUserId && currentUserId === "guest") {
+            storage.removeItem("phishnclick.telemetry.v1");
+            window.dispatchEvent(new StorageEvent("storage", { key: "phishnclick.telemetry.v1" }));
+        }
+        
+        storage.setItem("phishnclick.telemetry.user", currentUserId);
+    }, [auth?.userId, loading]);
 
     return (
         <AuthContext.Provider value={{auth, setAuth, loading}}>

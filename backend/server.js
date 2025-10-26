@@ -14,6 +14,8 @@ import voiceCallRoutes from './routes/voiceCall.routes.js';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.route.js';
 import userRoutes from './routes/user.route.js';
+import adminRoutes from './routes/admin.route.js';
+import telemetryRoutes from './routes/telemetry.route.js';
 
 // ES Module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -41,6 +43,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/telemetry', telemetryRoutes);
 
 // Test route
 app.get('/', (req, res) => {

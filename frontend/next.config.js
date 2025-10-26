@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: false, // Disable strict mode to reduce potential issues
   swcMinify: true,
   images: {
-    domains: ['cdn-icons-png.flaticon.com', 'upload.wikimedia.org'],
+    domains: ['cdn-icons-png.flaticon.com', 'upload.wikimedia.org', 'lh3.googleusercontent.com'],
     remotePatterns: [
       {
         protocol: 'http',

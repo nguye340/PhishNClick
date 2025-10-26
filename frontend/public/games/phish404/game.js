@@ -162,6 +162,97 @@ document.addEventListener('DOMContentLoaded', function() {
   let gameLoopRunning = false; // Track if game loop is running
   let hackerIsLoading = false; // Global flag to track if hacker is in loading mode
 
+  const slugifyCategory = (value) => {
+    if (!value || typeof value !== 'string') return 'unknown';
+    return value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'unknown';
+  };
+
+  const buildReactionMs = (startedAt) => {
+    if (!startedAt) return undefined;
+    const delta = Date.now() - startedAt;
+    return delta >= 0 ? delta : undefined;
+  };
+
+  const sendInteractionTelemetry = (payload) => {
+    if (!window.parent || window.parent === window) return;
+    try {
+      window.parent.postMessage(
+        {
+          type: 'PHISH404_INTERACTION',
+          ts: Date.now(),
+          difficulty: typeof playerLevel === 'number' ? playerLevel : 1,
+          ...payload,
+        },
+        window.location.origin
+      );
+    } catch (error) {
+      console.error('Failed to send Phish404 telemetry:', error);
+    }
+  };
+
+  let emailPopupShownAt = 0;
+  let currentEmailCategory = 'unknown';
+  let currentEmailUiType = 'email_popup';
+  let phonePopupShownAt = 0;
+  let currentVoiceCallCategory = 'phone_unknown';
+  let currentVoiceCallType = 'unknown';
+
+  const emailCategoryFromData = (data) => {
+    if (!data) return 'unknown';
+    return slugifyCategory(data.intent || data.technique || data.target || data.label || data.id || 'unknown');
+  };
+
+  const buildVoiceCallType = (call) => {
+    if (!call) return 'unknown';
+    const base = call.isPhishing ? 'phishing' : 'legitimate';
+    const mode = call.isStatic ? 'static' : 'dynamic';
+    return `${base}_${mode}`;
+  };
+
+  const evaluateEmailOutcome = (action, emailData) => {
+    if (!emailData) return 'unknown';
+    const isPhishing = emailData.label === 'phishing';
+    switch (action) {
+      case 'mark_clean':
+        return isPhishing ? 'incorrect' : 'correct';
+      case 'report_phishing':
+        return isPhishing ? 'correct' : 'incorrect';
+      case 'click_link':
+      case 'click_attachment':
+        return isPhishing ? 'incorrect' : 'correct';
+      default:
+        return 'unknown';
+    }
+  };
+
+  const emitEmailInteraction = (action, emailData) => {
+    sendInteractionTelemetry({
+      interaction: 'email',
+      action,
+      outcome: evaluateEmailOutcome(action, emailData),
+      category: currentEmailCategory,
+      ui_type: currentEmailUiType,
+      reaction_ms: buildReactionMs(emailPopupShownAt),
+    });
+    emailPopupShownAt = 0;
+  };
+
+  const emitPhoneInteraction = (action, isCorrectChoice) => {
+    sendInteractionTelemetry({
+      interaction: 'phone',
+      action,
+      outcome: isCorrectChoice ? 'correct' : 'incorrect',
+      category: currentVoiceCallCategory,
+      ui_type: 'phone_popup',
+      voice_call_type: currentVoiceCallType,
+      reaction_ms: buildReactionMs(phonePopupShownAt),
+    });
+    phonePopupShownAt = 0;
+  };
+
   function createSprite() {
     const playerWidthInGame = PLAYER_WIDTH * scaleRatio;
     const playerHeightInGame = PLAYER_HEIGHT * scaleRatio;
@@ -471,6 +562,16 @@ document.addEventListener('DOMContentLoaded', function() {
     if (gameOver) {
       console.log('Game already over, not losing life');
       return;
+    }
+    
+    // Record telemetry: obstacle hit (incorrect action)
+    if (window.GameTelemetry) {
+      window.GameTelemetry.recordInteraction(
+        'phish404-obstacle-' + Date.now(),
+        'ignore',
+        false, // Hitting obstacle is incorrect
+        0
+      );
     }
     
     // Don't lose life if already invincible
@@ -1397,6 +1498,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Select random email from dataset
     currentEmailData = emailDataset[Math.floor(Math.random() * emailDataset.length)];
+    emailPopupShownAt = Date.now();
+    currentEmailCategory = emailCategoryFromData(currentEmailData);
+    
     console.log('[EmailPopup] Selected email data:', currentEmailData);
     
     // Update email popup content
@@ -1429,6 +1533,7 @@ document.addEventListener('DOMContentLoaded', function() {
             hideEmailPopup();
             resumeGame();
           }
+          emitEmailInteraction('click_link', currentEmailData);
         });
       });
       
@@ -1449,6 +1554,7 @@ document.addEventListener('DOMContentLoaded', function() {
             hideEmailPopup();
             resumeGame();
           }
+          emitEmailInteraction('click_attachment', currentEmailData);
         });
       });
     }, 100);
@@ -1644,6 +1750,9 @@ document.addEventListener('DOMContentLoaded', function() {
     gameOver = true;
     popupVisible = true; // Set popup visible flag
     
+    currentVoiceCallCategory = 'phone_unknown';
+    currentVoiceCallType = 'unknown';
+
     // Get the phone popup buttons
     const phoneDoItBtn = document.getElementById('phoneDoIt');
     const phoneSkipBtn = document.getElementById('phoneSkip');
@@ -1664,10 +1773,17 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Get voice call data (first call uses vishing.mp3, subsequent calls use database)
       const voiceCallData = await window.voiceCallManager.getVoiceCall();
-      
+
       // Store current voice call info for button logic
       window.currentVoiceCall = voiceCallData;
-      
+      currentVoiceCallCategory = voiceCallData && typeof voiceCallData.isPhishing === 'boolean'
+        ? (voiceCallData.isPhishing ? 'phone_phishing' : 'phone_legitimate')
+        : 'phone_unknown';
+      currentVoiceCallType = buildVoiceCallType({
+        isPhishing: !!(voiceCallData && voiceCallData.isPhishing),
+        isStatic: !!(voiceCallData && voiceCallData.isStatic)
+      });
+
       // Voice call popup is now ready with simplified UI (no caller info)
       
       console.log('Playing voice call:', {
@@ -1742,7 +1858,9 @@ document.addEventListener('DOMContentLoaded', function() {
         isPhishing: true,
         caller: { name: 'Bank Security', number: '+1-800-555-0199' }
       };
-      
+      currentVoiceCallCategory = 'phone_phishing';
+      currentVoiceCallType = buildVoiceCallType({ isPhishing: true, isStatic: true });
+
       // Enable buttons when fallback audio ends
       vishingSound.onended = function() {
         phoneDoItBtn.disabled = false;
@@ -1757,6 +1875,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show the phone popup with options
     document.getElementById('phonePopup').style.display = 'block';
+    phonePopupShownAt = Date.now();
+    console.log('[PhonePopup] Phone popup displayed');
   }
 
   // Create audio objects once to prevent duplication
@@ -1984,7 +2104,9 @@ document.addEventListener('DOMContentLoaded', function() {
           playerChoice: 'doIt',
           isCorrect: isCorrectChoice
         });
-        
+
+        emitPhoneInteraction('do_it', isCorrectChoice);
+
         if (isCorrectChoice) {
           // Correct choice - play success sound and reward player
           correctSound.currentTime = 0;
@@ -2048,7 +2170,9 @@ document.addEventListener('DOMContentLoaded', function() {
           playerChoice: 'skip',
           isCorrect: isCorrectChoice
         });
-        
+
+        emitPhoneInteraction('skip', isCorrectChoice);
+
         if (isCorrectChoice) {
           // Correct choice - play success sound and reward player
           correctSound.currentTime = 0;
@@ -2378,6 +2502,25 @@ document.addEventListener('DOMContentLoaded', function() {
   function showGameOver() {
     console.log('Showing game over screen - triggering React GameOverModal');
     
+    // Save telemetry stats before showing game over
+    if (window.GameTelemetry && coinController) {
+      const totalCoins = coinController.coinsCollected || 0;
+      const maxLives = 3; // Starting lives
+      const livesLost = maxLives - (lives || 0);
+      
+      window.GameTelemetry.saveStats({
+        totalPopups: totalCoins + livesLost, // Total interactions
+        correctCount: totalCoins, // Coins collected
+        mistakeCount: livesLost, // Lives lost
+        falsePositives: 0,
+        falseNegatives: 0,
+        avgReactionTime: 0,
+        reactionScore: totalCoins * 10,
+        confidenceScore: 50,
+        confidenceRating: 'balanced'
+      });
+    }
+    
     // Pause all game elements
     stopGameLoop();
     
@@ -2412,7 +2555,8 @@ document.addEventListener('DOMContentLoaded', function() {
         timestamp: Date.now()
       };
       console.log('Sending game over message to parent:', gameOverData);
-      window.parent.postMessage(gameOverData, window.location.origin);
+      // Use '*' as target origin to ensure message is delivered
+      window.parent.postMessage(gameOverData, '*');
     }
     
     // Return early - let React GameOverModal handle the UI
@@ -2460,7 +2604,7 @@ document.addEventListener('DOMContentLoaded', function() {
     emailCleanBtn.addEventListener('click', () => {
       console.log('Email Clean button clicked', new Date().toISOString());
       document.getElementById('emailPopup').style.display = 'none';
-      
+
       // Check if this is a legitimate or phishing email
       if (currentEmailData && currentEmailData.label === 'legitimate') {
         // Correct action for legitimate email
@@ -2492,6 +2636,7 @@ document.addEventListener('DOMContentLoaded', function() {
           console.error('Failed to process life loss');
         }
       }
+      emitEmailInteraction('mark_clean', currentEmailData);
     });
   } else {
     console.error('Email Clean button not found');
@@ -2518,6 +2663,7 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         console.error('Failed to process life loss from phishing link');
       }
+      emitEmailInteraction('click_link', currentEmailData);
     });
   } else {
     console.error('Phishing link not found');
@@ -2546,6 +2692,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show phishing education result
         showPhishingResult();
+        emitEmailInteraction('report_phishing', currentEmailData);
       } else {
         // Wrong action for legitimate email
         console.log('Wrong choice - legitimate email reported as malicious');
@@ -2563,6 +2710,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
           console.error('Failed to process life loss');
         }
+        emitEmailInteraction('report_phishing', currentEmailData);
       }
       resumeGameAfterPopup();
     });  
