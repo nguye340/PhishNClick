@@ -79,6 +79,16 @@ class CoinController {
         
         // Increment counter
         this.coinsCollected++;
+        
+        // Record telemetry: coin collected (correct action)
+        if (window.GameTelemetry) {
+          window.GameTelemetry.recordInteraction(
+            'phish404-coin-' + Date.now(),
+            'click',
+            true, // Collecting coin is correct
+            0 // No specific reaction time for auto-collection
+          );
+        }
       }
     });
   }

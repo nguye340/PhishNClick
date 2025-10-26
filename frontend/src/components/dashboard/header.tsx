@@ -30,6 +30,8 @@ export function DashboardHeader() {
     }
   }, [isProfileOpen])
 
+  const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:5000"
+
   const roleLabel = (() => {
     const normalizedRole = auth?.role?.toLowerCase()
     if (!auth?.accessToken) return "Guest"
@@ -40,6 +42,15 @@ export function DashboardHeader() {
 
   const dashboardHref = auth?.role?.toLowerCase() === "admin" ? "/dashboard/admin" : "/dashboard"
   const displayName = auth?.name ?? auth?.email ?? "Player"
+
+  const profileImageSrc = (() => {
+    const picture = auth?.profilePicture
+    if (!picture) return null
+    if (/^https?:\/\//i.test(picture)) {
+      return picture
+    }
+    return `${backendBaseUrl}${picture}`
+  })()
 
   const handleLogout = async () => {
     try {
@@ -68,21 +79,6 @@ export function DashboardHeader() {
         </Link>
 
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-arcade-yellow rounded-full animate-pulse" />
-            <span className="font-terminal text-arcade-yellow">713</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-arcade-magenta rounded-full animate-pulse" />
-            <span className="font-terminal text-arcade-magenta">12130</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-arcade-red rounded-full animate-pulse" />
-            <span className="font-terminal text-arcade-red">5</span>
-          </div>
-
           <button className="hover:text-arcade-cyan transition-colors">
             <Bell className="w-5 h-5" />
           </button>
@@ -93,10 +89,10 @@ export function DashboardHeader() {
                 className="flex items-center gap-3 rounded-lg border border-white/10 bg-black/30 px-4 py-2 text-left hover:border-arcade-cyan/60 transition-all"
                 onClick={() => setIsProfileOpen((prev) => !prev)}
               >
-                {auth?.profilePicture ? (
+                {profileImageSrc ? (
                   <div className="relative w-8 h-8 rounded-full border-2 border-arcade-cyan overflow-hidden flex-shrink-0">
                     <Image
-                      src={`http://localhost:5000${auth.profilePicture}`}
+                      src={profileImageSrc}
                       alt="Profile"
                       width={32}
                       height={32}

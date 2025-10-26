@@ -1,16 +1,7 @@
-"node_modules/" 
-node_modules
+node_modules/
 backend/.env
-"backend/.env"
-"*.env"
-"*env*"
-"backend/.env.example"
-"backend/.env.local"
-"backend/.env.development"
-"backend/.env.test"
-"backend/.env.production"
-"backend/*.env*"
 *.env*
+
 # Environment variables
 .env
 .env.local
@@ -18,4 +9,11 @@ backend/.env
 .env.test
 .env.production
 .env.example
-*.env
+
+# Documentation
+*.md
+*.txt
+!README.md
+
+# Git
+.gitignore

@@ -24,6 +24,8 @@ import {
 import { GameHUD, ScorePopup, BadgeNotification, DifficultyUpNotification, VirusOutbreakHint } from './game-hud'
 import { AnimatedPopup, TrapGIF, InfectionOverlay, FreezeEffect, SlowMotionEffect, InfectedGIF } from './animated-popup'
 import { GameSummaryModal } from './game-summary-modal'
+import { logEvent } from '../../../lib/telemetry'
+import { GameEvents } from '../../../lib/game-events'
 
 // Default dimensions for legacy popups
 const DEFAULT_POPUP_SIZE = {
@@ -1562,6 +1564,7 @@ useEffect(() => {
     ensureAudio()
     setShowInstructions(false)
     setGameActive(true)
+    try { logEvent({ type: 'game_started', game: 'Popup Manic', ts: Date.now() }); } catch {}
     // Start guided tutorial after game starts
     setShowTutorial(true)
     setTutorialStep(0)
@@ -2939,6 +2942,29 @@ useEffect(() => {
     // Pause game and open in-game modal (no browser alert)
     setPaused(true);
     setQuizResultModal({ open: true, passed, correctCount, percentage });
+    try { logEvent({ type: 'quiz_result', game: 'Popup Manic', correct: correctCount, percentage, total: 5, passed, ts: Date.now() }); } catch {}
+    
+    // Emit telemetry event for backend tracking
+    try {
+      GameEvents.emitQuizComplete({
+        quizData: {
+          score: correctCount * 10,
+          totalQuestions: 5,
+          correctAnswers: correctCount,
+          incorrectAnswers: 5 - correctCount,
+          questions: state.quizQuestions.map((q: any, i: number) => ({
+            questionType: q.type || 'general',
+            popupId: q.popupId || 'unknown',
+            userAnswer: answers[i]?.selectedAnswer || '',
+            correctAnswer: q.correctAnswer || '',
+            isCorrect: answers[i]?.isCorrect || false,
+            reactionTime: 0
+          }))
+        }
+      });
+    } catch (err) {
+      console.error('[Telemetry] Failed to emit quiz complete:', err);
+    }
   };
 
   // Start hidden malware progression
@@ -3225,6 +3251,9 @@ useEffect(() => {
         virusSirenSoundRef.current.currentTime = 0;
       }
     }
+    // Hide outbreak overlays so the antivirus modal is clickable/visible
+    setShowVirusWarning(false);
+    setInfectionEndsAt(null);
     // Always open modal so users can test states
     setAntivirusModalOpen(true)
     setAntivirusModalStep('confirm')
@@ -3434,6 +3463,7 @@ useEffect(() => {
       playSound(false);
       const newMistakes = state.mistakes + 1;
       setMistakes(newMistakes);
+      try { logEvent({ type: 'popup_incorrect', game: 'Popup Manic', category: popup.category, ui_type: popup.ui_type, action: actionStr, ts: Date.now() }); } catch {}
       if (newMistakes >= 5) { 
         setGameOver(true); 
         setGameActive(false); 
@@ -3702,6 +3732,20 @@ useEffect(() => {
       setTimeout(() => {
         setScorePopups(prev => prev.filter(s => s.id !== scoreId));
       }, 1000);
+      try { logEvent({ type: 'popup_correct', game: 'Popup Manic', category: popup.category, ui_type: popup.ui_type, reaction_ms: reactionTime, ts: Date.now() }); } catch {}
+      
+      // Emit telemetry event for backend tracking
+      try {
+        GameEvents.emitPopupInteraction({
+          popupId: popup._id || popup.id,
+          action: userAction,
+          wasCorrect: true,
+          reactionTime: reactionTime,
+          spawnTime: spawnTime
+        });
+      } catch (err) {
+        console.error('[Telemetry] Failed to emit popup interaction:', err);
+      }
       
       // Check for new badges
       if (newMechanics.badges.length > oldBadgeCount) {
@@ -3775,6 +3819,10 @@ useEffect(() => {
       // Incorrect action - use new mechanics for losing life
       playWrongSound();
       
+      // Calculate reaction time
+      const spawnTime = popupSpawnTimes.get(popup.id) || Date.now();
+      const reactionTime = Date.now() - spawnTime;
+      
       // Update mechanics (lose life and reset combo)
       const newMechanics = handleIncorrectAction(mechanics, true);
       setMechanics(newMechanics);
@@ -3782,6 +3830,32 @@ useEffect(() => {
       // Update legacy mistakes state for compatibility
       const newMistakes = state.mistakes + 1;
       setMistakes(newMistakes);
+      
+      // Log telemetry for incorrect action
+      try { 
+        logEvent({ 
+          type: 'popup_incorrect', 
+          game: 'Popup Manic', 
+          category: popup.category, 
+          ui_type: popup.ui_type, 
+          action: userAction, 
+          reaction_ms: reactionTime, 
+          ts: Date.now() 
+        }); 
+      } catch {}
+      
+      // Emit telemetry event for backend tracking
+      try {
+        GameEvents.emitPopupInteraction({
+          popupId: popup._id || popup.id,
+          action: userAction,
+          wasCorrect: false,
+          reactionTime: reactionTime,
+          spawnTime: spawnTime
+        });
+      } catch (err) {
+        console.error('[Telemetry] Failed to emit popup interaction:', err);
+      }
       
       // Show educational modal for learning - FIXED TRIGGER
       console.log('[MODAL] Triggering educational modal for popup:', popup.id);
@@ -3805,6 +3879,31 @@ useEffect(() => {
         }
         setGameOver(true);
         setGameActive(false);
+        try { logEvent({ type: 'game_over', game: 'Popup Manic', score: newMechanics.score, level: newMechanics.difficulty + 1, mistakes: newMistakes, ts: Date.now() }); } catch {}
+        
+        // Emit telemetry event for backend tracking
+        try {
+          const totalInteractions = newMechanics.correctCount + newMistakes;
+          const avgReactionTime = newMechanics.reactionTimes.length > 0
+            ? newMechanics.reactionTimes.reduce((a, b) => a + b, 0) / newMechanics.reactionTimes.length
+            : 0;
+          
+          GameEvents.emitGameEnd({
+            stats: {
+              totalPopups: totalInteractions,
+              correctCount: newMechanics.correctCount,
+              mistakeCount: newMistakes,
+              falsePositives: 0,
+              falseNegatives: 0,
+              avgReactionTime: avgReactionTime,
+              reactionScore: newMechanics.score,
+              confidenceScore: totalInteractions > 0 ? Math.round((newMechanics.correctCount / totalInteractions) * 100) : 0,
+              confidenceRating: 'balanced'
+            }
+          });
+        } catch (err) {
+          console.error('[Telemetry] Failed to emit game end:', err);
+        }
         
         // Show game summary after a delay
         setTimeout(requestShowSummary, 1000);
@@ -4899,7 +4998,7 @@ useEffect(() => {
 
       {/* Antivirus Modal */}
       {antivirusModalOpen && (
-        <div className="fixed inset-0 bg-black/60 z-[10000] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 z-[14000] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
           <div className="w-full max-w-md rounded-xl shadow-2xl border-2 border-arcade-cyan bg-gradient-to-b from-black via-gray-900 to-black" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b-2 border-gray-800">
               <h2 className="font-arcade text-3xl text-arcade-cyan tracking-wider">NYANTIVIRUS</h2>

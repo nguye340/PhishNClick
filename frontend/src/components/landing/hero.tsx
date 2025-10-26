@@ -12,6 +12,14 @@ export function LandingHero() {
   const router = useRouter()
   const [isButtonPressed, setIsButtonPressed] = useState(false)
   const coinSoundRef = React.useRef<HTMLAudioElement | null>(null);
+  const onlineEnv = process.env.NEXT_PUBLIC_ONLINE_COUNT
+  const totalPlayersEnv = process.env.NEXT_PUBLIC_TOTAL_PLAYERS
+  const onlineCount = onlineEnv ? Number(onlineEnv) : NaN
+  const totalPlayers = totalPlayersEnv ? Number(totalPlayersEnv) : NaN
+  const showOnline = Number.isFinite(onlineCount) && onlineCount >= 50
+  const showPlayers = Number.isFinite(totalPlayers) && totalPlayers >= 1000
+  const formatNumber = (n: number) => new Intl.NumberFormat().format(n)
+  const formatPlayers = (n: number) => n >= 10000 ? `${Math.round(n / 1000)}K+` : formatNumber(n)
 
   // Initialize audio element
   useEffect(() => {
@@ -51,7 +59,7 @@ export function LandingHero() {
       setTimeout(() => {
         rafIds.forEach(id => cancelAnimationFrame(id));
         // Navigate to the next page
-        router.push("/assessment/phishing-test");
+        router.push("/games/popup-manic");
       }, 50);
     };
     
@@ -107,16 +115,22 @@ export function LandingHero() {
                 </button>
               </div>
 
-              <div className="hero-content flex items-center justify-center gap-12 text-lg font-terminal vhs-text">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-arcade-green rounded-full animate-pulse"></div>
-                  <span className="text-arcade-green glow-heading">1,234 Online</span>
+              {(showOnline || showPlayers) && (
+                <div className="hero-content flex items-center justify-center gap-12 text-lg font-terminal vhs-text">
+                  {showOnline && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-arcade-green rounded-full animate-pulse"></div>
+                      <span className="text-arcade-green glow-heading">{formatNumber(onlineCount)} Online</span>
+                    </div>
+                  )}
+                  {showPlayers && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-arcade-magenta rounded-full animate-pulse"></div>
+                      <span className="text-arcade-magenta glow-heading">{formatPlayers(totalPlayers)} Players</span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-arcade-magenta rounded-full animate-pulse"></div>
-                  <span className="text-arcade-magenta glow-heading">50K+ Players</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

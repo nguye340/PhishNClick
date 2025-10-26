@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hooked or Cooked - Phishing Email Game</title>
+  <script src="../../game-telemetry.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -1098,7 +1099,7 @@
         <div class="quiz-prompt" style="background: rgba(0,255,127,0.1); border: 2px solid #00ff7f; border-radius: 10px; padding: 15px; margin-top: 15px;">
           <h4 style="color: #00ff7f; margin: 0 0 10px 0;">🎓 Ready for Final Assessment?</h4>
           <p style="font-size: 13px; margin: 0 0 15px 0; color: #e0e0e0;">Test your cybersecurity knowledge with our comprehensive quiz!</p>
-          <button class="btn" style="background: #00ff7f; color: #000; font-weight: bold; padding: 10px 20px;" onclick="window.location.href='/assessment/final-quiz'">📝 Take Final Quiz</button>
+          <button class="btn" style="background: #00ff7f; color: #000; font-weight: bold; padding: 10px 20px;" onclick="window.location.href='/assessment/phishing-test'">📝 Take Final Quiz</button>
         </div>
       </div>
     </div>
@@ -1197,7 +1198,7 @@
           <div style="font-size: 32px; margin-bottom: 10px;">🎓</div>
           <h3 style="color: #00ff7f; margin: 0 0 10px 0;">Ready for Your Final Assessment?</h3>
           <p style="font-size: 14px; margin: 0 0 20px 0; color: #e0e0e0;">Complete your cybersecurity training with our comprehensive 15-question quiz. Test everything you've learned!</p>
-          <button class="btn" style="background: linear-gradient(135deg, #00ff7f 0%, #00cc66 100%); color: #000; font-weight: bold; padding: 12px 25px; font-size: 14px; border-radius: 25px; border: none; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="window.location.href='/assessment/final-quiz'">📝 Take Final Quiz</button>
+          <button class="btn" style="background: linear-gradient(135deg, #00ff7f 0%, #00cc66 100%); color: #000; font-weight: bold; padding: 12px 25px; font-size: 14px; border-radius: 25px; border: none; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="window.location.href='/assessment/phishing-test'">📝 Take Final Quiz</button>
         </div>
       </div>
     </div>
@@ -1242,6 +1243,101 @@
     let downloadWithoutPreview = 0;
     let securityMistakes = [];
     let currentAttachmentPreviewed = false;
+    let emailOpenedAt = null;
+    let currentEmailCategory = 'unknown';
+    let currentEmailUiType = 'email_modal';
+
+    const slugify = (value) => {
+      if (!value || typeof value !== 'string') return 'unknown';
+      return value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '') || 'unknown';
+    };
+
+    const postToParent = (payload) => {
+      if (!window.parent || window.parent === window) return;
+      try {
+        window.parent.postMessage({
+          ts: Date.now(),
+          difficulty,
+          ...payload
+        }, window.location.origin);
+      } catch (error) {
+        console.error('Hooked or Cooked telemetry failed:', error);
+      }
+    };
+
+    const buildEmailCategory = (emailData) => {
+      if (!emailData) return 'unknown';
+      const base = emailData.phish ? 'phish' : 'legit';
+      const detail = emailData.linkType
+        ? slugify(emailData.linkType)
+        : emailData.attachment
+          ? slugify(emailData.attachment.type || 'attachment')
+          : 'standard';
+      return `${base}_${detail}`;
+    };
+
+    const buildUiType = (emailData) => {
+      if (!emailData) return 'email_modal';
+      if (emailData.attachment) return 'attachment_modal';
+      if (emailData.linkType) return `link_${slugify(emailData.linkType)}`;
+      return 'email_modal';
+    };
+
+    const buildReactionMs = () => {
+      if (!emailOpenedAt) return undefined;
+      const delta = Date.now() - emailOpenedAt;
+      return delta >= 0 ? delta : undefined;
+    };
+
+    const emitEmailDecision = (action, isCorrect) => {
+      const emailData = currentEmail && currentEmail.data ? currentEmail.data : null;
+      const category = buildEmailCategory(emailData);
+      const uiType = buildUiType(emailData);
+      const reactionMs = buildReactionMs();
+      postToParent({
+        type: 'HOOKED_INTERACTION',
+        interaction: 'email_decision',
+        action,
+        outcome: isCorrect ? 'correct' : 'incorrect',
+        category,
+        ui_type: uiType,
+        reaction_ms: reactionMs,
+        phish: emailData ? !!emailData.phish : null,
+        link_type: emailData && emailData.linkType ? emailData.linkType : null,
+        attachment_type: emailData && emailData.attachment ? emailData.attachment.type : null
+      });
+      emailOpenedAt = null;
+    };
+
+    const emitLinkInteraction = (href, isCorrect, extra = {}) => {
+      postToParent({
+        type: 'HOOKED_INTERACTION',
+        interaction: 'link_click',
+        action: 'click_link',
+        outcome: isCorrect ? 'correct' : 'incorrect',
+        category: currentEmailCategory,
+        ui_type: 'email_link',
+        reaction_ms: buildReactionMs(),
+        link_url: href,
+        ...extra
+      });
+    };
+
+    const emitAttachmentInteraction = (action, outcome, extra = {}) => {
+      postToParent({
+        type: 'HOOKED_INTERACTION',
+        interaction: 'attachment_action',
+        action,
+        outcome,
+        category: currentEmailCategory,
+        ui_type: 'email_attachment',
+        reaction_ms: buildReactionMs(),
+        ...extra
+      });
+    };
 
     // Load emails from JSON
     fetch('emails.json')
@@ -1289,6 +1385,12 @@
       startMouseTracking();
       startSmoothMovement();
       startBubbleTrail();
+
+      postToParent({
+        type: 'HOOKED_GAME',
+        stage: 'started',
+        player: playerName || 'Player'
+      });
     }
 
     function spawnEmails() {
@@ -1344,10 +1446,13 @@
 
     function openEmail(emailData, iconElement) {
       currentEmail = { data: emailData, icon: iconElement };
-      
+
       // Reset attachment preview tracking for new email
       currentAttachmentPreviewed = false;
-      
+      emailOpenedAt = Date.now();
+      currentEmailCategory = buildEmailCategory(emailData);
+      currentEmailUiType = buildUiType(emailData);
+
       // Play bubble pop sound
       playBubblePopSound();
       
@@ -1380,6 +1485,16 @@
       setupLinkPreviews();
       
       document.getElementById('emailModal').style.display = 'flex';
+
+      postToParent({
+        type: 'HOOKED_INTERACTION',
+        interaction: 'email_opened',
+        category: currentEmailCategory,
+        ui_type: currentEmailUiType,
+        phish: emailData.phish,
+        link_type: emailData.linkType || null,
+        attachment_type: emailData.attachment ? emailData.attachment.type : null
+      });
     }
     
     function playBubblePopSound() {
@@ -1510,6 +1625,13 @@
       
       body.innerHTML = bodyContent;
       modal.style.display = 'flex';
+
+      emitAttachmentInteraction('preview', 'correct', {
+        attachment_name: name,
+        attachment_type: type,
+        malicious,
+        previewed: true
+      });
     }
     
     function downloadAttachment(name) {
@@ -1526,6 +1648,8 @@
       
       // Show educational alert instead of actual download
       const isPhishingEmail = currentEmail && currentEmail.data.phish;
+      const attachment = currentEmail && currentEmail.data ? currentEmail.data.attachment : null;
+      const isMalicious = attachment ? !!attachment.malicious : false;
       let message = `🚨 SECURITY ALERT 🚨\n\n`;
       
       if (isPhishingEmail) {
@@ -1545,6 +1669,14 @@
       }
       
       alert(message);
+
+      const outcome = (!currentAttachmentPreviewed || isPhishingEmail || isMalicious) ? 'incorrect' : 'correct';
+      emitAttachmentInteraction('download', outcome, {
+        attachment_name: name,
+        attachment_type: attachment ? attachment.type : null,
+        malicious: isMalicious,
+        previewed: currentAttachmentPreviewed
+      });
     }
     
 
@@ -1563,7 +1695,8 @@
       linkClicks++;
       
       // Check if this is a suspicious link click (security mistake)
-      if (isPhishingEmail || isSuspiciousLink(href)) {
+      const isSuspicious = isPhishingEmail || isSuspiciousLink(href);
+      if (isSuspicious) {
         suspiciousLinkClicks++;
         securityMistakes.push({
           type: 'suspicious_link_click',
@@ -1573,6 +1706,11 @@
         });
       }
       
+      emitLinkInteraction(href, !isSuspicious, {
+        phish: isPhishingEmail,
+        suspicious: isSuspicious
+      });
+
       analyzeLinkClick(href, isPhishingEmail);
     }
     
@@ -1885,6 +2023,16 @@
       if (!currentEmail) return;
       
       const isCorrect = !currentEmail.data.phish; // Correct if it's NOT phishing
+      
+      // Record telemetry
+      if (window.GameTelemetry && currentEmail) {
+        window.GameTelemetry.recordInteraction(
+          'hooked-email-' + (currentEmail.data.id || Date.now()),
+          'click',
+          isCorrect,
+          0
+        );
+      }
       emailsAnswered++;
       
       if (isCorrect) {
@@ -1930,6 +2078,7 @@
       }
       
       updateDifficulty();
+      emitEmailDecision('keep_email', isCorrect);
       closeModal();
     }
 
@@ -1937,6 +2086,16 @@
       if (!currentEmail) return;
       
       const isCorrect = currentEmail.data.phish; // Correct if it IS phishing
+      
+      // Record telemetry
+      if (window.GameTelemetry && currentEmail) {
+        window.GameTelemetry.recordInteraction(
+          'hooked-email-' + (currentEmail.data.id || Date.now()),
+          'close',
+          isCorrect,
+          0
+        );
+      }
       emailsAnswered++;
       
       if (isCorrect) {
@@ -1982,6 +2141,7 @@
       }
       
       updateDifficulty();
+      emitEmailDecision('drop_email', isCorrect);
       closeModal();
     }
 
@@ -1989,13 +2149,30 @@
       if (currentEmail && currentEmail.icon) {
         currentEmail.icon.remove();
       }
-      
+
       // Clean up any link previews
       const previews = document.querySelectorAll('.link-preview');
       previews.forEach(preview => preview.remove());
       
+      if (emailOpenedAt !== null) {
+        const category = currentEmailCategory;
+        const uiType = currentEmailUiType;
+        postToParent({
+          type: 'HOOKED_INTERACTION',
+          interaction: 'email_closed',
+          action: 'close_email',
+          outcome: 'neutral',
+          category,
+          ui_type: uiType,
+          reaction_ms: buildReactionMs()
+        });
+      }
+
       document.getElementById('emailModal').style.display = 'none';
       currentEmail = null;
+      currentEmailCategory = 'unknown';
+      currentEmailUiType = 'email_modal';
+      emailOpenedAt = null;
       updateDisplay();
     }
 
@@ -2303,8 +2480,42 @@
         clearInterval(bubbleTrailInterval);
       }
       
+      // Save telemetry stats
+      if (window.GameTelemetry) {
+        window.GameTelemetry.saveStats({
+          totalPopups: emailsAnswered || 0,
+          correctCount: (phishingCaught || 0) + (legitimateKept || 0),
+          mistakeCount: (phishingMissed || 0) + (legitimateDropped || 0),
+          falsePositives: legitimateDropped || 0,
+          falseNegatives: phishingMissed || 0,
+          avgReactionTime: 0,
+          reactionScore: score || 0,
+          confidenceScore: 50,
+          confidenceRating: 'balanced'
+        });
+      }
+      
       // Show detailed performance report
       showGameReport();
+
+      postToParent({
+        type: 'HOOKED_GAME',
+        stage: 'ended',
+        score,
+        max_combo: maxCombo,
+        difficulty,
+        emails_answered: emailsAnswered,
+        phishing_caught: phishingCaught,
+        phishing_missed: phishingMissed,
+        legitimate_kept: legitimateKept,
+        legitimate_dropped: legitimateDropped,
+        link_hovers: linkHovers,
+        link_clicks: linkClicks,
+        suspicious_link_clicks: suspiciousLinkClicks,
+        attachments_previewed: attachmentViews,
+        downloads_without_preview: downloadWithoutPreview,
+        security_mistakes: securityMistakes.length
+      });
     }
 
     function restartGame() {

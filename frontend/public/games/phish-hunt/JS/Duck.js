@@ -52,6 +52,16 @@ class Duck{
         let destWidth = this.getRandomWidth(10,85);
         this.changeDuckBackground(destWidth, 100);
         $(this.duckId).animate({bottom: `100%`, left: `${destWidth}%`}, 500 ,function(){})
+        
+        // Record telemetry: phish escaped (incorrect - missed)
+        if (window.GameTelemetry) {
+            window.GameTelemetry.recordInteraction(
+                'phishhunt-duck-' + Date.now(),
+                'ignore',
+                false, // Letting phish escape is incorrect
+                0
+            );
+        }
     }
 
 
@@ -61,6 +71,16 @@ class Duck{
             let this_ = this;
             this.stopFlightAnimation();
             $(this.duckId).css("background-image", "url(../resources/sprites/duck/hit.png)")
+            
+            // Record telemetry: phish shot (correct action)
+            if (window.GameTelemetry) {
+                window.GameTelemetry.recordInteraction(
+                    'phishhunt-duck-' + Date.now(),
+                    'click',
+                    true, // Shooting phish is correct
+                    0
+                );
+            }
 
             setTimeout(function(){
                 $(this_.duckId)

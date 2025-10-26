@@ -3,65 +3,23 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { 
-  GraduationCap, 
-  Target, 
-  Trophy, 
-  Users, 
-  ShoppingBag,
-  User,
-  Gamepad2, 
-  Brain
-} from "lucide-react"
+import { Trophy } from "lucide-react"
 
 const tabs = [
-  {
-    id: "learn",
-    label: "TRAINING LEVELS",
-    icon: Brain,
-    description: "Progress through game levels to master phishing awareness skills.",
-    href: "/dashboard"
-  },
-  {
-    id: "practice",
-    label: "PHISH BLASTER",
-    icon: Gamepad2,
-    description: "Practice mode with unlimited lives and instant feedback.",
-    href: "/dashboard/practice"
-  },
   {
     id: "leaderboards",
     label: "SKILL STATS",
     icon: Trophy,
     description: "Track your progress and view detailed battle metrics.",
-    href: "/dashboard/leaderboards"
-  },
-  {
-    id: "multiplayer",
-    label: "MULTIPLAYER ARENA",
-    icon: Users,
-    description: "Challenge other players in head-to-head phishing battles.",
-    href: "/dashboard/multiplayer"
-  },
-  {
-    id: "shop",
-    label: "SHOP",
-    icon: ShoppingBag,
-    href: "/dashboard/shop"
-  },
-  {
-    id: "profile",
-    label: "PROFILE",
-    icon: User,
-    href: "/dashboard/profile"
+    href: "/dashboard"
   }
 ]
 
-export function DashboardTabs({ defaultTab = "learn" }: { defaultTab?: string }) {
+export function DashboardTabs({ defaultTab = "leaderboards" }: { defaultTab?: string }) {
   const [activeTab, setActiveTab] = useState(defaultTab)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+    <div className="grid grid-cols-1 gap-4 p-4">
       {tabs.map((tab) => {
         const Icon = tab.icon
         return (

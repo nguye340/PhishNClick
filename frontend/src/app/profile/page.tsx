@@ -4,7 +4,9 @@ import { useEffect, useState, useRef } from "react"
 import Image from "next/image"
 import { useAuth } from "@/context/auth.context"
 import axios from "@/lib/axios"
-import { AlertCircle, Loader2, Pencil, ShieldCheck, Camera, Upload } from "lucide-react"
+import { AlertCircle, Loader2, Pencil, ShieldCheck, Camera } from "lucide-react"
+
+const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:5000"
 
 interface UserProfile {
   id?: string
@@ -87,6 +89,8 @@ export default function ProfilePage() {
     fetchProfile()
   }, [])
 
+  
+
   return (
     <main className="min-h-screen bg-arcade-bg/95 pt-24 pb-16">
       <div className="max-w-4xl mx-auto px-6">
@@ -94,7 +98,11 @@ export default function ProfilePage() {
           <div className="relative group">
             <div className="relative w-32 h-32 rounded-full border-4 border-arcade-cyan bg-black/60 flex items-center justify-center overflow-hidden shadow-lg shadow-arcade-cyan/30">
               <Image
-                src={profile?.profilePicture ? `http://localhost:5000${profile.profilePicture}` : "/img/catphish_white.svg"}
+                src={profile?.profilePicture
+                  ? (/^https?:\/\//i.test(profile.profilePicture)
+                    ? profile.profilePicture
+                    : `${backendBaseUrl}${profile.profilePicture}`)
+                  : "/img/catphish_white.svg"}
                 alt="Profile avatar"
                 width={128}
                 height={128}
@@ -124,9 +132,9 @@ export default function ProfilePage() {
           </div>
           <div className="text-center">
             <h1 className="font-arcade text-3xl text-arcade-cyan glow-heading">Player Profile</h1>
-            <p className="font-terminal text-base text-gray-300">
+            <h2 className="font-arcade text-2xl text-white mt-2">
               Welcome back, {auth?.name ?? auth?.email ?? "Player"}
-            </p>
+            </h2>
           </div>
         </header>
 
@@ -177,14 +185,6 @@ export default function ProfilePage() {
                   </dd>
                 </div>
               </dl>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-black/50 p-6 shadow-inner">
-              <h3 className="font-arcade text-lg text-arcade-cyan mb-3">Profile Notes</h3>
-              <p className="font-terminal text-base text-gray-300 leading-relaxed">
-                This is your placeholder profile view. Future updates will let you customize your avatar, edit account
-                details, and review your security progress. Stay tuned!
-              </p>
             </div>
           </section>
         ) : (

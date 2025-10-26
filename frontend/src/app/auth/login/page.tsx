@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Eye, EyeOff, Shield, Mail, Lock, AlertCircle, ArrowLeft, UserPlus } from "lucide-react"
+import { Eye, EyeOff, Shield, Mail, Lock, AlertCircle, ArrowLeft, UserPlus, Chrome, Github } from "lucide-react"
 import { useAuth } from "@/context/auth.context"
 import axios from "@/lib/axios"
 
@@ -17,6 +17,47 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  const handleGoogleLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+
+    if (!clientId || !backendUrl) {
+      console.error("Missing Google OAuth environment variables")
+      setError("Google sign-in is temporarily unavailable. Please contact support.")
+      return
+    }
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: `${backendUrl}/api/auth/google/callback`,
+      response_type: "code",
+      scope: "openid email profile",
+      access_type: "offline",
+      prompt: "consent"
+    })
+
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+  }
+
+  const handleGithubLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+
+    if (!clientId || !backendUrl) {
+      console.error("Missing GitHub OAuth environment variables")
+      setError("GitHub sign-in is temporarily unavailable. Please contact support.")
+      return
+    }
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: `${backendUrl}/api/auth/github/callback`,
+      scope: "user:email"
+    })
+
+    window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -137,6 +178,34 @@ export default function LoginPage() {
           </div>
           <div className="relative flex justify-center">
             <span className="px-4 bg-black/80 text-gray-500 font-terminal text-base">OR</span>
+          </div>
+        </div>
+
+        {/* OAuth Buttons */}
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full rounded-lg bg-white text-gray-800 font-terminal py-3 px-4 text-base flex items-center justify-center gap-3 transition-all transform hover:-translate-y-1 hover:shadow-lg hover:shadow-white/30 active:translate-y-0"
+          >
+            <Chrome className="w-5 h-5" />
+            Continue with Google
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGithubLogin}
+            className="w-full rounded-lg bg-gray-800 text-white font-terminal py-3 px-4 text-base flex items-center justify-center gap-3 border-2 border-gray-600 transition-all transform hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-600/30 active:translate-y-0"
+          >
+            <Github className="w-5 h-5" />
+            Continue with GitHub
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-700"></div>
           </div>
         </div>
 

@@ -1,11 +1,11 @@
 {
   "pages": {
-    "/page": [
+    "/auth/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",
       "static/chunks/main-app.js",
       "static/chunks/commons.js",
-      "static/chunks/app/page.js"
+      "static/chunks/app/auth/login/page.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
@@ -15,20 +15,55 @@
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/auth/login/page": [
+    "/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",
       "static/chunks/main-app.js",
       "static/chunks/commons.js",
-      "static/chunks/app/auth/login/page.js"
+      "static/chunks/app/page.js"
+    ],
+    "/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/dashboard/page.js"
+    ],
+    "/dashboard/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/dashboard/layout.js"
     ],
     "/games/popup-manic/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",
       "static/chunks/main-app.js",
       "static/chunks/commons.js",
-      "static/chunks/vendors-_app-pages-browser_node_modules_lucide-react_dist_esm_icons_alert-triangle_js-_app-pa-d016ac.js",
+      "static/chunks/vendors-_app-pages-browser_node_modules_lucide-react_dist_esm_icons_award_js-_app-pages-brows-d5d673.js",
       "static/chunks/app/games/popup-manic/page.js"
+    ],
+    "/games/phish404/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/games/phish404/page.js"
+    ],
+    "/games/phish-hunt/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/games/phish-hunt/page.js"
+    ],
+    "/games/hooked-or-cooked/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/framework.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/games/hooked-or-cooked/page.js"
     ],
     "/admin/page": [
       "static/chunks/webpack.js",
@@ -58,26 +93,11 @@
       "static/chunks/commons.js",
       "static/chunks/app/profile/layout.js"
     ],
-    "/games/phish404/page": [
+    "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/framework.js",
       "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/games/phish404/page.js"
-    ],
-    "/dashboard/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/dashboard/page.js"
-    ],
-    "/dashboard/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/dashboard/layout.js"
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

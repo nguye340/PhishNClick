@@ -35,6 +35,8 @@ export function Navbar() {
     }
   }, [isProfileOpen])
 
+  const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:5000"
+
   const roleLabel = (() => {
     const normalizedRole = auth?.role?.toLowerCase()
     if (!auth?.accessToken) return "Guest"
@@ -43,8 +45,17 @@ export function Navbar() {
     return "User"
   })()
 
-  const dashboardHref = auth?.role?.toLowerCase() === "admin" ? "/dashboard/admin" : "/dashboard"
+  const dashboardHref = "/dashboard"
   const displayName = auth?.name ?? auth?.email ?? "Player"
+
+  const profileImageSrc = (() => {
+    const picture = auth?.profilePicture
+    if (!picture) return null
+    if (/^https?:\/\//i.test(picture)) {
+      return picture
+    }
+    return `${backendBaseUrl}${picture}`
+  })()
 
   const handleLogin = () => {
     setIsLoginPressed(true)
@@ -113,10 +124,10 @@ export function Navbar() {
                   className="flex items-center gap-3 rounded-lg border border-white/10 bg-black/30 px-4 py-2 text-left hover:border-arcade-cyan/60 transition-all"
                   onClick={() => setIsProfileOpen((prev) => !prev)}
                 >
-                  {auth?.profilePicture ? (
+                  {profileImageSrc ? (
                     <div className="relative w-8 h-8 rounded-full border-2 border-arcade-cyan overflow-hidden flex-shrink-0">
                       <Image
-                        src={`http://localhost:5000${auth.profilePicture}`}
+                        src={profileImageSrc}
                         alt="Profile"
                         width={32}
                         height={32}

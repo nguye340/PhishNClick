@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { GameOverModal } from '../../../components/modals/game-over-modal'
+import { logEvent } from '@/lib/telemetry'
 
 export default function HookedOrCookedPage() {
   const [gameOver, setGameOver] = useState(false)
@@ -16,6 +17,81 @@ export default function HookedOrCookedPage() {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
       
+      if (event.data.type === 'HOOKED_INTERACTION') {
+        const {
+          action,
+          outcome,
+          category,
+          ui_type,
+          reaction_ms,
+          difficulty,
+          ts
+        } = event.data
+
+        const timestamp = typeof ts === 'number' ? ts : Date.now()
+
+        if (outcome === 'correct') {
+          try {
+            logEvent({
+              type: 'popup_correct',
+              game: 'Hooked or Cooked',
+              category,
+              ui_type,
+              reaction_ms,
+              difficulty,
+              ts: timestamp
+            })
+          } catch {}
+        } else if (outcome === 'incorrect') {
+          try {
+            logEvent({
+              type: 'popup_incorrect',
+              game: 'Hooked or Cooked',
+              category,
+              ui_type,
+              action,
+              reaction_ms,
+              difficulty,
+              ts: timestamp
+            })
+          } catch {}
+        } else {
+          try {
+            logEvent({
+              type: 'popup_correct',
+              game: 'Hooked or Cooked',
+              category,
+              ui_type,
+              reaction_ms,
+              difficulty,
+              ts: timestamp
+            })
+          } catch {}
+        }
+        return
+      }
+
+      if (event.data.type === 'HOOKED_GAME') {
+        const timestamp = typeof event.data.ts === 'number' ? event.data.ts : Date.now()
+        if (event.data.stage === 'started') {
+          try {
+            logEvent({ type: 'game_started', game: 'Hooked or Cooked', ts: timestamp })
+          } catch {}
+        } else if (event.data.stage === 'ended') {
+          try {
+            logEvent({
+              type: 'game_over',
+              game: 'Hooked or Cooked',
+              score: event.data.score || 0,
+              level: event.data.difficulty || 1,
+              mistakes: event.data.security_mistakes || 0,
+              ts: timestamp
+            })
+          } catch {}
+        }
+        return
+      }
+
       if (event.data.type === 'HOOKED_OR_COOKED_GAME_OVER') {
         setGameOver(true)
         setScore(event.data.score || 0)

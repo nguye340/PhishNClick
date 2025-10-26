@@ -2,6 +2,22 @@ import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+const buildCookieOptions = (maxAge) => {
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        maxAge,
+        path: '/',
+    };
+
+    if (process.env.COOKIE_DOMAIN) {
+        options.domain = process.env.COOKIE_DOMAIN;
+    }
+
+    return options;
+};
+
 export const register = async (req, res) => {
     const { username, email, password } = req.body;
 
@@ -51,43 +67,31 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: 'Invalid password' });
         }
 
-        const accessToken = jwt.sign(
-            {
+        const tokenPayload = {
             id: user._id,
             email: user.email,
             role: user.role
-            }, 
-            process.env.ACCESS_TOKEN_SECRET, 
+        };
+
+        const accessToken = jwt.sign(
+            tokenPayload,
+            process.env.ACCESS_TOKEN_SECRET,
             {
                 expiresIn: '15m'
             }
         );
 
         const refreshToken = jwt.sign(
-            {
-            id: user._id,
-            email: user.email,
-            role: user.role
-            }, 
-            process.env.REFRESH_TOKEN_SECRET, 
+            tokenPayload,
+            process.env.REFRESH_TOKEN_SECRET,
             {
                 expiresIn: '7d'
             }
         );
 
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-        });
+        res.cookie("refreshToken", refreshToken, buildCookieOptions(7 * 24 * 60 * 60 * 1000));
 
-        res.cookie("accessToken", accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 15 * 60 * 1000 // 15 minutes
-        });
+        res.cookie("accessToken", accessToken, buildCookieOptions(15 * 60 * 1000));
 
         return res.status(200).json({
             message: "User logged in successfully",
@@ -136,12 +140,7 @@ export const refreshToken = async (req, res) => {
             }
         );
 
-        res.cookie("accessToken", newAccessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 15 * 60 * 1000 // 15 minutes
-        });
+        res.cookie("accessToken", newAccessToken, buildCookieOptions(15 * 60 * 1000));
 
         return res.status(200).json({
             message: "Token refreshed successfully",
@@ -167,16 +166,19 @@ export const refreshToken = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
-        res.clearCookie('refreshToken', {
+        const clearOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'strict', 
-        });
-        res.clearCookie('accessToken', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
-            sameSite: 'strict', 
-        });
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            path: '/',
+        };
+
+        if (process.env.COOKIE_DOMAIN) {
+            clearOptions.domain = process.env.COOKIE_DOMAIN;
+        }
+
+        res.clearCookie('refreshToken', clearOptions);
+        res.clearCookie('accessToken', clearOptions);
         return res.status(200).json({
             message: "User logged out successfully", 
         });

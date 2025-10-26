@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { GameOverModal } from '../../../components/modals/game-over-modal'
+import { logEvent } from '@/lib/telemetry'
 
 export default function PhishHuntPage() {
   const router = useRouter()
@@ -14,14 +15,69 @@ export default function PhishHuntPage() {
 
   // Listen for game over events from the iframe
   useEffect(() => {
+    try { logEvent({ type: 'game_started', game: 'Phish Hunt', ts: Date.now() }) } catch {}
+
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
       
+      if (event.data.type === 'PHISH_HUNT_INTERACTION') {
+        const {
+          action,
+          outcome,
+          category,
+          ui_type,
+          reaction_ms,
+          difficulty,
+          ts
+        } = event.data
+
+        const timestamp = typeof ts === 'number' ? ts : Date.now()
+
+        if (outcome === 'correct') {
+          try {
+            logEvent({
+              type: 'popup_correct',
+              game: 'Phish Hunt',
+              category,
+              ui_type,
+              reaction_ms,
+              difficulty,
+              ts: timestamp
+            })
+          } catch {}
+        } else if (outcome === 'incorrect') {
+          try {
+            logEvent({
+              type: 'popup_incorrect',
+              game: 'Phish Hunt',
+              category,
+              ui_type,
+              action,
+              reaction_ms,
+              difficulty,
+              ts: timestamp
+            })
+          } catch {}
+        }
+        return
+      }
+
       if (event.data.type === 'PHISH_HUNT_GAME_OVER') {
         setGameOver(true)
         setScore(event.data.score || 0)
         setLevel(event.data.level || 1)
         setDucksShot(event.data.ducksShot || 0)
+
+        try {
+          logEvent({
+            type: 'game_over',
+            game: 'Phish Hunt',
+            score: event.data.score || 0,
+            level: event.data.level || 1,
+            mistakes: event.data.emailsEscaped || 0,
+            ts: Date.now()
+          })
+        } catch {}
       }
     }
 
