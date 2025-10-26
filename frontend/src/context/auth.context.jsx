@@ -11,11 +11,17 @@ export const AuthProvider = ({children}) => {
         const checkAuth = async () => {
             try {
                 const res = await axios.get('/api/auth/refresh');
-                const { role, email, name, user, profilePicture } = res.data || {};
+                const { role, email, name, user, profilePicture, id } = res.data || {};
                 const derivedEmail = email ?? user?.email ?? null;
                 const derivedName = name ?? user?.name ?? (derivedEmail ? derivedEmail.split('@')[0] : null);
+                const derivedUserId = id ?? user?.id ?? user?._id ?? null;
+                
+                console.log('[Auth] User ID extracted:', derivedUserId);
+                console.log('[Auth] Full response:', res.data);
+                
                 setAuth({
                     accessToken: true, // Token is in httpOnly cookie, not accessible to JS
+                    userId: derivedUserId,
                     role,
                     email: derivedEmail,
                     name: derivedName,

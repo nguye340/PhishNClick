@@ -18,6 +18,36 @@ export const getSessionStats = async (req, res) => {
   }
 };
 
+/**
+ * Save session stats directly from frontend
+ */
+export const saveSessionStats = async (req, res) => {
+  try {
+    const statsData = req.body;
+    
+    if (!statsData.session_id) {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
+
+    // Check if stats already exist for this session
+    const existingStats = await SessionStats.findOne({ session_id: statsData.session_id });
+    if (existingStats) {
+      // Update existing stats
+      Object.assign(existingStats, statsData);
+      await existingStats.save();
+      return res.status(200).json(existingStats);
+    }
+
+    // Create new stats
+    const stats = new SessionStats(statsData);
+    await stats.save();
+    res.status(201).json(stats);
+  } catch (err) {
+    console.error('Error saving session stats:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const generateStatsForSession = async (req, res) => {
   try {
     const sessionId = req.params.sessionId;

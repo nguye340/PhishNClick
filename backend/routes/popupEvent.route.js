@@ -3,7 +3,7 @@ import { recordPopupEvent, getEventsBySession } from '../controllers/popupEvent.
 import auth from '../middleware/auth.middleware.js';
 const router = express.Router();
 
-router.post('/', auth, recordPopupEvent);
-router.get('/session/:sessionId', auth, getEventsBySession);
+router.post('/', recordPopupEvent); // No auth required for telemetry
+router.get('/session/:sessionId', auth, getEventsBySession); // Keep auth for reading data
 
 export default router;

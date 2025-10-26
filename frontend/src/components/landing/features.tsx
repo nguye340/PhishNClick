@@ -3,7 +3,7 @@
 import React from "react"
 import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
-import { Trophy, Users, BarChart3, Gamepad2 } from "lucide-react"
+import { Trophy, Users, BarChart3, Gamepad2, Shield } from "lucide-react"
 
 export function Features() {
   useGSAP(() => {
@@ -34,12 +34,13 @@ export function Features() {
             color="green"
           />
 
-          <FeatureCard
+          {/* Multiplayer feature - hidden for now */}
+          {/* <FeatureCard
             icon={<Users className="w-8 h-8" />}
             title="MULTIPLAYER"
             description="Challenge friends and colleagues in head-to-head security battles. Team up to defeat advanced phishing threats."
             color="magenta"
-          />
+          /> */}
 
           <FeatureCard
             icon={<BarChart3 className="w-8 h-8" />}
@@ -53,6 +54,13 @@ export function Features() {
             title="HIGH SCORES"
             description="Compete for the top spot on global, regional, or company leaderboards. Show off your security expertise!"
             color="cyan"
+          />
+
+          <FeatureCard
+            icon={<Shield className="w-8 h-8" />}
+            title="DIVERSE THREATS"
+            description="Learn to identify various phishing tactics including emails, popups, SMS, and voice calls. Stay ahead of evolving attacks."
+            color="magenta"
           />
         </div>
       </div>
