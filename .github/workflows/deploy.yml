@@ -32,11 +32,21 @@ jobs:
               git reset --hard origin/main
               git clean -fd
             else
+              # Backup env files
+              cp backend.env /tmp/backend.env.bak 2>/dev/null || true
+              cp frontend.env /tmp/frontend.env.bak 2>/dev/null || true
+              
               # Clean directory completely
               rm -rf /opt/phishnclick/*
               rm -rf /opt/phishnclick/.git
               cd /opt/phishnclick
+              
+              # Clone repo
               git clone https://github.com/${{ github.repository }} .
+              
+              # Restore env files
+              cp /tmp/backend.env.bak backend.env 2>/dev/null || true
+              cp /tmp/frontend.env.bak frontend.env 2>/dev/null || true
             fi
             
             # Stop existing containers
