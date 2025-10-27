@@ -32,8 +32,7 @@ const telemetryEventSchema = new mongoose.Schema({
   passed: Boolean,
   timestamp: {
     type: Date,
-    default: Date.now,
-    index: true
+    default: Date.now
   }
 }, {
   timestamps: true
