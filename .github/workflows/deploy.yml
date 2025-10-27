@@ -23,6 +23,9 @@ jobs:
             # Navigate to deployment directory
             cd /opt/phishnclick
             
+            # Fix ownership
+            sudo chown -R ubuntu:ubuntu /opt/phishnclick
+            
             # Pull latest code
             if [ -d ".git" ]; then
               git fetch origin
@@ -30,8 +33,8 @@ jobs:
               git clean -fd
             else
               # Clean directory completely
-              sudo rm -rf /opt/phishnclick/*
-              sudo rm -rf /opt/phishnclick/.git
+              rm -rf /opt/phishnclick/*
+              rm -rf /opt/phishnclick/.git
               cd /opt/phishnclick
               git clone https://github.com/${{ github.repository }} .
             fi
