@@ -1,5 +1,6 @@
 # prebuild config
-FROM node:20-bookworm-slim
+#FROM node:20-bookworm-slim
+FROM node:20-alpine AS base
 
 ENV NODE_ENV=production
 WORKDIR /app

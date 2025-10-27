@@ -1,2 +1,15 @@
 node_modules
 *.env
+*.env.local
+*.env.example
+*.env.development
+*.env.test
+*.env.production
+*.env.production.local
+*.env.test.local
+*.md
+*.txt
+*.dockerignore
+*.gitignore
+*.dockerfile
+*.dockerfile.*

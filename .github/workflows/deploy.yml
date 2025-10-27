@@ -1,0 +1,44 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Navigate to deployment directory
+            cd /opt/phishnclick
+            
+            # Pull latest code
+            if [ -d ".git" ]; then
+              git pull origin main
+            else
+              git clone https://github.com/${{ github.repository }} .
+            fi
+            
+            # Stop existing containers
+            docker compose -f docker-compose.prod.yml down || true
+            
+            # Rebuild and start containers
+            docker compose -f docker-compose.prod.yml build --no-cache
+            docker compose -f docker-compose.prod.yml up -d
+            
+            # Clean up old images
+            docker image prune -f
+            
+            # Show running containers
+            docker compose -f docker-compose.prod.yml ps

@@ -1,103 +1,165 @@
 {
   "pages": {
-    "/auth/login/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/auth/login/page.js"
+    "/_not-found/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/app/_not-found/page-52d3ed22ba797726.js"
     ],
     "/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/css/app/layout.css",
-      "static/chunks/app/layout.js"
-    ],
-    "/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/page.js"
-    ],
-    "/dashboard/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/dashboard/page.js"
-    ],
-    "/dashboard/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/dashboard/layout.js"
-    ],
-    "/games/popup-manic/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/vendors-_app-pages-browser_node_modules_lucide-react_dist_esm_icons_award_js-_app-pages-brows-d5d673.js",
-      "static/chunks/app/games/popup-manic/page.js"
-    ],
-    "/games/phish404/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/games/phish404/page.js"
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/css/c08fa98aeea7800f.css",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/layout-107df991d36749b2.js"
     ],
     "/games/phish-hunt/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/games/phish-hunt/page.js"
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/games/phish-hunt/page-93601f0e06ee417f.js"
+    ],
+    "/games/popup-manic/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/games/popup-manic/page-3567bbc50ef95cd3.js"
+    ],
+    "/auth/register/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/auth/register/page-97c02356eb6b4654.js"
+    ],
+    "/auth/login/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/auth/login/page-fac1fd6e44a5a199.js"
+    ],
+    "/games/popup-manic/test/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/games/popup-manic/test/page-226586c19c84ad3d.js"
+    ],
+    "/games/phish404/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/games/phish404/page-a9f7f62c89629d1e.js"
     ],
     "/games/hooked-or-cooked/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/games/hooked-or-cooked/page.js"
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/games/hooked-or-cooked/page-df0a75372b1e5607.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/page-b77a4415e9eeecb8.js"
+    ],
+    "/unauthorized/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/unauthorized/page-240b2414829d6b02.js"
     ],
     "/admin/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/admin/page.js"
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/admin/page-02ba49a456e2aa11.js"
     ],
     "/admin/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/admin/layout.js"
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/admin/layout-d5d2e740a2280949.js"
+    ],
+    "/assessment/final-quiz/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/assessment/final-quiz/page-3f25ab0d9c6f8b93.js"
+    ],
+    "/assessment/layout": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/assessment/layout-35f5557ef41e2a66.js"
+    ],
+    "/assessment/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/assessment/page-9337cfbfa33192f0.js"
+    ],
+    "/dashboard/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/dashboard/page-7e4fc8a35b98f3f5.js"
+    ],
+    "/dashboard/layout": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/dashboard/layout-9380058a00a6cd8a.js"
+    ],
+    "/admin/users/[id]/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/admin/users/[id]/page-8a676660076467ae.js"
     ],
     "/profile/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/profile/page.js"
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/profile/page-b762ed7c862da564.js"
     ],
     "/profile/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/commons.js",
-      "static/chunks/app/profile/layout.js"
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/profile/layout-5125ac52f3950af8.js"
     ],
-    "/_not-found/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/framework.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+    "/assessment/phishing-test/page": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/assessment/phishing-test/page-060c6d5b67db095b.js"
+    ],
+    "/assessment/phishing-test/layout": [
+      "static/chunks/webpack-ed2b36b87e700fca.js",
+      "static/chunks/framework-1f1c20ce53127618.js",
+      "static/chunks/main-app-fc81eea585482f62.js",
+      "static/chunks/commons-53628ae097b9a801.js",
+      "static/chunks/app/assessment/phishing-test/layout-a7b51d3ac18b0b09.js"
     ]
   }
 }

@@ -1,37 +1,55 @@
 name: phishnclick-mern-app
-
 services:
-  api:
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    env_file: ./backend/.env
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+  backend:
+    build: ./backend
+    image: phishnclick-backend:latest
+    env_file:
+      - ./backend/.env  # create this file with prod vars
     ports:
       - "5000:5000"
-    networks:
-      - phishnclick-mern-app
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    ports:
-      - "5173:5173" # publish container port 5173 to a random host port
-    networks:
-      - phishnclick-mern-app
-    command: ["npm", "run", "dev", "--", "-p", "5173", "-H", "0.0.0.0"]
+    build: ./frontend
+    image: phishnclick-frontend:latest
+    env_file:
+      - ./frontend/.env.local
     depends_on:
-      - api
+      - backend
+    ports:
+      - "3000:3000"
+# services:
+#   api:
+#     build: 
+#       context: ./backend
+#       dockerfile: Dockerfile
+#     restart: unless-stopped
+#     env_file: ./backend/.env
+#     volumes:
+#       - ./backend:/app
+#       - /app/node_modules
+#     ports:
+#       - "5000:5000"
+#     networks:
+#       - phishnclick-mern-app
 
-networks:
-  phishnclick-mern-app:
-    name: phishnclick-mern-app
-    driver: bridge
+#   frontend:
+#     build:
+#       context: ./frontend
+#       dockerfile: Dockerfile
+#     restart: unless-stopped
+#     volumes:
+#       - ./frontend:/app
+#       - /app/node_modules
+#     ports:
+#       - "5173:5173" # publish container port 5173 to a random host port
+#     networks:
+#       - phishnclick-mern-app
+#     command: ["npm", "run", "dev", "--", "-p", "5173", "-H", "0.0.0.0"]
+#     depends_on:
+#       - api
+
+# networks:
+#   phishnclick-mern-app:
+#     name: phishnclick-mern-app
+#     driver: bridge
+

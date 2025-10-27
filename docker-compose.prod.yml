@@ -1,0 +1,30 @@
+name: phishnclick-prod
+
+services:
+  backend:
+    build: ./backend
+    image: phishnclick-backend:latest
+    env_file:
+      - backend.env
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    networks:
+      - phishnclick-net
+
+  frontend:
+    build: ./frontend
+    image: phishnclick-frontend:latest
+    env_file:
+      - frontend.env
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - phishnclick-net
+
+networks:
+  phishnclick-net:
+    driver: bridge

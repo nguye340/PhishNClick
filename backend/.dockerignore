@@ -2,3 +2,10 @@ node_modules
 test-db.js
 test-server.js
 *.env
+*.env.*
+*.md
+*.txt
+*.dockerignore
+*.gitignore
+*.dockerfile
+*.dockerfile.*
