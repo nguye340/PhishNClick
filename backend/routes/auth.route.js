@@ -13,8 +13,7 @@ const loginLimiter = rateLimit({
     standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
     legacyHeaders: false, // Disable `X-RateLimit-*` headers
     skipSuccessfulRequests: false, // Count all requests
-    // Uses req.ip which respects X-Forwarded-For when trust proxy is set
-    keyGenerator: (req) => req.ip,
+    // Remove custom keyGenerator - uses default which handles IPv6 correctly
     handler: (req, res) => {
         const retryAfter = Math.ceil(60); // 1 minute in seconds
         res.set('Retry-After', retryAfter);
