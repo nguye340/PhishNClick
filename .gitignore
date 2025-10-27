@@ -16,6 +16,4 @@ backend/.env
 *.md
 *.txt
 !README.md
-!LOCKOUT.md
-!PR_SUMMARY.md
 
