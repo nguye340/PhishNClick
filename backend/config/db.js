@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import seedPopup from '../seeds/seedPopup.js';
+// import seedPopup from '../seeds/seedPopup.js'; // Commented out - seeds excluded from production build
 
 // Ensure environment variables are loaded
 dotenv.config();
