@@ -29,7 +29,10 @@ jobs:
               git reset --hard origin/main
               git clean -fd
             else
-              rm -rf * .git
+              # Clean directory completely
+              sudo rm -rf /opt/phishnclick/*
+              sudo rm -rf /opt/phishnclick/.git
+              cd /opt/phishnclick
               git clone https://github.com/${{ github.repository }} .
             fi
             
