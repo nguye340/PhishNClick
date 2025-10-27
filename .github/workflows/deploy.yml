@@ -5,82 +5,104 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  COMPOSE_FILE: docker-compose.prod.yml
+  APP_DIR: /opt/phishnclick
+
 jobs:
   build-and-push:
+    name: Build and Push Docker Images
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push backend
-        run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/phishnclick-backend:latest ./backend
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/phishnclick-backend:latest
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ env.DOCKERHUB_USERNAME }}/phishnclick-backend:latest
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/phishnclick-backend:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/phishnclick-backend:buildcache,mode=max
 
-      - name: Build and push frontend
-        run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/phishnclick-frontend:latest ./frontend
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/phishnclick-frontend:latest
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ env.DOCKERHUB_USERNAME }}/phishnclick-frontend:latest
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/phishnclick-frontend:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/phishnclick-frontend:buildcache,mode=max
 
   deploy:
+    name: Deploy to EC2
     needs: build-and-push
     runs-on: ubuntu-latest
     
+    env:
+      REPO: ${{ github.repository }}
+    
     steps:
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          APP_DIR: ${{ env.APP_DIR }}
+          COMPOSE_FILE: ${{ env.COMPOSE_FILE }}
+          REPO: ${{ env.REPO }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: APP_DIR,COMPOSE_FILE,REPO
           script: |
-            # Navigate to deployment directory
-            cd /opt/phishnclick
+            set -e
             
-            # Fix ownership
-            sudo chown -R ubuntu:ubuntu /opt/phishnclick
+            echo "==> Setting up deployment directory"
+            sudo mkdir -p "${APP_DIR}"
+            sudo chown -R ubuntu:ubuntu "${APP_DIR}"
+            cd "${APP_DIR}"
             
-            # Pull latest code
+            echo "==> Syncing repository"
             if [ -d ".git" ]; then
               git fetch origin
               git reset --hard origin/main
               git clean -fd
             else
               # Backup env files
-              cp backend.env /tmp/backend.env.bak 2>/dev/null || true
-              cp frontend.env /tmp/frontend.env.bak 2>/dev/null || true
+              mkdir -p /tmp/phishnclick-backup
+              cp backend.env /tmp/phishnclick-backup/ 2>/dev/null || true
+              cp frontend.env /tmp/phishnclick-backup/ 2>/dev/null || true
               
-              # Clean directory completely
-              rm -rf /opt/phishnclick/*
-              rm -rf /opt/phishnclick/.git
-              cd /opt/phishnclick
-              
-              # Clone repo
-              git clone https://github.com/${{ github.repository }} .
+              # Clean and clone
+              sudo rm -rf "${APP_DIR}"/*
+              sudo rm -rf "${APP_DIR}/.git"
+              git clone "https://github.com/${REPO}" "${APP_DIR}"
+              cd "${APP_DIR}"
               
               # Restore env files
-              cp /tmp/backend.env.bak backend.env 2>/dev/null || true
-              cp /tmp/frontend.env.bak frontend.env 2>/dev/null || true
+              cp /tmp/phishnclick-backup/backend.env . 2>/dev/null || true
+              cp /tmp/phishnclick-backup/frontend.env . 2>/dev/null || true
             fi
             
-            # Stop existing containers
-            docker compose -f docker-compose.prod.yml down || true
+            echo "==> Deploying containers"
+            docker compose -f "${COMPOSE_FILE}" down || true
+            docker compose -f "${COMPOSE_FILE}" pull
+            docker compose -f "${COMPOSE_FILE}" up -d
             
-            # Pull latest images from Docker Hub
-            docker compose -f docker-compose.prod.yml pull
+            echo "==> Cleaning up"
+            docker image prune -af || true
             
-            # Start containers
-            docker compose -f docker-compose.prod.yml up -d
-            
-            # Clean up old images
-            docker image prune -af
-            
-            # Show running containers
-            docker compose -f docker-compose.prod.yml ps
+            echo "==> Deployment complete"
+            docker compose -f "${COMPOSE_FILE}" ps
