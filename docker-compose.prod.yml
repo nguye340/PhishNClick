@@ -2,8 +2,7 @@ name: phishnclick-prod
 
 services:
   backend:
-    build: ./backend
-    image: phishnclick-backend:latest
+    image: nguyenthaohan214/phishnclick-backend:latest
     env_file:
       - backend.env
     ports:
@@ -13,8 +12,7 @@ services:
       - phishnclick-net
 
   frontend:
-    build: ./frontend
-    image: phishnclick-frontend:latest
+    image: nguyenthaohan214/phishnclick-frontend:latest
     env_file:
       - frontend.env
     depends_on:
