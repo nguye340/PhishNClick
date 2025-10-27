@@ -1,6 +1,8 @@
 node_modules/
 backend/.env
-*.env*
+*.env
+*.env.*
+!*.env.example
 
 # Environment variables
 .env
@@ -8,10 +10,12 @@ backend/.env
 .env.development
 .env.test
 .env.production
-.env.example
+# .env.example - Allow example files
 
 # Documentation
 *.md
 *.txt
 !README.md
+!LOCKOUT.md
+!PR_SUMMARY.md
 

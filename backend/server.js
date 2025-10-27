@@ -30,6 +30,9 @@ console.log('Environment variables loaded:', process.env.MONGO_URI ? 'MONGO_URI 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy for rate limiting and IP detection behind ALB/reverse proxy
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json());
 const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000,http://localhost:3001")

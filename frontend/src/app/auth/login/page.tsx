@@ -83,8 +83,27 @@ export default function LoginPage() {
       } else {
         router.push("/dashboard")
       }
-    } catch (err) {
-      setError("Login failed. Please check your credentials.")
+    } catch (err: any) {
+      // Handle lockout errors (423 status)
+      if (err.response?.status === 423) {
+        const lockoutData = err.response.data
+        if (lockoutData.permanent) {
+          setError("Your account has been permanently locked due to too many failed login attempts. Please contact an administrator to unlock your account.")
+        } else if (lockoutData.remainingSeconds) {
+          const minutes = Math.ceil(lockoutData.remainingSeconds / 60)
+          const hours = Math.ceil(lockoutData.remainingSeconds / 3600)
+          const timeStr = hours > 1 ? `${hours} hours` : `${minutes} minutes`
+          setError(`Your account is temporarily locked. Please try again in approximately ${timeStr}.`)
+        } else {
+          setError(lockoutData.message || "Your account is locked. Please try again later.")
+        }
+      } else if (err.response?.status === 429) {
+        setError("Too many login attempts. Please wait a moment before trying again.")
+      } else if (err.response?.data?.error === 'INVALID_CREDENTIALS') {
+        setError("Invalid email or password. Please try again.")
+      } else {
+        setError("Login failed. Please check your credentials.")
+      }
       console.error(err)
     } finally {
       setLoading(false)

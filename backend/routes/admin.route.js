@@ -7,7 +7,9 @@ import {
   getOrganizationRisk,
   getTrainingEffectiveness,
   getActivityFeed,
-  deleteUserByAdmin
+  deleteUserByAdmin,
+  unlockUserAccount,
+  requirePasswordReset
 } from '../controllers/admin.controller.js';
 import { verifyToken, verifyRole } from '../middleware/auth.middleware.js';
 
@@ -45,6 +47,20 @@ router.get('/users/:userId', getUserDetails);
  * @access  Admin only
  */
 router.delete('/users/:userId', deleteUserByAdmin);
+
+/**
+ * @route   POST /api/admin/users/:userId/unlock
+ * @desc    Unlock a locked user account (clear lockout counters)
+ * @access  Admin only
+ */
+router.post('/users/:userId/unlock', unlockUserAccount);
+
+/**
+ * @route   POST /api/admin/users/:userId/require-password-reset
+ * @desc    Require user to reset password on next login
+ * @access  Admin only
+ */
+router.post('/users/:userId/require-password-reset', requirePasswordReset);
 
 /**
  * @route   GET /api/admin/analytics/behavior

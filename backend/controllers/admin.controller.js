@@ -3,7 +3,10 @@ import Session from '../models/session.model.js';
 import SessionStats from '../models/sessionStats.model.js';
 import PopupEvent from '../models/popupEvent.model.js';
 import QuizResult from '../models/quizResult.model.js';
+import AuditEvent from '../models/auditEvent.model.js';
 import { calculateUserRiskScore, calculateOrganizationRisk } from '../utils/riskScoring.js';
+import crypto from 'crypto';
+import { sendPasswordResetEmail } from '../services/mailer.js';
 
 /**
  * Get overview KPIs for admin dashboard
@@ -855,3 +858,190 @@ async function calculateUserRiskFromDB(userId) {
     };
   }
 }
+
+/**
+ * Unlock a user account (clear all lockout counters and flags)
+ * Only accessible to admins
+ */
+export const unlockUserAccount = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    // Prevent self-unlock
+    if (req.user?.id === userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'FORBIDDEN',
+        message: 'Admins cannot unlock themselves'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get admin info
+    const adminUser = await User.findById(req.user.id).select('email');
+    const adminEmail = adminUser?.email || 'unknown';
+    const adminId = req.user?.id || 'unknown';
+    
+    // Console audit log
+    console.log(`[AUDIT] Admin ${adminEmail} (${adminId}) unlocked account for user ${user.email} (${user._id})`);
+
+    // Persist audit log to database
+    await AuditEvent.create({
+      eventType: 'ACCOUNT_UNLOCK',
+      adminId: adminId,
+      adminEmail: adminEmail,
+      targetUserId: user._id,
+      targetUserEmail: user.email,
+      metadata: {
+        wasPermanentlyLocked: user.isPermanentlyLocked,
+        lockoutStage: user.lockoutStage,
+        consecutiveFailures: user.consecutiveFailedLoginAttempts
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
+    // Clear all lockout-related fields atomically and bump tokenVersion
+    await User.findByIdAndUpdate(userId, {
+      $set: {
+        isPermanentlyLocked: false,
+        lockoutStage: 0,
+        lockoutExpiresAt: null,
+        consecutiveFailedLoginAttempts: 0,
+        failedLoginAttempts: 0,
+        lastFailedLoginAt: null
+      },
+      $inc: { tokenVersion: 1 } // Revoke all existing tokens
+    });
+
+    res.json({
+      success: true,
+      message: `Account unlocked successfully for ${user.email}`,
+      data: {
+        userId: user._id,
+        email: user.email,
+        username: user.username,
+        unlockedBy: adminEmail,
+        unlockedAt: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error unlocking user account:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to unlock account',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Require a user to reset their password
+ * Generates a secure token and sends reset email
+ * Only accessible to admins
+ */
+export const requirePasswordReset = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { sendEmail = true } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get admin info
+    const adminUser = await User.findById(req.user.id).select('email');
+    const adminEmail = adminUser?.email || 'unknown';
+    const adminId = req.user?.id || 'unknown';
+    
+    // Console audit log
+    console.log(`[AUDIT] Admin ${adminEmail} (${adminId}) required password reset for user ${user.email} (${user._id})`);
+
+    // Persist audit log to database
+    await AuditEvent.create({
+      eventType: 'PASSWORD_RESET_REQUIRED',
+      adminId: adminId,
+      adminEmail: adminEmail,
+      targetUserId: user._id,
+      targetUserEmail: user.email,
+      metadata: {
+        sendEmail: sendEmail
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
+    // Generate secure reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Update user with reset requirements
+    user.passwordResetRequired = true;
+    user.passwordResetTokenHash = resetTokenHash;
+    user.passwordResetTokenExpiresAt = resetTokenExpiry;
+    user.passwordResetApprovedBy = req.user.id; // Admin who approved
+    user.passwordResetApprovedAt = new Date();
+
+    await user.save();
+
+    // Send reset email if requested
+    let emailSent = false;
+    if (sendEmail) {
+      const resetLink = `${process.env.FRONTEND_URL || 'https://app.catphishlabs.ca'}/auth/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+      
+      try {
+        await sendPasswordResetEmail(user.email, resetLink, user.username);
+        emailSent = true;
+      } catch (emailError) {
+        console.error('Failed to send password reset email:', emailError);
+        // Don't fail the request if email fails
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Password reset required for ${user.email}`,
+      data: {
+        userId: user._id,
+        email: user.email,
+        username: user.username,
+        resetTokenExpiry: resetTokenExpiry.toISOString(),
+        emailSent,
+        resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined // Only in dev
+      }
+    });
+  } catch (error) {
+    console.error('Error requiring password reset:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to require password reset',
+      error: error.message
+    });
+  }
+};
