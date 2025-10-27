@@ -36,10 +36,14 @@ const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000,http:
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
-app.use(cors({
+const corsOptions = {
   origin: allowedOrigins,
-  credentials: true
-}));
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(cookieParser());
 
 // Serve uploaded files statically
