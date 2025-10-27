@@ -52,12 +52,12 @@ jobs:
             # Stop existing containers
             docker compose -f docker-compose.prod.yml down || true
             
-            # Rebuild and start containers
-            docker compose -f docker-compose.prod.yml build --no-cache
-            docker compose -f docker-compose.prod.yml up -d
+            # Clean up Docker system to free space
+            docker system prune -af --volumes
             
-            # Clean up old images
-            docker image prune -f
+            # Rebuild and start containers (use cache to save space)
+            docker compose -f docker-compose.prod.yml build
+            docker compose -f docker-compose.prod.yml up -d
             
             # Show running containers
             docker compose -f docker-compose.prod.yml ps
