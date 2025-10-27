@@ -15,5 +15,3 @@ backend/.env
 *.txt
 !README.md
 
-# Git
-.gitignore
