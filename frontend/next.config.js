@@ -11,6 +11,11 @@ const nextConfig = {
         port: '5000',
         pathname: '/uploads/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'app.catphishlabs.ca',
+        pathname: '/uploads/**',
+      },
     ],
   },
   onDemandEntries: {
