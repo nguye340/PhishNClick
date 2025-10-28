@@ -1,5 +1,11 @@
 # PhishNClick - Cyber Awareness Training Website
 
+<div align="center">
+  
+[![Visit Website](https://img.shields.io/badge/🎮_Visit_Website-app.catphishlabs.ca-00D9FF?style=for-the-badge&labelColor=000000)](https://app.catphishlabs.ca/)
+
+</div>
+
 PhishNClick is an interactive cybersecurity training platform that turns phishing awareness into an engaging arcade experience. Through gamified learning, users can improve their ability to identify and combat phishing attempts while competing with others globally.
 
 ## Features
