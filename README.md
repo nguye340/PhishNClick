@@ -8,9 +8,9 @@
 
 PhishNClick is an interactive cybersecurity training platform that turns phishing awareness into an engaging arcade experience. Through gamified learning, users can improve their ability to identify and combat phishing attempts while having fun.
 
-## ✨ Features
+## Features
 
-### 🎮 Diverse Mini-Game Training Modules
+### Diverse Mini-Game Training Modules
 Four unique arcade-style games that teach different aspects of cybersecurity:
 - **Popup Manic**: Identify and handle malicious popups in a Windows-like environment
 - **Phish404**: Catch phishing emails while avoiding legitimate ones
@@ -19,7 +19,7 @@ Four unique arcade-style games that teach different aspects of cybersecurity:
 
 ![Training Modules](screenshots/Diverse-Minigame-Training-Modules.png)
 
-### 👤 User Authentication & Registration
+### User Authentication & Registration
 Secure authentication system with multiple options:
 - Email/password registration and login
 - Google OAuth integration
@@ -29,7 +29,7 @@ Secure authentication system with multiple options:
 ![User Login](screenshots/UserLogin.png)
 ![User Registration](screenshots/UserRegistration.png)
 
-### 📊 Comprehensive User Dashboard
+### Comprehensive User Dashboard
 Track your cybersecurity learning progress with detailed analytics:
 - Overall security score and risk level
 - Category-specific performance metrics
@@ -42,7 +42,7 @@ Track your cybersecurity learning progress with detailed analytics:
 ![User Dashboard 3](screenshots/UserDashboard3.png)
 ![User Dashboard 4](screenshots/UserDashboard4.png)
 
-### 🛡️ Admin Dashboard
+### Admin Dashboard
 Powerful administrative tools for organizations:
 - User risk assessment and scoring
 - Detailed user progress tracking
@@ -108,7 +108,7 @@ This will start the frontend on http://localhost:3000 and the backend on http://
 - To build the frontend: `npm run frontend:build`
 - To start in production mode: `npm run start`
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **Framework**: Next.js 14 (App Router)

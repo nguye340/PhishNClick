@@ -66,8 +66,38 @@ app.get('/', (req, res) => {
 // app.get('/api/test', (req, res) => {
 //   res.json({ success: true, message: 'Api route is working!' });
 // });
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Check MongoDB connection
+    const mongoose = await import('mongoose');
+    const dbState = mongoose.default.connection.readyState;
+    
+    // readyState: 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+    if (dbState !== 1) {
+      return res.status(503).json({ 
+        status: 'unhealthy', 
+        reason: 'Database not connected',
+        dbState: dbState,
+        timestamp: new Date().toISOString() 
+      });
+    }
+    
+    // Ping database to ensure it's responsive
+    await mongoose.default.connection.db.admin().ping();
+    
+    res.status(200).json({ 
+      status: 'healthy', 
+      database: 'connected',
+      timestamp: new Date().toISOString() 
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({ 
+      status: 'unhealthy', 
+      reason: error.message,
+      timestamp: new Date().toISOString() 
+    });
+  }
 });
 // API Routes
 app.use('/api/popup', popupRoutes);
