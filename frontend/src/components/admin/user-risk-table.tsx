@@ -13,7 +13,8 @@ import {
   Mail,
   Calendar,
   ExternalLink,
-  Trash
+  Trash,
+  Unlock
 } from "lucide-react"
 
 interface UserRiskData {
@@ -46,9 +47,11 @@ interface UserRiskTableProps {
   currentFilter: string | null
   onDelete: (user: UserRiskData) => Promise<void>
   deletingId: string | null
+  onUnlock?: (user: UserRiskData) => Promise<void>
+  unlockingId?: string | null
 }
 
-export function UserRiskTable({ users, loading, onSort, onFilterRisk, currentFilter, onDelete, deletingId }: UserRiskTableProps) {
+export function UserRiskTable({ users, loading, onSort, onFilterRisk, currentFilter, onDelete, deletingId, onUnlock, unlockingId }: UserRiskTableProps) {
   const [sortField, setSortField] = useState<string>("overallScore")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
@@ -305,6 +308,16 @@ export function UserRiskTable({ users, loading, onSort, onFilterRisk, currentFil
                         View Details
                         <ExternalLink className="h-4 w-4" />
                       </Link>
+                      {onUnlock && (
+                        <button
+                          onClick={() => onUnlock(user)}
+                          disabled={unlockingId === user._id}
+                          className="inline-flex items-center gap-2 rounded-md border border-arcade-yellow/40 bg-arcade-yellow/20 px-3 py-1.5 font-terminal text-sm text-arcade-yellow transition-colors hover:bg-arcade-yellow/30 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Unlock className="h-4 w-4" />
+                          {unlockingId === user._id ? "Unlocking..." : "Unlock"}
+                        </button>
+                      )}
                       <button
                         onClick={() => onDelete(user)}
                         disabled={deletingId === user._id}

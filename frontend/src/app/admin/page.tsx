@@ -59,6 +59,7 @@ export default function AdminDashboard() {
   const [riskFilter, setRiskFilter] = useState<string | null>(null)
   const [sortField, setSortField] = useState('overallScore')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [unlockingId, setUnlockingId] = useState<string | null>(null)
 
   const fetchOverview = async () => {
     try {
@@ -143,6 +144,30 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleUnlockUser = async (user: UserRiskData) => {
+    if (!confirm(`Unlock account for ${user.name} (${user.email})? This will clear all lockout counters and allow them to log in immediately.`)) {
+      return
+    }
+
+    try {
+      setUnlockingId(user._id)
+      setError(null)
+      const response = await axios.post(`/api/admin/users/${user._id}/unlock`)
+      
+      if (response.data.success) {
+        // Show success message
+        alert(`Account unlocked successfully for ${user.email}`)
+        // Optionally refresh user list to show updated status
+        fetchUsers()
+      }
+    } catch (err: any) {
+      console.error("Failed to unlock user:", err)
+      setError(err.response?.data?.message || "Failed to unlock user account")
+    } finally {
+      setUnlockingId(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-arcade-bg pt-16">
       {/* Sub-header for Admin Dashboard */}
@@ -187,6 +212,8 @@ export default function AdminDashboard() {
             currentFilter={riskFilter}
             onDelete={handleDeleteUser}
             deletingId={deletingId}
+            onUnlock={handleUnlockUser}
+            unlockingId={unlockingId}
           />
         </div>
       </main>

@@ -63,10 +63,12 @@ app.get('/', (req, res) => {
     status: 'success!!',
     message: 'Server is working!' });
 } )
-app.get('/api/test', (req, res) => {
-  res.json({ success: true, message: 'Api route is working!' });
+// app.get('/api/test', (req, res) => {
+//   res.json({ success: true, message: 'Api route is working!' });
+// });
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
-
 // API Routes
 app.use('/api/popup', popupRoutes);
 app.use('/api/popupEvent', popupEventRoutes);
