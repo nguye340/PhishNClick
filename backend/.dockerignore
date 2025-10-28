@@ -1,6 +1,7 @@
 node_modules
 test-db.js
 test-server.js
+test*.js
 *.env
 *.env.*
 *.md
@@ -10,3 +11,10 @@ test-server.js
 *.dockerfile
 *.dockerfile.*
 seeds/
+scripts/
+tests/
+*.bak
+*.old
+*.log
+.git
+.github

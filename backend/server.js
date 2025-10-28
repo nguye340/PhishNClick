@@ -25,7 +25,7 @@ const __dirname = dirname(__filename);
 dotenv.config();
 
 // Verify environment variables are loaded
-console.log('Environment variables loaded:', process.env.MONGO_URI ? 'MONGO_URI found' : 'MONGO_URI missing');
+// console.log('Environment variables loaded:', process.env.MONGO_URI ? 'MONGO_URI found' : 'MONGO_URI missing');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -111,7 +111,7 @@ app.use('/api/voice-calls', voiceCallRoutes);
 let server;
 connectDB().then(() => {
   server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    // console.log(`Server running on port ${PORT}`);
   });
   
   // Set keep-alive timeout for connections
@@ -124,16 +124,16 @@ connectDB().then(() => {
 
 // Graceful shutdown handlers
 const gracefulShutdown = (signal) => {
-  console.log(`\n${signal} received. Starting graceful shutdown...`);
+  // console.log(`\n${signal} received. Starting graceful shutdown...`);
   
   if (server) {
     server.close(() => {
-      console.log('HTTP server closed');
+      // console.log('HTTP server closed');
       
       // Close database connection
       import('mongoose').then(mongoose => {
         mongoose.default.connection.close(false, () => {
-          console.log('MongoDB connection closed');
+          // console.log('MongoDB connection closed');
           process.exit(0);
         });
       });

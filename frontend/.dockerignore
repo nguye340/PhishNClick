@@ -13,3 +13,11 @@ node_modules
 *.gitignore
 *.dockerfile
 *.dockerfile.*
+*.bak
+*.old
+*.log
+.git
+.github
+.next/cache
+tests/
+test/
