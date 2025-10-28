@@ -1,4 +1,4 @@
-# PhishNClick - Cyber Awareness Training Website
+# PhishNClick Cyber Awareness Training Website
 
 <div align="center">
   
