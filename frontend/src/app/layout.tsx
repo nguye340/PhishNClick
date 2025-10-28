@@ -6,6 +6,10 @@ import { ClientLayout } from "@/components/client-layout"
 export const metadata: Metadata = {
   title: "PhishNClick",
   description: "Master the art of detecting phishing attempts through interactive gameplay",
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 }
 
 export default function RootLayout({
