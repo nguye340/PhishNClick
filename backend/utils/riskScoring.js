@@ -304,41 +304,41 @@ function generateRecommendations(riskData) {
   
   // Critical overall risk
   if (overallScore >= 70) {
-    recommendations.push('🚨 URGENT: Schedule immediate security awareness training');
+    recommendations.push('[URGENT] Schedule immediate security awareness training');
     recommendations.push('Consider restricting access to sensitive systems until training is completed');
   }
   
   // Accuracy issues
   if (accuracyRisk >= 50) {
-    recommendations.push('📚 Assign foundational phishing awareness modules');
+    recommendations.push('[TRAINING] Assign foundational phishing awareness modules');
     recommendations.push('Review basic security principles with user');
   }
   
   // Engagement issues
   if (engagementRisk >= 50) {
     if (totalInteractions < 10) {
-      recommendations.push('🎮 User needs to complete initial training games');
+      recommendations.push('[ACTION] User needs to complete initial training games');
     }
     if (daysSinceLastActivity > 30) {
-      recommendations.push('⏰ Send reminder: User has not trained in over 30 days');
+      recommendations.push('[REMINDER] User has not trained in over 30 days');
     }
   }
   
   // Category weaknesses
   if (categoryRiskData.weakCategories.length > 0) {
     const weakest = categoryRiskData.weakCategories[0];
-    recommendations.push(`🎯 Focus training on: ${weakest.category} (${weakest.accuracy}% accuracy)`);
+    recommendations.push(`[FOCUS] Prioritize training on: ${weakest.category} (${weakest.accuracy}% accuracy)`);
   }
   
   // Game-specific issues
   if (gameRiskData.concerningGames.length > 0) {
     const weakestGame = gameRiskData.concerningGames[0];
-    recommendations.push(`🎲 Assign additional practice in: ${weakestGame.game}`);
+    recommendations.push(`[PRACTICE] Assign additional practice in: ${weakestGame.game}`);
   }
   
   // Positive reinforcement
   if (overallScore < 30) {
-    recommendations.push('✅ User demonstrates strong security awareness - maintain regular practice');
+    recommendations.push('[EXCELLENT] User demonstrates strong security awareness - maintain regular practice');
   }
   
   return recommendations;

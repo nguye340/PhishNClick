@@ -6,15 +6,53 @@
 
 </div>
 
-PhishNClick is an interactive cybersecurity training platform that turns phishing awareness into an engaging arcade experience. Through gamified learning, users can improve their ability to identify and combat phishing attempts while competing with others globally.
+PhishNClick is an interactive cybersecurity training platform that turns phishing awareness into an engaging arcade experience. Through gamified learning, users can improve their ability to identify and combat phishing attempts while having fun.
 
-## Features
+## ✨ Features
 
-- **Arcade-Style Learning**: Progress through increasingly difficult security challenges
-- **Interactive Assessment**: Initial skill assessment to personalize your learning journey
-- **Real-Time Battles**: Challenge friends and colleagues in head-to-head security battles
-- **Skill Stats**: Track your progress with detailed performance metrics
-- **Global Leaderboards**: Compete for the top spot on global, regional, or company leaderboards
+### 🎮 Diverse Mini-Game Training Modules
+Four unique arcade-style games that teach different aspects of cybersecurity:
+- **Popup Manic**: Identify and handle malicious popups in a Windows-like environment
+- **Phish404**: Catch phishing emails while avoiding legitimate ones
+- **Hooked or Cooked**: Analyze email content and make quick security decisions
+- **PhishHunt**: Duck hunt style game for spotting phishing attempts
+
+![Training Modules](screenshots/Diverse-Minigame-Training-Modules.png)
+
+### 👤 User Authentication & Registration
+Secure authentication system with multiple options:
+- Email/password registration and login
+- Google OAuth integration
+- GitHub OAuth integration
+- Account lockout protection after failed attempts
+
+![User Login](screenshots/UserLogin.png)
+![User Registration](screenshots/UserRegistration.png)
+
+### 📊 Comprehensive User Dashboard
+Track your cybersecurity learning progress with detailed analytics:
+- Overall security score and risk level
+- Category-specific performance metrics
+- Game-by-game statistics
+- Progress tracking over time
+- Personalized recommendations
+
+![User Dashboard 1](screenshots/UserDashboard1.png)
+![User Dashboard 2](screenshots/UserDashboard2.png)
+![User Dashboard 3](screenshots/UserDashboard3.png)
+![User Dashboard 4](screenshots/UserDashboard4.png)
+
+### 🛡️ Admin Dashboard
+Powerful administrative tools for organizations:
+- User risk assessment and scoring
+- Detailed user progress tracking
+- Category weakness identification
+- Bulk user management
+- Account unlock capabilities
+- Organization-wide analytics
+
+![Admin Dashboard](screenshots/admin-dashboard-full.png)
+![User Risk Details](screenshots/admin-dashboard-user-progress-and-risk-details.png)
 
 ## Project Structure
 
@@ -70,13 +108,37 @@ This will start the frontend on http://localhost:3000 and the backend on http://
 - To build the frontend: `npm run frontend:build`
 - To start in production mode: `npm run start`
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- **Frontend**: React.js, TypeScript, Tailwind CSS, Shadcn UI
-- **Animations**: GSAP, Framer Motion, Spline
-- **Backend**: Next.js API Routes
+### Frontend
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **UI Library**: React 18
+- **Styling**: Tailwind CSS
+- **UI Components**: Radix UI, Shadcn UI
+- **Animations**: Framer Motion, GSAP
+- **3D Graphics**: Spline, Rive
+- **Icons**: Lucide React
+- **HTTP Client**: Axios
+- **Audio**: Howler.js
+
+### Backend
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Language**: JavaScript (ES Modules)
 - **Database**: MongoDB with Mongoose
-- **Authentication**: NextAuth.js
+- **Authentication**: JWT (JSON Web Tokens)
+- **Password Hashing**: bcrypt
+- **Security**: CORS, express-rate-limit, cookie-parser
+- **File Upload**: Multer
+
+### DevOps & Deployment
+- **Containerization**: Docker
+- **CI/CD**: GitHub Actions
+- **Registry**: Docker Hub
+- **Hosting**: AWS EC2
+- **Reverse Proxy**: Application Load Balancer (ALB)
+- **SSL**: AWS Certificate Manager
 
 ## Contributing
 
