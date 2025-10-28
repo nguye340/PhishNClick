@@ -217,7 +217,7 @@ export function Navbar() {
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={handleLogin}
-                    className={`flex items-center gap-2 px-4 py-2 rounded border border-arcade-cyan text-[#00ffff] bg-transparent hover:bg-arcade-cyan hover:text-black focus:text-black active:text-black transition-all duration-200 group vhs-effect ${isLoginPressed ? 'active' : ''}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded border border-arcade-cyan text-black bg-arcade-cyan hover:bg-arcade-yellow hover:text-arcade-magenta transition-all duration-200 group vhs-effect ${isLoginPressed ? 'active' : ''}`}
                   >
                     <LogIn className="w-4 h-4" />
                     <span className="font-terminal text-sm">Login</span>

@@ -184,7 +184,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-arcade-cyan text-arcade-magenta font-arcade py-4 text-lg tracking-wider transition-all transform hover:-translate-y-1 hover:bg-arcade-yellow hover:shadow-lg hover:shadow-arcade-yellow/50 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none active:translate-y-0"
+            className="w-full rounded-lg bg-arcade-cyan text-black font-arcade py-4 text-lg tracking-wider transition-all transform hover:-translate-y-1 hover:text-arcade-magenta hover:shadow-lg hover:shadow-arcade-cyan/50 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none active:translate-y-0"
           >
             {loading ? "Signing in..." : "Start Playing"}
           </button>
