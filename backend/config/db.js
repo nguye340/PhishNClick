@@ -17,8 +17,33 @@ if (connectionString && connectionString.includes('mongodb+srv://') && !connecti
 export const connectDB = async () => {
   try {
     console.log('Attempting to connect to MongoDB scenarios database...');
-    const conn = await mongoose.connect(connectionString);
+    
+    // Connection options for better stability
+    const options = {
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 10000,
+      heartbeatFrequencyMS: 10000,
+      retryWrites: true,
+      retryReads: true,
+    };
+    
+    const conn = await mongoose.connect(connectionString, options);
     console.log(`MongoDB connected: ${conn.connection.host}`);
+    
+    // Handle connection events
+    mongoose.connection.on('error', (err) => {
+      console.error('MongoDB connection error:', err);
+    });
+    
+    mongoose.connection.on('disconnected', () => {
+      console.warn('MongoDB disconnected. Attempting to reconnect...');
+    });
+    
+    mongoose.connection.on('reconnected', () => {
+      console.log('MongoDB reconnected successfully');
+    });
     
     // Temporarily disable seeding for debugging
     // const shouldSeed = process.env.SEED_DB === 'true' || process.argv.includes('--seed');
@@ -28,6 +53,7 @@ export const connectDB = async () => {
     // }
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
-    process.exit(1); // Exit process with error 1, and success 0
+    console.error('Retrying connection in 5 seconds...');
+    setTimeout(() => connectDB(), 5000);
   }
 };

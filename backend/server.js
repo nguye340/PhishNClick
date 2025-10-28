@@ -78,11 +78,59 @@ app.use('/api/quiz-results', quizResultRoutes);
 app.use('/api/voice-calls', voiceCallRoutes);
 
 // Connect to database first, then start server
+let server;
 connectDB().then(() => {
-  app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
+  
+  // Set keep-alive timeout for connections
+  server.keepAliveTimeout = 65000; // 65 seconds
+  server.headersTimeout = 66000; // 66 seconds (must be higher than keepAliveTimeout)
 }).catch((error) => {
   console.error('Failed to connect to database:', error);
-  process.exit(1);
+  // Don't exit immediately, let reconnection logic handle it
+});
+
+// Graceful shutdown handlers
+const gracefulShutdown = (signal) => {
+  console.log(`\n${signal} received. Starting graceful shutdown...`);
+  
+  if (server) {
+    server.close(() => {
+      console.log('HTTP server closed');
+      
+      // Close database connection
+      import('mongoose').then(mongoose => {
+        mongoose.default.connection.close(false, () => {
+          console.log('MongoDB connection closed');
+          process.exit(0);
+        });
+      });
+    });
+    
+    // Force close after 10 seconds
+    setTimeout(() => {
+      console.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  } else {
+    process.exit(0);
+  }
+};
+
+// Handle various termination signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit, log and continue
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit, log and continue
 });
