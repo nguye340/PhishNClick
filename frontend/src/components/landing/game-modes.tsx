@@ -21,7 +21,7 @@ export function GameModes() {
   }, [])
 
   return (
-    <section className="py-24 px-4">
+    <section id="choose-your-adventure" className="py-24 px-4">
       <div className="max-w-7xl mx-auto">
         <h2 className="font-arcade text-2xl md:text-4xl text-center mb-16 text-arcade-magenta neon-text glow-heading-pink">
           CHOOSE YOUR ADVENTURE

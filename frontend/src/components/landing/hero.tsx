@@ -105,24 +105,33 @@ export function LandingHero() {
                 An arcade-style cybersecurity training platform that turns phishing awareness into an epic gaming adventure.
               </p>
 
-              <div className="hero-content flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <button 
-                  onClick={handleInsertCoin}
-                  className={`coin-button relative font-arcade text-xl px-10 py-5 bg-arcade-green text-white rounded-lg transition-colors group ${isButtonPressed ? 'active' : ''}`}
-                >
-                  <span className="relative z-10 vhs-aberration glow-heading">Insert Coin</span>
-                  <div className="vhs-noise"></div>
-                  <div className="vhs-glitch"></div>
-                </button>
-                
+              <div className="hero-content flex flex-col gap-6 justify-center items-center">
+                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                  <button 
+                    onClick={handleInsertCoin}
+                    className={`coin-button relative font-arcade text-xl px-10 py-5 bg-arcade-green text-white rounded-lg transition-colors group ${isButtonPressed ? 'active' : ''}`}
+                  >
+                    <span className="relative z-10 vhs-aberration glow-heading">Start Here</span>
+                    <div className="vhs-noise"></div>
+                    <div className="vhs-glitch"></div>
+                  </button>
+                  
+                  <a
+                    href="https://github.com/nguye340/PhishNClick"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 font-terminal text-lg px-8 py-4 bg-gray-800 text-white rounded-lg border-2 border-gray-600 transition-all transform hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-600/30 hover:border-arcade-cyan active:translate-y-0"
+                  >
+                    <Github className="w-6 h-6" />
+                    View on GitHub
+                  </a>
+                </div>
+
                 <a
-                  href="https://github.com/nguye340/PhishNClick"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 font-terminal text-lg px-8 py-4 bg-gray-800 text-white rounded-lg border-2 border-gray-600 transition-all transform hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-600/30 hover:border-arcade-cyan active:translate-y-0"
+                  href="#choose-your-adventure"
+                  className="inline-flex items-center justify-center font-terminal text-lg px-8 py-4 border-2 border-arcade-magenta text-arcade-magenta rounded-lg transition-all transform hover:-translate-y-1 hover:bg-arcade-magenta hover:text-black active:translate-y-0"
                 >
-                  <Github className="w-6 h-6" />
-                  View on GitHub
+                  Explore Training Paths
                 </a>
               </div>
 
