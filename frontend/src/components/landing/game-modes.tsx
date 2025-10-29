@@ -2,6 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
@@ -33,6 +34,7 @@ export function GameModes() {
             description="Click smart, close fast! Malicious pop-ups flood your screen while benign ones hide among them. React with speed and precision—close the wrong one, and you lose points, or worse!"
             color="magenta"
             href="/games/popup-manic"
+            thumbnail="/screenshots/popup-manic4.png"
           />
 
           <GameModeCard
@@ -40,6 +42,7 @@ export function GameModes() {
             description="Jump over scams before they jump you. A side-scroller where your catphish hero leaps past waves of inbox hazards, training you to recognize threats through pure instinct."
             color="cyan"
             href="/games/phish404"
+            thumbnail="/screenshots/phish404-2.png"
           />
 
           <GameModeCard
@@ -47,6 +50,7 @@ export function GameModes() {
             description="Shoot the phish, not the facts. Like Duck Hunt for cyber threats. Take aim at sketchy messages—miss one, and it might just be a real-world breach. Levels scale from rookie spam to red-team bait."
             color="green"
             href="/games/phish-hunt"
+            thumbnail="/screenshots/phishhunt4.png"
           />
 
           <GameModeCard
@@ -54,6 +58,7 @@ export function GameModes() {
             description="Bite or bail — the inbox is your fishing ground. Fish icons hide emails—some safe, others sinister. Read, react, and reel in the legit ones while tossing the phish. Fast eyes win the game."
             color="yellow"
             href="/games/hooked-or-cooked"
+            thumbnail="/screenshots/hooked-or-cooked.png"
           />
         </div>
       </div>
@@ -61,11 +66,12 @@ export function GameModes() {
   )
 }
 
-function GameModeCard({ title, description, color, href }: {
+function GameModeCard({ title, description, color, href, thumbnail }: {
   title: string
   description: string
   color: "magenta" | "cyan" | "green" | "yellow"
   href: string
+  thumbnail: string
 }) {
   return (
     <motion.div
@@ -77,6 +83,15 @@ function GameModeCard({ title, description, color, href }: {
       whileHover={{ scale: 1.02 }}
       transition={{ type: "spring", stiffness: 300 }}
     >
+      <div className="mb-4 relative w-full h-48 rounded-lg overflow-hidden border-2 border-current opacity-80 group-hover:opacity-100 transition-opacity">
+        <Image
+          src={thumbnail}
+          alt={`${title} gameplay screenshot`}
+          fill
+          className="object-cover"
+        />
+      </div>
+      
       <h3 className={`font-arcade text-xl mb-4
         ${color === "magenta" ? "text-arcade-magenta glow-heading-pink" : 
           color === "cyan" ? "text-arcade-cyan glow-heading" : 

@@ -12,12 +12,26 @@ PhishNClick is an interactive cybersecurity training platform that turns phishin
 
 ### Diverse Mini-Game Training Modules
 Four unique arcade-style games that teach different aspects of cybersecurity:
-- **Popup Manic**: Identify and handle malicious popups in a Windows-like environment
-- **Phish404**: Catch phishing emails while avoiding legitimate ones
-- **Hooked or Cooked**: Analyze email content and make quick security decisions
-- **PhishHunt**: Duck hunt style game for spotting phishing attempts
 
-![Training Modules](screenshots/Diverse-Minigame-Training-Modules.png)
+#### Popup Manic
+Identify and handle malicious popups in a Windows-like environment with draggable windows, taskbar management, and educational feedback.
+
+![Popup Manic](screenshots/popup-manic4.png)
+
+#### Phish404
+A side-scrolling arcade game where you jump over phishing attempts and collect power-ups while avoiding cyber threats.
+
+![Phish404](screenshots/phish404-2.png)
+
+#### PhishHunt
+Duck Hunt-style game for spotting phishing attempts. Shoot the malicious emails before they escape!
+
+![PhishHunt](screenshots/phishhunt4.png)
+
+#### Hooked or Cooked
+Analyze email content and make quick security decisions. Catch the legitimate emails and avoid the phishing bait.
+
+![Hooked or Cooked](screenshots/hooked-or-cooked.png)
 
 ### User Authentication & Registration
 Secure authentication system with multiple options:
