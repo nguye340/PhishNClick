@@ -35,6 +35,8 @@ interface PlayerStats {
 
 // Enhanced quiz questions covering all 4 games with diverse question types
 const QUIZ_QUESTIONS: QuizQuestion[] = [
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
   // POPUP UI QUESTION
   {
     id: 1,
@@ -563,7 +565,7 @@ export function FinalQuiz() {
       }
       
       const result = await response.json()
-      console.log('Fetched vishing call result:', result)
+      debugLog('Fetched vishing call result:', result)
       
       // Extract call data from response
       const callData = result.data || result
@@ -575,23 +577,23 @@ export function FinalQuiz() {
           const audio = new Audio()
           
           // Set up event handlers before setting src
-          audio.onloadstart = () => console.log('Audio loading...')
+          audio.onloadstart = () => debugLog('Audio loading...')
           audio.oncanplay = () => {
-            console.log('Audio ready to play')
+            debugLog('Audio ready to play')
             setLoadingAudio(false)
           }
           audio.onplay = () => {
             setAudioPlaying(true)
-            console.log('Audio playing')
+            debugLog('Audio playing')
           }
           audio.onended = () => {
             setAudioPlaying(false)
-            console.log('Audio ended')
+            debugLog('Audio ended')
           }
           audio.onerror = (e) => {
             setAudioPlaying(false)
             setLoadingAudio(false)
-            console.error('Audio error:', e)
+            debugError('Audio error:', e)
             // Fallback: show text transcript
             showVishingTranscript(callData)
           }
@@ -606,14 +608,14 @@ export function FinalQuiz() {
           const playPromise = audio.play()
           if (playPromise !== undefined) {
             playPromise.catch((error) => {
-              console.error('Audio play failed:', error)
+              debugError('Audio play failed:', error)
               setAudioPlaying(false)
               setLoadingAudio(false)
               showVishingTranscript(callData)
             })
           }
         } catch (error) {
-          console.error('Audio setup failed:', error)
+          debugError('Audio setup failed:', error)
           setLoadingAudio(false)
           showVishingTranscript(callData)
         }
@@ -623,7 +625,7 @@ export function FinalQuiz() {
         showVishingTranscript(callData)
       }
     } catch (error) {
-      console.error('Error fetching vishing call:', error)
+      debugError('Error fetching vishing call:', error)
       setLoadingAudio(false)
       // Fallback to sample vishing call data
       const sampleCall = {

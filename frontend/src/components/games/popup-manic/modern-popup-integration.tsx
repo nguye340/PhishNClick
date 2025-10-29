@@ -4,6 +4,8 @@ import React, { useState, useRef } from 'react';
 import { BrowserNotification, ChatMessage, PhoneCallUI, VideoPlayerOverlay } from './popup-types';
 // Import Popup type from the types file
 import type { Popup } from './popup-types';
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 interface ModernPopupIntegrationProps {
   popup: Popup;
@@ -98,7 +100,7 @@ export default function ModernPopupIntegration({
   }, [isDragging, dragOffset]);
   
   // Debug logging
-  console.log(`[ModernPopupIntegration] Rendering popup ${popup?.id} (${popup?.ui_type}):`, {
+  debugLog(`[ModernPopupIntegration] Rendering popup ${popup?.id} (${popup?.ui_type}):`, {
     isMinimized,
     position,
     isActive,
@@ -108,17 +110,17 @@ export default function ModernPopupIntegration({
 
   // Early return after all hooks are declared
   if (!popup) {
-    console.warn('[ModernPopupIntegration] No popup provided');
+    debugWarn('[ModernPopupIntegration] No popup provided');
     return null;
   }
   
   if (isMinimized) {
-    console.log(`[ModernPopupIntegration] Popup ${popup.id} is minimized`);
+    debugLog(`[ModernPopupIntegration] Popup ${popup.id} is minimized`);
     return null;
   }
   
   // Render different popup UI types based on popup.ui_type
-  console.log(`[ModernPopupIntegration] Rendering UI type: ${popup.ui_type}`);
+  debugLog(`[ModernPopupIntegration] Rendering UI type: ${popup.ui_type}`);
   
   // Add default size if missing
   const popupWithDefaults = {
@@ -131,7 +133,7 @@ export default function ModernPopupIntegration({
   
   switch (popup.ui_type) {
     case 'browser_notification':
-      console.log('[ModernPopupIntegration] Rendering BrowserNotification');
+      debugLog('[ModernPopupIntegration] Rendering BrowserNotification');
       return (
         <BrowserNotification
           popup={popupWithDefaults}

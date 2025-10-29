@@ -7,11 +7,11 @@ function showComboMessage(posX,posY, comboValue){
         .css("display", "block");
     
     let x = setTimeout(hideComboMessage, 1000);
-    console.log("show");
+    debugLog("show");
 }
 
 function hideComboMessage(){
-    console.log("hide");
+    debugLog("hide");
     $(".comboMessage").css("display", "none");
 }
 

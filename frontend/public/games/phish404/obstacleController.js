@@ -24,7 +24,7 @@ class ObstacleController {
   
   // Reset method to clear all obstacles
   reset() {
-    console.log('Clearing all obstacles from ObstacleController');
+    debugLog('Clearing all obstacles from ObstacleController');
     this.obstacle = [];
     this.resetTimer();
   }
@@ -117,7 +117,7 @@ class ObstacleController {
   }
   
   reset() {
-    console.log('Resetting obstacle controller');
+    debugLog('Resetting obstacle controller');
     // Clear all obstacles
     this.obstacle = [];
     // Reset spawn timer

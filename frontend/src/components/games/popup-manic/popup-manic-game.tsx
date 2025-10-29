@@ -29,6 +29,8 @@ import { GameEvents } from '../../../lib/game-events'
 
 // Default dimensions for legacy popups
 const DEFAULT_POPUP_SIZE = {
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
   width: 450, // BIGGER for better visibility
   height: 350  // BIGGER for better visibility
 };
@@ -141,7 +143,7 @@ class Popup {
   constructor(data: Partial<Popup>) {
     // Required properties with defaults
     const generatedId = data.id || `popup-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    console.log(`[POPUP CONSTRUCTOR] Creating popup with ID:`, generatedId, 'from data.id:', data.id);
+    debugLog(`[POPUP CONSTRUCTOR] Creating popup with ID:`, generatedId, 'from data.id:', data.id);
     this.id = generatedId;
     this.title = data.title || ''
     this.message = data.message || ''
@@ -230,39 +232,39 @@ export async function fetchRandomPopup(type?: string) {
     if (type) {
       url += `?type=${type}`;
     }
-    console.log('Fetching popup from:', url);
+    debugLog('Fetching popup from:', url);
     
     // Add timeout to avoid long waiting periods
     const response = await axios.get(url, { timeout: 5000 });
     
     // Validate the response data
     if (response.data && response.data.success && response.data.data) {
-      console.log('Successfully fetched popup from API:', response.data.data);
+      debugLog('Successfully fetched popup from API:', response.data.data);
       return response.data.data;
     } else {
-      console.warn('API response missing expected data structure:', response.data);
+      debugWarn('API response missing expected data structure:', response.data);
       throw new Error('Invalid API response format');
     }
   } catch (error: any) {
     // Provide more detailed error information
     if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
-      console.error('Cannot connect to backend server. Make sure it is running at:', 
+      debugError('Cannot connect to backend server. Make sure it is running at:', 
         process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
     } else if (error.response) {
       // The request was made and the server responded with a status code outside of 2xx range
-      console.error('API error response:', error.response.status, error.response.data);
+      debugError('API error response:', error.response.status, error.response.data);
     } else if (error.request) {
       // The request was made but no response was received
-      console.error('No response received from API. Backend server might be down.');
+      debugError('No response received from API. Backend server might be down.');
     } else {
       // Something happened in setting up the request
-      console.error('Error setting up request:', error.message);
+      debugError('Error setting up request:', error.message);
     }
     
     // Return mock popup data if API call fails
-    console.log('Using mock popup data instead');
+    debugLog('Using mock popup data instead');
     const mockPopup = getMockPopup(type as 'malicious' | 'benign' | 'neutral');
-    console.log('Generated mock popup:', mockPopup);
+    debugLog('Generated mock popup:', mockPopup);
     return mockPopup;
   }
 }
@@ -584,10 +586,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'SET_POPUPS':
       return { ...state, popups: action.payload };
     case 'ADD_POPUP':
-      console.log('[REDUCER] Adding popup to state:', action.payload.id);
+      debugLog('[REDUCER] Adding popup to state:', action.payload.id);
       return { ...state, popups: [...state.popups, action.payload] };
     case 'REMOVE_POPUP':
-      console.log('[REDUCER] Removing popup from state:', action.payload);
+      debugLog('[REDUCER] Removing popup from state:', action.payload);
       // Clean up popup position when removing
       const newPopupPositions = { ...state.popupPositions };
       delete newPopupPositions[action.payload];
@@ -805,15 +807,15 @@ const addPopup = (popup: Popup) => {
   // if (popup.ui_type === 'chat_message' && systemAlertSound2Ref.current) {
   //   // Play chat message sound
   //   systemAlertSound2Ref.current.currentTime = 0;
-  //   systemAlertSound2Ref.current.play().catch(err => console.error('Error playing chat sound:', err));
+  //   systemAlertSound2Ref.current.play().catch(err => debugError('Error playing chat sound:', err));
   // } else if ((popup.ui_type === 'system_alert' || popup.ui_type === 'browser_notification') && systemAlertSound1Ref.current) {
   //   // Play system alert sound
   //   systemAlertSound1Ref.current.currentTime = 0;
-  //   systemAlertSound1Ref.current.play().catch(err => console.error('Error playing alert sound:', err));
+  //   systemAlertSound1Ref.current.play().catch(err => debugError('Error playing alert sound:', err));
   // } else if (notificationSoundRef.current) {
   //   // Default notification sound for other types
   //   notificationSoundRef.current.currentTime = 0;
-  //   notificationSoundRef.current.play().catch(err => console.error('Error playing notification sound:', err));
+  //   notificationSoundRef.current.play().catch(err => debugError('Error playing notification sound:', err));
   // }
   dispatch({ type: 'ADD_POPUP', payload: popup });
 };
@@ -921,25 +923,25 @@ useEffect(() => {
   cheerfulSoundRef.current = new Audio('/sounds/cartoon-sfx-cheerful-wow-wah-cute-adorable-surprised-338343.mp3');
   cheerfulSoundRef.current.volume = 0.7;
 
-  console.log('All audio elements initialized with specific sounds including virus outbreak sounds');
+  debugLog('All audio elements initialized with specific sounds including virus outbreak sounds');
 }, [])
 
 // Cleanup audio when component unmounts or user leaves the game
 React.useEffect(() => {
   return () => {
-    console.log('[Cleanup] Stopping all virus outbreak audio on component unmount');
+    debugLog('[Cleanup] Stopping all virus outbreak audio on component unmount');
     
     // Stop virus outbreak sounds
     if (virusAlertSoundRef.current) {
       virusAlertSoundRef.current.pause();
       virusAlertSoundRef.current.currentTime = 0;
-      console.log('[Cleanup] Stopped virus alert sound');
+      debugLog('[Cleanup] Stopped virus alert sound');
     }
     
     if (virusSirenSoundRef.current) {
       virusSirenSoundRef.current.pause();
       virusSirenSoundRef.current.currentTime = 0;
-      console.log('[Cleanup] Stopped virus siren sound');
+      debugLog('[Cleanup] Stopped virus siren sound');
     }
     
     // Stop all other audio elements
@@ -960,7 +962,7 @@ React.useEffect(() => {
       delete (window as any).clearVirusOutbreak;
     }
     
-    console.log('[Cleanup] All audio cleanup completed');
+    debugLog('[Cleanup] All audio cleanup completed');
   };
 }, [])
 
@@ -1137,10 +1139,10 @@ useEffect(() => {
     // Set the mock session
     const setSession = (_: any) => {} // no-op to satisfy legacy reference
     setSession(mockSession)
-    console.log('Using mock session:', mockSession)
+    debugLog('Using mock session:', mockSession)
     
     // CRITICAL: Ensure game stays inactive until user clicks START GAME
-    console.log('[AUTO-START FIX] Ensuring game remains inactive on component mount')
+    debugLog('[AUTO-START FIX] Ensuring game remains inactive on component mount')
     setGameActive(false)
     setShowInstructions(true)
   }, [])
@@ -1154,7 +1156,7 @@ useEffect(() => {
     // Schedule random virus outbreak between 50-120 seconds
     const scheduleVirusOutbreak = () => {
       const randomDelay = Math.random() * (120000 - 50000) + 50000; // 50-120 seconds in milliseconds
-      console.log(`[VirusOutbreak] Next outbreak scheduled in ${Math.round(randomDelay / 1000)} seconds`);
+      debugLog(`[VirusOutbreak] Next outbreak scheduled in ${Math.round(randomDelay / 1000)} seconds`);
       
       return setTimeout(() => {
         // Double-check game is still active before triggering
@@ -1166,7 +1168,7 @@ useEffect(() => {
             return nextTimer;
           }
         } else {
-          console.log('[VirusOutbreak] Skipping outbreak scheduling - game not active');
+          debugLog('[VirusOutbreak] Skipping outbreak scheduling - game not active');
         }
       }, randomDelay);
     };
@@ -1190,7 +1192,7 @@ useEffect(() => {
     // Use difficulty-based spawn interval from new mechanics
     const difficulty = getCurrentDifficulty(mechanics);
     const spawnInterval = difficulty.spawnInterval;
-    console.log(`[GameLoop] Starting popup spawn timer, interval: ${spawnInterval}ms, difficulty level: ${mechanics.difficulty + 1}`);
+    debugLog(`[GameLoop] Starting popup spawn timer, interval: ${spawnInterval}ms, difficulty level: ${mechanics.difficulty + 1}`);
 
     const spawnTimer = setInterval(async () => {
       // Don't spawn if too many popups already exist
@@ -1198,7 +1200,7 @@ useEffect(() => {
         return;
       }
 
-      console.log(`[GameLoop] Spawning new popup, current count: ${state.popups.length}`);
+      debugLog(`[GameLoop] Spawning new popup, current count: ${state.popups.length}`);
       
       try {
         // Fetch a random popup from the API
@@ -1218,12 +1220,12 @@ useEffect(() => {
           
           // Filter out debug messages from popup titles
           if (randomPopup.title && (randomPopup.title.includes('DEBUG') || randomPopup.title.includes('Generic Browser'))) {
-            console.log(`[GameLoop] Skipping debug popup: ${randomPopup.title}`);
+            debugLog(`[GameLoop] Skipping debug popup: ${randomPopup.title}`);
             return; // Skip this popup
           }
           
           // Add the popup to the state using addPopup action
-          console.log(`[GameLoop] Adding popup ${randomPopup.id} to state`);
+          debugLog(`[GameLoop] Adding popup ${randomPopup.id} to state`);
           addPopup(randomPopup);
           setPopupPositions({
             ...state.popupPositions,
@@ -1250,13 +1252,13 @@ useEffect(() => {
           
           playPopupSound();
           
-          console.log(`[GameLoop] Spawned popup ${randomPopup.id} at position:`, popupPosition, 'behavior:', behavior.type);
+          debugLog(`[GameLoop] Spawned popup ${randomPopup.id} at position:`, popupPosition, 'behavior:', behavior.type);
         } else {
           // Fallback to generating a random popup if API fails
           const fallbackPopup = generateFallbackPopup();
           const popupPosition = generateRandomPosition(fallbackPopup.ui_type);
           
-          console.log(`[GameLoop] Adding fallback popup ${fallbackPopup.id} to state`);
+          debugLog(`[GameLoop] Adding fallback popup ${fallbackPopup.id} to state`);
           addPopup(fallbackPopup);
           setPopupPositions({
             ...state.popupPositions,
@@ -1282,15 +1284,15 @@ useEffect(() => {
           
           playPopupSound();
           
-          console.log(`[GameLoop] Spawned fallback popup ${fallbackPopup.id} at position:`, popupPosition, 'behavior:', behavior.type);
+          debugLog(`[GameLoop] Spawned fallback popup ${fallbackPopup.id} at position:`, popupPosition, 'behavior:', behavior.type);
         }
       } catch (error) {
-        console.error('[GameLoop] Error spawning popup:', error);
+        debugError('[GameLoop] Error spawning popup:', error);
       }
     }, spawnInterval);
 
     return () => {
-      console.log(`[GameLoop] Clearing spawn timer`);
+      debugLog(`[GameLoop] Clearing spawn timer`);
       clearInterval(spawnTimer);
     };
   }, [state.gameActive, state.gameOver, state.systemCrashed, state.level, state.popups.length, mechanics.difficulty])
@@ -1347,7 +1349,7 @@ useEffect(() => {
       name: "Firecat",
       imagePath: "/img/firecat-taskbar.png",
       action: () => {
-        console.log("Opening Firecat browser")
+        debugLog("Opening Firecat browser")
         setFirecatOpen(true)
         const programs = state.activePrograms.includes("firecat")
           ? state.activePrograms
@@ -1359,7 +1361,7 @@ useEffect(() => {
       name: "Nyantivirus",
       imagePath: "/img/meowareBytes-taskbar.png",
       action: () => {
-        console.log("Opening Nyantivirus")
+        debugLog("Opening Nyantivirus")
         setActivePrograms([...state.activePrograms, "meowarebytes"])
         
         // If there are popups that require running antivirus to close
@@ -1375,7 +1377,7 @@ useEffect(() => {
       name: "Notepad",
       imagePath: "/img/notepad-taskbar.png",
       action: () => {
-        console.log("Opening Notepad")
+        debugLog("Opening Notepad")
         setActivePrograms([...state.activePrograms, "notepad"])
       }
     }
@@ -1386,7 +1388,7 @@ useEffect(() => {
       name: "Task Manager",
       imagePath: "/img/TaskManager-taskbar.png",
       action: () => {
-        console.log("Opening Task Manager")
+        debugLog("Opening Task Manager")
         setTaskManagerOpen(true)
         const programs = state.activePrograms.includes("taskmanager")
           ? state.activePrograms
@@ -1409,7 +1411,7 @@ useEffect(() => {
       name: "Recycle Bin",
       imagePath: "/img/RecycleBin-taskbar.png",
       action: () => {
-        console.log("Opening Recycle Bin")
+        debugLog("Opening Recycle Bin")
         setActivePrograms([...state.activePrograms, "recyclebin"])
         
         // If there are popups that require dragging to trash
@@ -1636,7 +1638,7 @@ useEffect(() => {
         }
       }
     } catch (error) {
-      console.error('Error fetching popups from API:', error)
+      debugError('Error fetching popups from API:', error)
       
       // Fallback to generating random popups if API fails
       for (let i = 0; i < count; i++) {
@@ -1655,7 +1657,7 @@ useEffect(() => {
         const pos = generateRandomPosition(popup.ui_type, allOccupiedPositions);
         assignedPositions[popup.id] = pos;
         allOccupiedPositions.push(pos);
-        console.log(`[PopupManic] Assigned position for popup ${popup.id}:`, pos);
+        debugLog(`[PopupManic] Assigned position for popup ${popup.id}:`, pos);
       }
     });
 
@@ -1664,7 +1666,7 @@ useEffect(() => {
     
     // Add all popups to the state using the addPopup action
     newPopups.forEach(popup => {
-      console.log(`[PopupManic] Adding popup to state: ${popup.id}`);
+      debugLog(`[PopupManic] Adding popup to state: ${popup.id}`);
       addPopup(popup);
     });
     
@@ -1676,8 +1678,8 @@ useEffect(() => {
     uiType?: string,
     extraOccupiedPositions: { x: number; y: number }[] = []
   ): { x: number, y: number } => {
-    console.log(`Generating position for UI type: ${uiType}`);
-    console.log(`Current popup positions:`, Object.keys(state.popupPositions).length, Object.values(state.popupPositions));
+    debugLog(`Generating position for UI type: ${uiType}`);
+    debugLog(`Current popup positions:`, Object.keys(state.popupPositions).length, Object.values(state.popupPositions));
     
     // Default popup dimensions - UPDATED to match actual sizes
     let popupWidth = 450;  // DEFAULT_POPUP_SIZE
@@ -2723,10 +2725,10 @@ useEffect(() => {
   const playSound = (isCorrect: boolean) => {
     if (isCorrect && correctSoundRef.current) {
       correctSoundRef.current.currentTime = 0
-      correctSoundRef.current.play().catch(err => console.error('Error playing correct sound:', err))
+      correctSoundRef.current.play().catch(err => debugError('Error playing correct sound:', err))
     } else if (!isCorrect && wrongSoundRef.current) {
       wrongSoundRef.current.currentTime = 0
-      wrongSoundRef.current.play().catch(err => console.error('Error playing wrong sound:', err))
+      wrongSoundRef.current.play().catch(err => debugError('Error playing wrong sound:', err))
     }
   }
 
@@ -2750,11 +2752,11 @@ useEffect(() => {
   const triggerRandomVirusOutbreak = () => {
     // Only trigger virus outbreak if the game is active and not paused
     if (!state.gameActive || state.hintModal.active || state.gameOver) {
-      console.log('[VirusOutbreak] Skipping virus outbreak - game not active');
+      debugLog('[VirusOutbreak] Skipping virus outbreak - game not active');
       return;
     }
     
-    console.log('[VirusOutbreak] Random virus outbreak triggered!');
+    debugLog('[VirusOutbreak] Random virus outbreak triggered!');
     
     setIsInfected(true);
     setShowVirusWarning(true);
@@ -2763,17 +2765,17 @@ useEffect(() => {
     if (!state.gameOver && !state.paused) {
       if (virusAlertSoundRef.current && virusAlertSoundRef.current.paused) {
         virusAlertSoundRef.current.currentTime = 0;
-        virusAlertSoundRef.current.play().catch(err => console.error('Error playing virus alert sound:', err));
-        console.log('[VirusOutbreak] Playing alert sound ONCE');
+        virusAlertSoundRef.current.play().catch(err => debugError('Error playing virus alert sound:', err));
+        debugLog('[VirusOutbreak] Playing alert sound ONCE');
       }
       
       if (virusSirenSoundRef.current && virusSirenSoundRef.current.paused) {
         virusSirenSoundRef.current.currentTime = 0;
-        virusSirenSoundRef.current.play().catch(err => console.error('Error playing virus siren sound:', err));
-        console.log('[VirusOutbreak] Playing siren sound ONCE');
+        virusSirenSoundRef.current.play().catch(err => debugError('Error playing virus siren sound:', err));
+        debugLog('[VirusOutbreak] Playing siren sound ONCE');
       }
     } else {
-      console.log('[VirusOutbreak] Skipping audio playback - game is over or paused');
+      debugLog('[VirusOutbreak] Skipping audio playback - game is over or paused');
     }
     
     // Flash the warning for 3 seconds
@@ -2812,7 +2814,7 @@ useEffect(() => {
     
     setInfectedGifs([...state.infectedGifs, ...newGifs]);
     
-    console.log(`[VirusOutbreak] Spawned ${gifCount} silly GIFs. Click Nyantivirus to clear them!`);
+    debugLog(`[VirusOutbreak] Spawned ${gifCount} silly GIFs. Click Nyantivirus to clear them!`);
   };
 
   // Generate quiz questions from encountered popups
@@ -2937,7 +2939,7 @@ useEffect(() => {
     const percentage = Math.round((correctCount / 5) * 100);
     const passed = percentage >= 70;
 
-    console.log(`[QUIZ] Quiz completed: ${correctCount}/5 correct (${percentage}%)`);
+    debugLog(`[QUIZ] Quiz completed: ${correctCount}/5 correct (${percentage}%)`);
 
     // Pause game and open in-game modal (no browser alert)
     setPaused(true);
@@ -2963,7 +2965,7 @@ useEffect(() => {
         }
       });
     } catch (err) {
-      console.error('[Telemetry] Failed to emit quiz complete:', err);
+      debugError('[Telemetry] Failed to emit quiz complete:', err);
     }
   };
 
@@ -2971,19 +2973,19 @@ useEffect(() => {
   const startHiddenMalware = () => {
     if (hiddenMalware.active) return
     
-    console.log('[HiddenMalware] Starting hidden malware progression...')
+    debugLog('[HiddenMalware] Starting hidden malware progression...')
     setHiddenMalware(prev => ({ ...prev, active: true, phase: 1 }))
     
     // Phase 1: Slow down WiFi after 30 seconds
     setTimeout(() => {
-      console.log('[HiddenMalware] Phase 1: Slowing down WiFi connection')
+      debugLog('[HiddenMalware] Phase 1: Slowing down WiFi connection')
       setWifiStatus('poor')
     }, 30000)
     
     // Phase 2: Spawn suspicious files after 60 seconds
     setTimeout(() => {
       if (hiddenMalware.phase < 3) {
-        console.log('[HiddenMalware] Phase 2: Spawning suspicious files on desktop')
+        debugLog('[HiddenMalware] Phase 2: Spawning suspicious files on desktop')
         setHiddenMalware(prev => ({ ...prev, phase: 2 }))
         spawnSuspiciousFiles()
       }
@@ -2992,7 +2994,7 @@ useEffect(() => {
     // Phase 3: Crash applications after 120 seconds
     setTimeout(() => {
       if (hiddenMalware.phase < 3) {
-        console.log('[HiddenMalware] Phase 3: Crashing applications')
+        debugLog('[HiddenMalware] Phase 3: Crashing applications')
         setHiddenMalware(prev => ({ ...prev, phase: 3 }))
         crashApplications()
       }
@@ -3027,7 +3029,7 @@ useEffect(() => {
   
   // Crash applications (disable them)
   const crashApplications = () => {
-    console.log('[HiddenMalware] All applications have been disabled by malware')
+    debugLog('[HiddenMalware] All applications have been disabled by malware')
     // Applications will be disabled in their click handlers based on hiddenMalware.phase
   }
   
@@ -3067,7 +3069,7 @@ useEffect(() => {
     }
     
     setSuspiciousFiles(prev => [...prev, newFile])
-    console.log('[SuspiciousFile] Spawned:', newFile.name)
+    debugLog('[SuspiciousFile] Spawned:', newFile.name)
   }
 
   // Opening a suspicious file triggers a full system infection
@@ -3107,7 +3109,7 @@ useEffect(() => {
   const performQuickScan = () => {
     if (hiddenMalware.scanInProgress || hiddenMalware.phase >= 3) return
     
-    console.log('[Nyantivirus] Starting quick scan...')
+    debugLog('[Nyantivirus] Starting quick scan...')
     setHiddenMalware(prev => ({ ...prev, scanInProgress: true }))
     
     // Simulate scan time (3 seconds)
@@ -3120,7 +3122,7 @@ useEffect(() => {
         suspiciousFiles: suspiciousFiles.length
       }
       
-      console.log('[Nyantivirus] Scan complete:', results)
+      debugLog('[Nyantivirus] Scan complete:', results)
       setHiddenMalware(prev => ({ 
         ...prev, 
         scanInProgress: false, 
@@ -3134,7 +3136,7 @@ useEffect(() => {
   const quarantineMalware = () => {
     if (hiddenMalware.quarantineInProgress || hiddenMalware.phase >= 3) return
     
-    console.log('[Nyantivirus] Starting quarantine process...')
+    debugLog('[Nyantivirus] Starting quarantine process...')
     setAntivirusModalStep('scanning')
     setAntivirusProgress(0)
     
@@ -3197,7 +3199,7 @@ useEffect(() => {
         try { cheerfulSoundRef.current.currentTime = 0; cheerfulSoundRef.current.play() } catch {}
       }
       
-      console.log('[Nyantivirus] Quarantine complete - all malware removed')
+      debugLog('[Nyantivirus] Quarantine complete - all malware removed')
       
       // Auto-close modal after 3 seconds
       setTimeout(() => {
@@ -3208,14 +3210,14 @@ useEffect(() => {
   
   // Enter Safe Mode
   const enterSafeMode = () => {
-    console.log('[System] Entering Safe Mode...')
+    debugLog('[System] Entering Safe Mode...')
     setSafeMode(true)
     // In safe mode, popups are disabled and background is black
   }
   
   // Exit Safe Mode and restart normally
   const exitSafeMode = () => {
-    console.log('[System] Exiting Safe Mode and restarting normally...')
+    debugLog('[System] Exiting Safe Mode and restarting normally...')
     setSafeMode(false)
     
     // Clear hidden malware if Nyantivirus was run in safe mode
@@ -3240,7 +3242,7 @@ useEffect(() => {
   // Open Nyantivirus modal (used by icons/taskbar). If outbreak is active, also stop sounds.
   const clearVirusOutbreak = () => {
     if (state.infectedGifs.length > 0) {
-      console.log('[VirusOutbreak] Nyantivirus activated! Preparing scan modal...');
+      debugLog('[VirusOutbreak] Nyantivirus activated! Preparing scan modal...');
       // Stop virus outbreak sounds immediately
       if (virusAlertSoundRef.current) {
         virusAlertSoundRef.current.pause();
@@ -3275,12 +3277,12 @@ useEffect(() => {
     if (state.gameOver || state.paused) {
       if (virusAlertSoundRef.current && !virusAlertSoundRef.current.paused) {
         virusAlertSoundRef.current.pause();
-        console.log('[GameState] Paused virus alert sound due to game over/pause');
+        debugLog('[GameState] Paused virus alert sound due to game over/pause');
       }
       
       if (virusSirenSoundRef.current && !virusSirenSoundRef.current.paused) {
         virusSirenSoundRef.current.pause();
-        console.log('[GameState] Paused virus siren sound due to game over/pause');
+        debugLog('[GameState] Paused virus siren sound due to game over/pause');
       }
     }
   }, [state.gameOver || state.paused]);
@@ -3448,7 +3450,7 @@ useEffect(() => {
 
     // Hidden malware trigger: Start malware if user clicks on malicious popup incorrectly
     if (!isCorrectAction && popup.type === 'malicious' && userAction === 'click' && !hiddenMalware.active) {
-      console.log('[HiddenMalware] Malicious popup clicked - triggering hidden malware!');
+      debugLog('[HiddenMalware] Malicious popup clicked - triggering hidden malware!');
       startHiddenMalware();
     }
 
@@ -3557,7 +3559,7 @@ useEffect(() => {
     if (cheerfulSoundRef.current) {
       try {
         cheerfulSoundRef.current.currentTime = 0;
-        cheerfulSoundRef.current.play().catch(err => console.log('Startup sound error:', err));
+        cheerfulSoundRef.current.play().catch(err => debugLog('Startup sound error:', err));
       } catch {}
     }
     
@@ -3744,7 +3746,7 @@ useEffect(() => {
           spawnTime: spawnTime
         });
       } catch (err) {
-        console.error('[Telemetry] Failed to emit popup interaction:', err);
+        debugError('[Telemetry] Failed to emit popup interaction:', err);
       }
       
       // Check for new badges
@@ -3782,7 +3784,7 @@ useEffect(() => {
         
         // Check if quiz should be triggered (every 1000 points)
         if (newMechanics.score > 0 && newMechanics.score % 1000 === 0 && updatedPopups.length >= 5) {
-          console.log('[QUIZ] Triggering security quiz at score:', newMechanics.score);
+          debugLog('[QUIZ] Triggering security quiz at score:', newMechanics.score);
           const quizQuestions = generateQuizQuestions(updatedPopups);
           const currentQuiz = {
             level: Math.floor(newMechanics.score / 100),
@@ -3854,12 +3856,12 @@ useEffect(() => {
           spawnTime: spawnTime
         });
       } catch (err) {
-        console.error('[Telemetry] Failed to emit popup interaction:', err);
+        debugError('[Telemetry] Failed to emit popup interaction:', err);
       }
       
       // Show educational modal for learning - FIXED TRIGGER
-      console.log('[MODAL] Triggering educational modal for popup:', popup.id);
-      console.log('[MODAL] Current hintModal state:', state.hintModal);
+      debugLog('[MODAL] Triggering educational modal for popup:', popup.id);
+      debugLog('[MODAL] Current hintModal state:', state.hintModal);
       dispatch({ 
         type: 'SET_HINT_MODAL', 
         payload: {
@@ -3875,7 +3877,7 @@ useEffect(() => {
         // Play crash sound when system crashes
         if (crashSoundRef.current) {
           crashSoundRef.current.currentTime = 0;
-          crashSoundRef.current.play().catch(err => console.error('Error playing crash sound:', err));
+          crashSoundRef.current.play().catch(err => debugError('Error playing crash sound:', err));
         }
         setGameOver(true);
         setGameActive(false);
@@ -3902,7 +3904,7 @@ useEffect(() => {
             }
           });
         } catch (err) {
-          console.error('[Telemetry] Failed to emit game end:', err);
+          debugError('[Telemetry] Failed to emit game end:', err);
         }
         
         // Show game summary after a delay
@@ -3917,7 +3919,7 @@ useEffect(() => {
 
   // Handle trap GIF click
   const handleTrapClick = (trapId: string) => {
-    console.log('[TRAP] Trap GIF clicked:', trapId);
+    debugLog('[TRAP] Trap GIF clicked:', trapId);
     
     // Show infection overlay
     setShowInfection(true);
@@ -3934,7 +3936,7 @@ useEffect(() => {
     if (newMechanics.lives === 0) {
       if (crashSoundRef.current) {
         crashSoundRef.current.currentTime = 0;
-        crashSoundRef.current.play().catch(err => console.error('Error playing crash sound:', err));
+        crashSoundRef.current.play().catch(err => debugError('Error playing crash sound:', err));
       }
       setGameOver(true);
       setGameActive(false);
@@ -4557,7 +4559,7 @@ useEffect(() => {
                               network: Math.min(90, prev.network + 40)
                             }));
                           } catch (error) {
-                            console.error('Error fetching popup:', error);
+                            debugError('Error fetching popup:', error);
                           }
                         }}
                       >
@@ -4598,7 +4600,7 @@ useEffect(() => {
                                   [randomPopup.id]: popupPosition
                                 });
                                 
-                                console.log(`Spawned product popup ${randomPopup.id} at position:`, popupPosition);
+                                debugLog(`Spawned product popup ${randomPopup.id} at position:`, popupPosition);
                               } else {
                                 // Fallback to a default popup if API call fails
                                 const fallbackPosition = generateRandomPosition('system_notification');
@@ -4636,10 +4638,10 @@ useEffect(() => {
                                   [fallbackPopup.id]: fallbackPosition
                                 });
                                 
-                                console.log(`Spawned product fallback popup ${fallbackPopup.id} at position:`, fallbackPosition);
+                                debugLog(`Spawned product fallback popup ${fallbackPopup.id} at position:`, fallbackPosition);
                               }
                             } catch (error) {
-                              console.error('Error fetching popup:', error);
+                              debugError('Error fetching popup:', error);
                             }
                           }}
                         >
@@ -5304,22 +5306,22 @@ useEffect(() => {
                           [randomPopup.id]: popupPosition
                         });
                         
-                        console.log(`[RENDER] Popup ${randomPopup.id} position:`, popupPosition, 'from popupPositions:', state.popupPositions[randomPopup.id]);
+                        debugLog(`[RENDER] Popup ${randomPopup.id} position:`, popupPosition, 'from popupPositions:', state.popupPositions[randomPopup.id]);
                       } else {
                         // Try one more time with a different API call approach
                         try {
                           // Try to get any popup regardless of type
-                          console.log('First API call failed, trying again with different parameters...');
+                          debugLog('First API call failed, trying again with different parameters...');
                           const fallbackPopup = generateFallbackPopup();
                           const fallbackPosition = generateRandomPosition(fallbackPopup.ui_type);
                           setPopupPositions({...state.popupPositions, [fallbackPopup.id]: fallbackPosition});
                           addPopup(fallbackPopup);
                         } catch (fallbackError) {
-                          console.error('Fallback popup generation failed:', fallbackError);
+                          debugError('Fallback popup generation failed:', fallbackError);
                         }
                       }
                     } catch (error) {
-                      console.error('Error fetching popup:', error);
+                      debugError('Error fetching popup:', error);
                       // Use fallback popup
                       const fallbackPopup = generateFallbackPopup();
                       const fallbackPosition = generateRandomPosition(fallbackPopup.ui_type);
@@ -5365,14 +5367,14 @@ useEffect(() => {
           if (!popup.id) {
             const newId = `popup-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`;
             popup.id = newId;
-            console.log(`[FIX] Assigned missing ID to popup:`, popup.id);
+            debugLog(`[FIX] Assigned missing ID to popup:`, popup.id);
             
             // If there's a position stored under undefined, move it to the new ID
             if (state.popupPositions[undefined as any]) {
               const newPositions = { ...state.popupPositions } as Record<string, { x: number; y: number }>;
               const newPosition = generateRandomPosition(popup.ui_type || 'system_alert');
               newPositions[newId] = newPosition;
-              console.log(`[FIX] Assigned new position for popup ${newId}:`, newPosition);
+              debugLog(`[FIX] Assigned new position for popup ${newId}:`, newPosition);
               setPopupPositions(newPositions);
             }
           }
@@ -5389,7 +5391,7 @@ useEffect(() => {
         
           // Debug log for each popup
           if (state.popups.length > 0) {
-            console.log(`[PopupManic] Rendering popup ${popup.id} (${popup.ui_type}) at position:`, popupPos, 'minimized:', isMinimized);
+            debugLog(`[PopupManic] Rendering popup ${popup.id} (${popup.ui_type}) at position:`, popupPos, 'minimized:', isMinimized);
           }
           
           // Get behavior for this popup

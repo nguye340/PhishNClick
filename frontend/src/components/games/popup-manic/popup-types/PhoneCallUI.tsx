@@ -34,7 +34,7 @@ const PhoneCallUI: React.FC<PhoneCallUIProps> = ({
         try {
           // CRITICAL: Check if already playing to prevent duplication
           if (!ringtoneRef.current.paused) {
-            console.log('Ringtone already playing, skipping duplicate');
+            debugLog('Ringtone already playing, skipping duplicate');
             return;
           }
           
@@ -43,14 +43,14 @@ const PhoneCallUI: React.FC<PhoneCallUIProps> = ({
           ringtoneRef.current.currentTime = 0; // Reset to beginning
           
           await ringtoneRef.current.play();
-          console.log('Ringtone playing ONCE');
+          debugLog('Ringtone playing ONCE');
         } catch (error) {
-          console.log('Ringtone play failed (likely due to autoplay policy):', error);
+          debugLog('Ringtone play failed (likely due to autoplay policy):', error);
         }
       } else if (!isRinging && ringtoneRef.current) {
         ringtoneRef.current.pause();
         ringtoneRef.current.currentTime = 0;
-        console.log('Ringtone stopped');
+        debugLog('Ringtone stopped');
       }
     };
     
@@ -167,6 +167,8 @@ const PhoneCallUI: React.FC<PhoneCallUIProps> = ({
   
   const callerInitials = getCallerInitials(callerName);
   const avatarBgColor = getRandomAvatarColor(callerName);
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
   return (
     <motion.div

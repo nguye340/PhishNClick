@@ -6,6 +6,8 @@ import { SystemAlert } from '../ui/popups/system-alert'
 import { BrowserNotification } from '../ui/popups/browser-notification'
 import { LoginForm } from '../ui/popups/login-form'
 import { SoftwareInstaller } from '../ui/popups/software-installer'
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 // Define the popup data structure
 interface PopupData {
@@ -46,7 +48,7 @@ export default function ModernPopupFetcher({ onPopupInteraction }: ModernPopupFe
       try {
         setLoading(true)
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-        console.log('[ModernPopupFetcher] Fetching from:', `${baseUrl}/api/popup/random`)
+        debugLog('[ModernPopupFetcher] Fetching from:', `${baseUrl}/api/popup/random`)
         const response = await axios.get(`${baseUrl}/api/popup/random`)
         
         if (response.data && response.data.data) {
@@ -57,7 +59,7 @@ export default function ModernPopupFetcher({ onPopupInteraction }: ModernPopupFe
         }
         setError(null)
       } catch (error) {
-        console.error('Error fetching popup:', error)
+        debugError('Error fetching popup:', error)
         setError('Failed to fetch popup')
         // Use mock data as fallback
         setPopup(getMockPopup())

@@ -112,9 +112,9 @@ class HackerController {
       
       if (isLoading) {
         this.loadingStartTime = Date.now();
-        console.log('Hacker loading phase started');
+        debugLog('Hacker loading phase started');
       } else {
-        console.log('Hacker loading phase ended');
+        debugLog('Hacker loading phase ended');
       }
       
       // Notify listeners
@@ -143,7 +143,7 @@ class HackerController {
       try {
         listener(isLoading);
       } catch (e) {
-        console.error('Error in loading state listener:', e);
+        debugError('Error in loading state listener:', e);
       }
     }
   }
@@ -188,7 +188,7 @@ class HackerController {
     
     // Resume normal background music if it was playing
     if (this.normalBackgroundMusic && !this.normalBackgroundMusic.paused) {
-      this.normalBackgroundMusic.play().catch(e => console.log("Error resuming background music:", e));
+      this.normalBackgroundMusic.play().catch(e => debugLog("Error resuming background music:", e));
     }
   }
   
@@ -210,7 +210,7 @@ class HackerController {
         popup.style.display = 'none';
         popup.style.visibility = 'hidden';
         anyPopupWasActive = true;
-        console.log(`Closed popup: ${popupId}`);
+        debugLog(`Closed popup: ${popupId}`);
       }
     }
     
@@ -221,13 +221,13 @@ class HackerController {
         popup.style.display = 'none';
         popup.style.visibility = 'hidden';
         anyPopupWasActive = true;
-        console.log(`Closed additional popup: ${popup.id || 'unnamed'}`);
+        debugLog(`Closed additional popup: ${popup.id || 'unnamed'}`);
       }
     }
     
     // If any popup was closed, wait a moment before continuing
     if (anyPopupWasActive) {
-      console.log('Waiting for popups to fully clear...');
+      debugLog('Waiting for popups to fully clear...');
       await new Promise(resolve => setTimeout(resolve, 800)); // 800ms delay to ensure animations complete
     }
     
@@ -257,7 +257,7 @@ class HackerController {
     }
     this.cautionStartTime = null;
     this.showingCaution = false;
-    console.log('Boss timer paused due to popup');
+    debugLog('Boss timer paused due to popup');
   }
   
   // Add method to resume boss timer
@@ -266,7 +266,7 @@ class HackerController {
       this.showingCaution = true;
       this.cautionStartTime = Date.now();
       this.startBossAppearTimer();
-      console.log('Boss timer resumed after popup');
+      debugLog('Boss timer resumed after popup');
     }
   }
   
@@ -274,7 +274,7 @@ class HackerController {
   spawnBoss() {
     if (this.hacker || !this.showingCaution) return;
     
-    console.log('Spawning boss!');
+    debugLog('Spawning boss!');
     this.showingCaution = false;
     
     // Update the last boss points threshold to current threshold
@@ -315,7 +315,7 @@ class HackerController {
       this.bossSpeed = 1.0 + (this.bossAppearanceCount * 0.1); // Increase speed by 10% each time
     }
     
-    console.log(`Boss appearance #${this.bossAppearanceCount}: Speed ${this.bossSpeed.toFixed(1)}x, Projectiles: ${this.projectileCount}`);
+    debugLog(`Boss appearance #${this.bossAppearanceCount}: Speed ${this.bossSpeed.toFixed(1)}x, Projectiles: ${this.projectileCount}`);
     
     // Create new hacker boss
     this.hacker = new Hacker(
@@ -330,7 +330,7 @@ class HackerController {
     const bonusLives = Math.floor(this.bossAppearanceCount / 2); // Extra life every 2 defeats
     this.hacker.resetLives(bonusLives);
     
-    console.log(`HACKER CONTROLLER: Spawning boss #${this.bossAppearanceCount + 1} with ${this.hacker.lives} lives, ${this.projectileCount} projectiles, speed ${this.bossSpeed}x`);
+    debugLog(`HACKER CONTROLLER: Spawning boss #${this.bossAppearanceCount + 1} with ${this.hacker.lives} lives, ${this.projectileCount} projectiles, speed ${this.bossSpeed}x`);
     
     // Activate the hacker
     this.hacker.activate();
@@ -338,7 +338,7 @@ class HackerController {
     // Pause obstacle spawning during boss battle
     if (this.obstacleController) {
       this.obstacleController.pauseSpawning = true;
-      console.log('Paused obstacle spawning for boss battle');
+      debugLog('Paused obstacle spawning for boss battle');
     }
     
     // Music transition: pause normal background music and play boss battle music
@@ -346,11 +346,11 @@ class HackerController {
       this.normalBackgroundMusic.pause();
     }
     this.bossBattleMusic.currentTime = 0;
-    this.bossBattleMusic.play().catch(e => console.log("Error playing boss battle music:", e));
+    this.bossBattleMusic.play().catch(e => debugLog("Error playing boss battle music:", e));
     
     // Play evil laugh sound
     this.evilLaughSound.currentTime = 0;
-    this.evilLaughSound.play().catch(e => console.log("Error playing evil laugh sound:", e));
+    this.evilLaughSound.play().catch(e => debugLog("Error playing evil laugh sound:", e));
     
     // Show notification if we haven't shown too many
     if (this.notificationCount < this.maxNotifications) {
@@ -367,19 +367,19 @@ class HackerController {
   async startBossSequence() {
     if (this.showingCaution || this.hacker) return;
     
-    console.log('Starting boss sequence...');
+    debugLog('Starting boss sequence...');
     
     try {
       // Clear all obstacles when the warning appears for a fair boss battle
       if (this.obstacleController) {
         // Clear all existing obstacles
         this.obstacleController.obstacles = [];
-        console.log('Cleared all obstacles for boss battle');
+        debugLog('Cleared all obstacles for boss battle');
         
         // Pause obstacle spawning immediately when warning appears
         this.obstacleController.pauseSpawning = true;
         this.obstacleController.pauseEmailPhone = true;
-        console.log('Paused obstacle spawning for boss battle warning');
+        debugLog('Paused obstacle spawning for boss battle warning');
       }
       
       // First, close any open popups and wait for them to clear
@@ -387,14 +387,14 @@ class HackerController {
       
       // If there were popups, wait a moment for them to animate out
       if (hadPopups) {
-        console.log('Popups were closed, waiting before showing warning...');
+        debugLog('Popups were closed, waiting before showing warning...');
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       // Play a warning sound to alert the player
       if (this.evilLaughSound) {
         this.evilLaughSound.currentTime = 0;
-        this.evilLaughSound.play().catch(e => console.log("Error playing warning sound:", e));
+        this.evilLaughSound.play().catch(e => debugLog("Error playing warning sound:", e));
       }
       
       // Now show the caution
@@ -412,9 +412,9 @@ class HackerController {
       // Start the boss appear timer
       this.startBossAppearTimer();
       
-      console.log('Warning sign activated!');
+      debugLog('Warning sign activated!');
     } catch (error) {
-      console.error('Error in boss sequence:', error);
+      debugError('Error in boss sequence:', error);
     }
   }
   
@@ -438,7 +438,7 @@ class HackerController {
     // Record the start time but don't set a timer to end the battle
     // The hacker will only leave when defeated by the player
     this.bossStartTime = Date.now();
-    console.log('Boss battle started - hacker will remain until defeated');
+    debugLog('Boss battle started - hacker will remain until defeated');
     
     // Note: We're not setting this.bossEndTimer anymore
     // The hacker will only be removed when all lives are depleted
@@ -460,7 +460,7 @@ class HackerController {
         this.bossBattleMusic.pause();
       }
       
-      console.log('Paused boss battle timer');
+      debugLog('Paused boss battle timer');
     }
   }
   
@@ -561,7 +561,7 @@ class HackerController {
         clearTimeout(this.bossEndTimer);
         this.bossEndTimer = null;
         this.bossPaused = true;
-        console.log('Paused boss battle due to popup');
+        debugLog('Paused boss battle due to popup');
       }
     } 
     // Resume boss battle if popup is closed
@@ -569,7 +569,7 @@ class HackerController {
       this.bossStartTime = Date.now() - (this.stayDuration - this.remainingBossTime);
       this.startBossEndTimer();
       this.bossPaused = false;
-      console.log('Resumed boss battle after popup');
+      debugLog('Resumed boss battle after popup');
     }
     
     // Update hacker if active and not paused
@@ -582,16 +582,16 @@ class HackerController {
       
       // Debug loading state changes
       if (wasLoading !== this.hacker.isLoading) {
-        console.log(`HACKER CONTROLLER: Loading state changed from ${wasLoading} to ${this.hacker.isLoading}`);
+        debugLog(`HACKER CONTROLLER: Loading state changed from ${wasLoading} to ${this.hacker.isLoading}`);
       }
       
       // Check if hacker just started loading
       if (!wasLoading && this.hacker.isLoading) {
-        console.log('Hacker entered loading mode - clearing all viruses and obstacles');
+        debugLog('Hacker entered loading mode - clearing all viruses and obstacles');
         
         // Set global flag to indicate hacker is loading
         window.hackerIsLoading = true;
-        console.log('Set window.hackerIsLoading = true');
+        debugLog('Set window.hackerIsLoading = true');
         
         // Switch music: pause boss battle music and play Catsong
         if (this.bossBattleMusic) {
@@ -602,28 +602,28 @@ class HackerController {
         // Play the Catsong during loading phase
         if (this.loadingSound) {
           this.loadingSound.currentTime = 0;
-          this.loadingSound.play().catch(e => console.log("Error playing Catsong during loading:", e));
+          this.loadingSound.play().catch(e => debugLog("Error playing Catsong during loading:", e));
         }
         
         // Log the state of all controllers before clearing
-        console.log('Current game state before clearing:');
-        console.log('- Skull projectiles:', this.skullProjectiles.length);
-        if (window.obstacleController) console.log('- Obstacles:', window.obstacleController.obstacles ? window.obstacleController.obstacles.length : 'N/A');
-        if (window.skullController) console.log('- Skulls:', window.skullController.skulls ? window.skullController.skulls.length : 'N/A');
-        if (window.coinController) console.log('- Coins:', window.coinController.coins ? window.coinController.coins.length : 'N/A');
-        if (window.milkController) console.log('- Milk bottles:', window.milkController.milkBottles ? window.milkController.milkBottles.length : 'N/A');
-        if (window.burgerController) console.log('- Burgers:', window.burgerController.burgers ? window.burgerController.burgers.length : 'N/A');
+        debugLog('Current game state before clearing:');
+        debugLog('- Skull projectiles:', this.skullProjectiles.length);
+        if (window.obstacleController) debugLog('- Obstacles:', window.obstacleController.obstacles ? window.obstacleController.obstacles.length : 'N/A');
+        if (window.skullController) debugLog('- Skulls:', window.skullController.skulls ? window.skullController.skulls.length : 'N/A');
+        if (window.coinController) debugLog('- Coins:', window.coinController.coins ? window.coinController.coins.length : 'N/A');
+        if (window.milkController) debugLog('- Milk bottles:', window.milkController.milkBottles ? window.milkController.milkBottles.length : 'N/A');
+        if (window.burgerController) debugLog('- Burgers:', window.burgerController.burgers ? window.burgerController.burgers.length : 'N/A');
         
         // Loading sound is already playing from earlier code
         // No need to play it again
         
         // Clear all viruses (projectiles) from the screen
         if (this.skullProjectiles.length > 0) {
-          console.log(`Clearing ${this.skullProjectiles.length} viruses from screen`);
+          debugLog(`Clearing ${this.skullProjectiles.length} viruses from screen`);
           // Play erase sound if available
           if (this.eraseSound) {
             this.eraseSound.currentTime = 0;
-            this.eraseSound.play().catch(e => console.log("Error playing erase sound:", e));
+            this.eraseSound.play().catch(e => debugLog("Error playing erase sound:", e));
           }
           // Clear all projectiles
           this.skullProjectiles = [];
@@ -631,36 +631,36 @@ class HackerController {
         
         // Clear all other obstacles from the screen
         if (this.obstacleController && typeof this.obstacleController.reset === 'function') {
-          console.log('Clearing all obstacles from screen during loading phase');
+          debugLog('Clearing all obstacles from screen during loading phase');
           this.obstacleController.reset();
         }
         
         // Access game controllers directly
         // First, make sure obstacleController is reset (we already have a reference)
         if (this.obstacleController && typeof this.obstacleController.reset === 'function') {
-          console.log('Clearing obstacles from obstacleController during loading phase');
+          debugLog('Clearing obstacles from obstacleController during loading phase');
           this.obstacleController.reset();
         }
         
         // Access other controllers through the parent scope
         // These controllers are defined in game.js and should be accessible
         if (window.skullController && typeof window.skullController.reset === 'function') {
-          console.log('Clearing skulls from skullController during loading phase');
+          debugLog('Clearing skulls from skullController during loading phase');
           window.skullController.reset();
         }
         
         if (window.coinController && typeof window.coinController.reset === 'function') {
-          console.log('Clearing coins from coinController during loading phase');
+          debugLog('Clearing coins from coinController during loading phase');
           window.coinController.reset();
         }
         
         if (window.milkController && typeof window.milkController.reset === 'function') {
-          console.log('Clearing milk bottles from milkController during loading phase');
+          debugLog('Clearing milk bottles from milkController during loading phase');
           window.milkController.reset();
         }
         
         if (window.burgerController && typeof window.burgerController.reset === 'function') {
-          console.log('Clearing burgers from burgerController during loading phase');
+          debugLog('Clearing burgers from burgerController during loading phase');
           window.burgerController.reset();
         }
         
@@ -668,36 +668,36 @@ class HackerController {
         this.createClearEffect();
         
         // Log the state of all controllers after clearing to verify they were cleared
-        console.log('Game state after clearing all obstacles:');
-        console.log('- Skull projectiles:', this.skullProjectiles.length);
-        if (window.obstacleController) console.log('- Obstacles:', window.obstacleController.obstacles ? window.obstacleController.obstacles.length : 'N/A');
-        if (window.skullController) console.log('- Skulls:', window.skullController.skulls ? window.skullController.skulls.length : 'N/A');
-        if (window.coinController) console.log('- Coins:', window.coinController.coins ? window.coinController.coins.length : 'N/A');
-        if (window.milkController) console.log('- Milk bottles:', window.milkController.milkBottles ? window.milkController.milkBottles.length : 'N/A');
-        if (window.burgerController) console.log('- Burgers:', window.burgerController.burgers ? window.burgerController.burgers.length : 'N/A');
+        debugLog('Game state after clearing all obstacles:');
+        debugLog('- Skull projectiles:', this.skullProjectiles.length);
+        if (window.obstacleController) debugLog('- Obstacles:', window.obstacleController.obstacles ? window.obstacleController.obstacles.length : 'N/A');
+        if (window.skullController) debugLog('- Skulls:', window.skullController.skulls ? window.skullController.skulls.length : 'N/A');
+        if (window.coinController) debugLog('- Coins:', window.coinController.coins ? window.coinController.coins.length : 'N/A');
+        if (window.milkController) debugLog('- Milk bottles:', window.milkController.milkBottles ? window.milkController.milkBottles.length : 'N/A');
+        if (window.burgerController) debugLog('- Burgers:', window.burgerController.burgers ? window.burgerController.burgers.length : 'N/A');
       }
       
       // Check if hacker just finished loading
       if (wasLoading && !this.hacker.isLoading) {
-        console.log('HACKER CONTROLLER: Hacker finished loading mode!');
-        console.log(`HACKER CONTROLLER: Before reset - window.hackerIsLoading = ${window.hackerIsLoading}`);
+        debugLog('HACKER CONTROLLER: Hacker finished loading mode!');
+        debugLog(`HACKER CONTROLLER: Before reset - window.hackerIsLoading = ${window.hackerIsLoading}`);
         
         // Reset global flag to indicate hacker is no longer loading
         window.hackerIsLoading = false;
-        console.log(`HACKER CONTROLLER: After reset - window.hackerIsLoading = ${window.hackerIsLoading}`);
-        console.log('HACKER CONTROLLER: Projectile collisions should now be enabled!');
+        debugLog(`HACKER CONTROLLER: After reset - window.hackerIsLoading = ${window.hackerIsLoading}`);
+        debugLog('HACKER CONTROLLER: Projectile collisions should now be enabled!');
         
         // Stop the loading sound
         if (this.loadingSound) {
           this.loadingSound.pause();
           this.loadingSound.currentTime = 0;
-          console.log('Stopped loading sound');
+          debugLog('Stopped loading sound');
         }
         
         // Resume boss battle music
         if (this.bossBattleMusic && this.bossBattleMusic.paused) {
-          this.bossBattleMusic.play().catch(e => console.log("Error resuming boss music:", e));
-          console.log('Resumed boss music after loading phase');
+          this.bossBattleMusic.play().catch(e => debugLog("Error resuming boss music:", e));
+          debugLog('Resumed boss music after loading phase');
         }
       }
       
@@ -713,7 +713,7 @@ class HackerController {
     
     // Update all skull projectiles
     if (this.skullProjectiles.length > 0) {
-      console.log(`PROJECTILE UPDATE: Updating ${this.skullProjectiles.length} projectiles with gameSpeed=${gameSpeed}`);
+      debugLog(`PROJECTILE UPDATE: Updating ${this.skullProjectiles.length} projectiles with gameSpeed=${gameSpeed}`);
     }
     this.skullProjectiles.forEach(projectile => {
       projectile.update(gameSpeed);
@@ -739,17 +739,17 @@ class HackerController {
   }
   
   shootSkullProjectiles() {
-    console.log('SHOOT PROJECTILES: Starting to shoot skull projectiles');
+    debugLog('SHOOT PROJECTILES: Starting to shoot skull projectiles');
     if (!this.hacker) {
-      console.log('SHOOT PROJECTILES: No hacker available');
+      debugLog('SHOOT PROJECTILES: No hacker available');
       return;
     }
     
-    console.log(`SHOOT PROJECTILES: Current projectile count before shooting: ${this.skullProjectiles.length}`);
+    debugLog(`SHOOT PROJECTILES: Current projectile count before shooting: ${this.skullProjectiles.length}`);
     
     // Play evil laugh sound when shooting
     this.evilLaughSound.currentTime = 0;
-    this.evilLaughSound.play().catch(e => console.log("Error playing evil laugh sound:", e));
+    this.evilLaughSound.play().catch(e => debugLog("Error playing evil laugh sound:", e));
     
     // Calculate starting position (from hacker's position)
     const startX = this.hacker.fixedX;
@@ -775,7 +775,7 @@ class HackerController {
       const dy = playerCenterY - startY;
       const angleToPlayer = Math.atan2(dy, -dx) * 180 / Math.PI;
       
-      console.log(`Aiming at player: angle ${angleToPlayer.toFixed(2)} degrees`);
+      debugLog(`Aiming at player: angle ${angleToPlayer.toFixed(2)} degrees`);
       
       // Create 3 skulls aimed at player with slight spread
       const aimSpread = 15; // Degrees of spread for the aimed shots
@@ -797,9 +797,9 @@ class HackerController {
           baseSpeed - 1 // Slightly slower than the pattern projectiles
         );
         
-        console.log(`SHOOT PROJECTILES: Created player-targeting skull ${i} at (${startX}, ${startY}) with angle ${aimAngles[i]}`);
+        debugLog(`SHOOT PROJECTILES: Created player-targeting skull ${i} at (${startX}, ${startY}) with angle ${aimAngles[i]}`);
         this.skullProjectiles.push(skull);
-        console.log(`SHOOT PROJECTILES: Total projectiles after adding: ${this.skullProjectiles.length}`);
+        debugLog(`SHOOT PROJECTILES: Total projectiles after adding: ${this.skullProjectiles.length}`);
       }
     }
     
@@ -937,17 +937,17 @@ class HackerController {
   checkProjectileCollisions(player) {
     // Debug: Check if player is valid
     if (!player) {
-      console.error('Invalid player object passed to checkProjectileCollisions');
+      debugError('Invalid player object passed to checkProjectileCollisions');
       return false;
     }
     
     // Skip collision detection if player is invincible
     if (player.isInvincible) {
-      console.log('Player is invincible, skipping projectile collision check');
+      debugLog('Player is invincible, skipping projectile collision check');
       return false;
     }
     
-    console.log(`Checking projectile collisions. Player at (${player.x}, ${player.y}), ${this.skullProjectiles.length} projectiles active`);
+    debugLog(`Checking projectile collisions. Player at (${player.x}, ${player.y}), ${this.skullProjectiles.length} projectiles active`);
   }
   
   drawCaution() {
@@ -1190,7 +1190,7 @@ class HackerController {
   checkCollision(player) {
     // Skip collision detection if player is invincible
     if (player.isInvincible) {
-      console.log('Player is invincible, skipping hacker collision check');
+      debugLog('Player is invincible, skipping hacker collision check');
       return null;
     }
 
@@ -1218,28 +1218,28 @@ class HackerController {
       );
       
       if (isColliding) {
-        console.log('Player collided with hacker boss!');
+        debugLog('Player collided with hacker boss!');
         
         // Different behavior based on loading state
         if (this.hacker.isLoading) {
           // During loading phase, player can attack the hacker
-          console.log('Player attacked the hacker during loading phase!');
+          debugLog('Player attacked the hacker during loading phase!');
           
           // Play attack sound
           this.attackSound = this.attackSound || new Audio('/games/phish404/audio/attack.mp3');
           this.attackSound.currentTime = 0;
-          this.attackSound.play().catch(e => console.log("Error playing attack sound:", e));
+          this.attackSound.play().catch(e => debugLog("Error playing attack sound:", e));
           
           // Damage the hacker
           const hackerDefeated = this.hacker.takeDamage();
           
           if (hackerDefeated) {
-            console.log('Hacker defeated! Loading phase ended.');
+            debugLog('Hacker defeated! Loading phase ended.');
             
             // Play victory sound
             this.victorySound = this.victorySound || new Audio('/games/phish404/audio/victory.mp3');
             this.victorySound.currentTime = 0;
-            this.victorySound.play().catch(e => console.log("Error playing victory sound:", e));
+            this.victorySound.play().catch(e => debugLog("Error playing victory sound:", e));
             
             // End loading phase
             window.hackerIsLoading = false;
@@ -1252,14 +1252,14 @@ class HackerController {
             
             // Resume normal background music
             if (this.normalBackgroundMusic) {
-              this.normalBackgroundMusic.play().catch(e => console.log("Error resuming background music:", e));
+              this.normalBackgroundMusic.play().catch(e => debugLog("Error resuming background music:", e));
             }
             
             // Resume obstacle spawning
             if (this.obstacleController) {
               this.obstacleController.pauseSpawning = false;
               this.obstacleController.pauseEmailPhone = false;
-              console.log('Resumed obstacle spawning after boss defeat');
+              debugLog('Resumed obstacle spawning after boss defeat');
             }
             
             // Remove the hacker
@@ -1275,11 +1275,11 @@ class HackerController {
           // Normal phase - player gets damaged
           // Play hit sound
           this.catHitSound.currentTime = 0;
-          this.catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
+          this.catHitSound.play().catch(e => debugLog("Error playing cat hit sound:", e));
           
           // Play evil laugh when player is hit
           this.evilLaughSound.currentTime = 0;
-          this.evilLaughSound.play().catch(e => console.log("Error playing evil laugh sound:", e));
+          this.evilLaughSound.play().catch(e => debugLog("Error playing evil laugh sound:", e));
           
           return this.hacker; // Return the hacker that was hit
         }
@@ -1291,43 +1291,43 @@ class HackerController {
   
   checkProjectileCollisions(player) {
     // Debug logging
-    console.log(`PROJECTILE COLLISION CHECK: projectiles=${this.skullProjectiles?.length || 0}, window.hackerIsLoading=${window.hackerIsLoading}, hacker.isLoading=${this.hacker?.isLoading}`);
+    debugLog(`PROJECTILE COLLISION CHECK: projectiles=${this.skullProjectiles?.length || 0}, window.hackerIsLoading=${window.hackerIsLoading}, hacker.isLoading=${this.hacker?.isLoading}`);
     
     // Check each condition individually for debugging
     if (!player) {
-      console.log('PROJECTILE COLLISION: SKIPPED - No player object');
+      debugLog('PROJECTILE COLLISION: SKIPPED - No player object');
       return false;
     }
     if (!this.skullProjectiles) {
-      console.log('PROJECTILE COLLISION: SKIPPED - No skullProjectiles array');
+      debugLog('PROJECTILE COLLISION: SKIPPED - No skullProjectiles array');
       return false;
     }
     if (this.skullProjectiles.length === 0) {
-      console.log('PROJECTILE COLLISION: SKIPPED - No projectiles in array');
+      debugLog('PROJECTILE COLLISION: SKIPPED - No projectiles in array');
       return false;
     }
     if (window.hackerIsLoading) {
-      console.log('PROJECTILE COLLISION: SKIPPED - window.hackerIsLoading is true');
+      debugLog('PROJECTILE COLLISION: SKIPPED - window.hackerIsLoading is true');
       return false;
     }
     if (this.hacker?.isLoading) {
-      console.log('PROJECTILE COLLISION: SKIPPED - hacker.isLoading is true');
+      debugLog('PROJECTILE COLLISION: SKIPPED - hacker.isLoading is true');
       return false;
     }
     
-    console.log('PROJECTILE COLLISION: All conditions passed, proceeding with collision detection');
+    debugLog('PROJECTILE COLLISION: All conditions passed, proceeding with collision detection');
     
     let hit = false;
     
-    console.log(`PROJECTILE COLLISION: Checking ${this.skullProjectiles.length} projectiles for collision`);
-    console.log(`PLAYER POSITION: x=${player.x?.toFixed(1)}, y=${player.y?.toFixed(1)}, w=${player.width}, h=${player.height}`);
+    debugLog(`PROJECTILE COLLISION: Checking ${this.skullProjectiles.length} projectiles for collision`);
+    debugLog(`PLAYER POSITION: x=${player.x?.toFixed(1)}, y=${player.y?.toFixed(1)}, w=${player.width}, h=${player.height}`);
     
     // Check each projectile for collision with player
     for (let i = this.skullProjectiles.length - 1; i >= 0; i--) {
       const projectile = this.skullProjectiles[i];
       
       // Debug projectile properties
-      console.log(`PROJECTILE ${i}: x=${projectile.x?.toFixed(1)}, y=${projectile.y?.toFixed(1)}, w=${projectile.width}, h=${projectile.height}`);
+      debugLog(`PROJECTILE ${i}: x=${projectile.x?.toFixed(1)}, y=${projectile.y?.toFixed(1)}, w=${projectile.width}, h=${projectile.height}`);
       
       // Simple rectangle collision detection
       const playerHitbox = {
@@ -1352,18 +1352,18 @@ class HackerController {
       );
       
       if (isColliding) {
-        console.log(`PROJECTILE COLLISION: HIT DETECTED with projectile ${i}!`);
+        debugLog(`PROJECTILE COLLISION: HIT DETECTED with projectile ${i}!`);
         // Collision detected with this projectile
         hit = true;
         
         // Remove the projectile
         this.skullProjectiles.splice(i, 1);
-        console.log(`PROJECTILE COLLISION: Removed projectile, ${this.skullProjectiles.length} remaining`);
+        debugLog(`PROJECTILE COLLISION: Removed projectile, ${this.skullProjectiles.length} remaining`);
         
         // Play hit sound
         if (this.catHitSound) {
           this.catHitSound.currentTime = 0;
-          this.catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
+          this.catHitSound.play().catch(e => debugLog("Error playing cat hit sound:", e));
         }
         
         // Trigger player hit effect (if available)
@@ -1391,13 +1391,13 @@ class HackerController {
     // Draw projectiles when hacker is active and not in loading mode
     // (i.e., when hacker is attacking or ready to attack)
     if (this.hacker && !this.hacker.isLoading) {
-      console.log(`HACKER CONTROLLER: Drawing ${this.skullProjectiles.length} projectiles`);
+      debugLog(`HACKER CONTROLLER: Drawing ${this.skullProjectiles.length} projectiles`);
       // Draw all projectiles
       this.skullProjectiles.forEach(projectile => {
         projectile.draw();
       });
     } else if (this.skullProjectiles.length > 0) {
-      console.log(`Skipping drawing of ${this.skullProjectiles.length} projectiles during loading phase`);
+      debugLog(`Skipping drawing of ${this.skullProjectiles.length} projectiles during loading phase`);
     }
     
     // Draw notification if active
@@ -1406,7 +1406,7 @@ class HackerController {
   
   // Create a visual effect when clearing obstacles
   createClearEffect() {
-    console.log('Creating visual clear effect for virus removal');
+    debugLog('Creating visual clear effect for virus removal');
     // Get canvas dimensions
     const canvasWidth = this.canvas.width;
     const canvasHeight = this.canvas.height;
@@ -1417,7 +1417,7 @@ class HackerController {
     // Play a digital clearing sound if available
     if (this.clearSound) {
       this.clearSound.currentTime = 0;
-      this.clearSound.play().catch(e => console.log("Error playing clear sound:", e));
+      this.clearSound.play().catch(e => debugLog("Error playing clear sound:", e));
     }
   }
   
@@ -1494,24 +1494,24 @@ class HackerController {
   
   // Handle hacker defeat - called by hacker when defeated
   onHackerDefeated() {
-    console.log('HACKER CONTROLLER: Hacker has been defeated! Starting cleanup...');
+    debugLog('HACKER CONTROLLER: Hacker has been defeated! Starting cleanup...');
     
     // Stop boss battle music immediately
     if (this.bossBattleMusic) {
       this.bossBattleMusic.pause();
       this.bossBattleMusic.currentTime = 0;
-      console.log('HACKER CONTROLLER: Stopped boss battle music');
+      debugLog('HACKER CONTROLLER: Stopped boss battle music');
     }
     
     // Clear all projectiles
     this.skullProjectiles = [];
-    console.log('HACKER CONTROLLER: Cleared all projectiles');
+    debugLog('HACKER CONTROLLER: Cleared all projectiles');
     
     // Resume obstacle spawning immediately (don't wait for cleanup)
     if (this.obstacleController) {
       this.obstacleController.pauseSpawning = false;
       this.obstacleController.pauseEmailPhone = false;
-      console.log('HACKER CONTROLLER: Immediately resumed obstacle spawning (including email/phone) after boss defeat');
+      debugLog('HACKER CONTROLLER: Immediately resumed obstacle spawning (including email/phone) after boss defeat');
     }
     
     // Set up cleanup after explosion animation completes
@@ -1523,7 +1523,7 @@ class HackerController {
     const explosionDuration = 16 * 3 * 16; // Approximately 768ms
     
     setTimeout(() => {
-      console.log('HACKER CONTROLLER: Explosion complete, cleaning up hacker...');
+      debugLog('HACKER CONTROLLER: Explosion complete, cleaning up hacker...');
       
       // Remove hacker
       if (this.hacker) {
@@ -1537,22 +1537,22 @@ class HackerController {
       // Resume background music
       if (this.normalBackgroundMusic) {
         this.normalBackgroundMusic.currentTime = 0;
-        this.normalBackgroundMusic.play().catch(e => console.log('Error resuming background music:', e));
-        console.log('HACKER CONTROLLER: Resumed background music');
+        this.normalBackgroundMusic.play().catch(e => debugLog('Error resuming background music:', e));
+        debugLog('HACKER CONTROLLER: Resumed background music');
       }
       
       // Resume obstacle spawning after boss battle
       if (this.obstacleController) {
         this.obstacleController.pauseSpawning = false;
         this.obstacleController.pauseEmailPhone = false;
-        console.log('HACKER CONTROLLER: Resumed obstacle spawning (including email/phone) after boss defeat');
+        debugLog('HACKER CONTROLLER: Resumed obstacle spawning (including email/phone) after boss defeat');
       }
       
       // Update boss stats for next appearance
       this.bossAppearanceCount++;
       this.updateBossStats();
       
-      console.log('HACKER CONTROLLER: Boss cleanup complete. Ready for next boss at next 500-point threshold.');
+      debugLog('HACKER CONTROLLER: Boss cleanup complete. Ready for next boss at next 500-point threshold.');
       
     }, explosionDuration);
   }
@@ -1565,6 +1565,6 @@ class HackerController {
     // Increase boss health (lives) every 2 defeats
     const bonusLives = Math.floor(this.bossAppearanceCount / 2);
     
-    console.log(`HACKER CONTROLLER: Next boss will have ${3 + bonusLives} lives, ${this.projectileCount} projectiles, speed ${this.bossSpeed}`);
+    debugLog(`HACKER CONTROLLER: Next boss will have ${3 + bonusLives} lives, ${this.projectileCount} projectiles, speed ${this.bossSpeed}`);
   }
 }

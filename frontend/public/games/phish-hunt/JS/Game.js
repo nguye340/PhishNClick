@@ -28,7 +28,7 @@ class Game{
                 ...payload
             }, window.location.origin);
         } catch (error) {
-            console.error('Phish Hunt telemetry failed:', error);
+            debugError('Phish Hunt telemetry failed:', error);
         }
     }
 
@@ -208,7 +208,7 @@ class Game{
         // Disable shooting
         this.shotHandler.disableShooting();
         
-        console.log("Game paused");
+        debugLog("Game paused");
     }
 
     resumeGame() {
@@ -237,7 +237,7 @@ class Game{
         // Enable shooting
         this.shotHandler.enableShooting();
         
-        console.log("Game resumed");
+        debugLog("Game resumed");
     }
 }
 

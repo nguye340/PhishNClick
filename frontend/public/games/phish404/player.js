@@ -55,7 +55,7 @@ class Player {
     
     // Load shield frames immediately
     this.loadShieldFrames();
-    console.log('Shield frames loaded:', this.shieldFrames.length);
+    debugLog('Shield frames loaded:', this.shieldFrames.length);
 
     // Load sprites for animation
     this.images = [];
@@ -159,7 +159,7 @@ class Player {
     if (this.jumpPressed && !this.jumpInProgress) {
       this.jumpInProgress = true;
       if (this.jumpSound && !window.isMuted) {
-        this.jumpSound.play().catch(error => console.log("Error playing jump sound:", error));
+        this.jumpSound.play().catch(error => debugLog("Error playing jump sound:", error));
       }
       this.state = this.JUMPING;
       this.frameX = 0;
@@ -231,33 +231,33 @@ class Player {
   
   // Load shield animation frames
   loadShieldFrames() {
-    console.log('Loading shield frames...');
+    debugLog('Loading shield frames...');
     this.shieldFrames = []; // Clear existing frames
     
     for (let i = 1; i <= 22; i++) {
       const img = new Image();
       img.src = `/games/phish404/img/shield/shield${i}.png`;
-      console.log(`Loading shield frame ${i}:`, img.src);
+      debugLog(`Loading shield frame ${i}:`, img.src);
       
       // Add onload handler to verify image loading
       img.onload = () => {
-        console.log(`Shield frame ${i} loaded successfully`);
+        debugLog(`Shield frame ${i} loaded successfully`);
       };
       
       img.onerror = () => {
-        console.error(`Failed to load shield frame ${i}:`, img.src);
+        debugError(`Failed to load shield frame ${i}:`, img.src);
       };
       
       this.shieldFrames.push(img);
     }
     
-    console.log(`Initialized ${this.shieldFrames.length} shield frames`);
+    debugLog(`Initialized ${this.shieldFrames.length} shield frames`);
   }
   
   // Activate shield with specified number of hits
   activateShield(hits) {
     this.shieldHits = hits;
-    console.log(`Shield activated with ${hits} hits remaining`);
+    debugLog(`Shield activated with ${hits} hits remaining`);
     
     // Reset animation frame to start
     this.shieldFrameIndex = 0;
@@ -269,7 +269,7 @@ class Player {
     // Play shield sound if available
     if (window.shieldSound) {
       window.shieldSound.currentTime = 0;
-      window.shieldSound.play().catch(e => console.log("Error playing shield sound:", e));
+      window.shieldSound.play().catch(e => debugLog("Error playing shield sound:", e));
     }
   }
   
@@ -295,7 +295,7 @@ class Player {
     // If player has a shield, use it instead of taking damage
     if (this.shieldHits > 0) {
       this.shieldHits--;
-      console.log(`Shield hit! ${this.shieldHits} hits remaining`);
+      debugLog(`Shield hit! ${this.shieldHits} hits remaining`);
       
       // Update shield counter UI
       this.updateShieldCounterUI();
@@ -303,13 +303,13 @@ class Player {
       // Play shield guard sound when shield blocks damage
       if (window.shieldGuardSound) {
         window.shieldGuardSound.currentTime = 0;
-        window.shieldGuardSound.play().catch(e => console.log("Error playing shield guard sound:", e));
+        window.shieldGuardSound.play().catch(e => debugLog("Error playing shield guard sound:", e));
       }
       
       // Play shield break sound on last hit
       if (this.shieldHits === 0 && window.shieldBreakSound) {
         window.shieldBreakSound.currentTime = 0;
-        window.shieldBreakSound.play().catch(e => console.log("Error playing shield break sound:", e));
+        window.shieldBreakSound.play().catch(e => debugLog("Error playing shield break sound:", e));
       }
       
       // Make player briefly invincible to prevent multiple hits
@@ -318,38 +318,38 @@ class Player {
     }
     
     // Take damage if no shield
-    console.log('takeDamage called with amount:', amount);
-    console.log('Current invincibility state:', this.isInvincible);
+    debugLog('takeDamage called with amount:', amount);
+    debugLog('Current invincibility state:', this.isInvincible);
     
     // Don't take damage if currently invincible
     if (this.isInvincible) {
-      console.log('Player is invincible, no damage taken');
+      debugLog('Player is invincible, no damage taken');
       return false;
     }
     
-    console.log(`Player took ${amount} damage!`);
+    debugLog(`Player took ${amount} damage!`);
     
     // Call the global game.loseLife function which will handle invincibility
-    console.log('Attempting to call loseLife...');
+    debugLog('Attempting to call loseLife...');
     
     if (window.game && typeof window.game.loseLife === 'function') {
-      console.log('Calling game.loseLife()');
+      debugLog('Calling game.loseLife()');
       try {
         window.game.loseLife();
-        console.log('Successfully called game.loseLife()');
+        debugLog('Successfully called game.loseLife()');
       } catch (e) {
-        console.error('Error calling game.loseLife():', e);
+        debugError('Error calling game.loseLife():', e);
       }
     } else if (typeof loseLife === 'function') {
-      console.log('Falling back to global loseLife()');
+      debugLog('Falling back to global loseLife()');
       try {
         loseLife();
-        console.log('Successfully called global loseLife()');
+        debugLog('Successfully called global loseLife()');
       } catch (e) {
-        console.error('Error calling global loseLife():', e);
+        debugError('Error calling global loseLife():', e);
       }
     } else {
-      console.error('No loseLife function available!');
+      debugError('No loseLife function available!');
     }
     
     return true;
@@ -362,7 +362,7 @@ class Player {
       if (this.shieldFrameTimer > this.shieldFrameInterval) {
         this.shieldFrameTimer = 0;
         this.shieldFrameIndex = (this.shieldFrameIndex + 1) % this.shieldFrames.length;
-        console.log('Shield animation frame:', this.shieldFrameIndex);
+        debugLog('Shield animation frame:', this.shieldFrameIndex);
       }
     }
   }
@@ -453,7 +453,7 @@ class Player {
   makeInvincible(duration = 2000) {
     // Set invincibility
     this.isInvincible = true;
-    console.log(`Player is now invincible for ${duration}ms`);
+    debugLog(`Player is now invincible for ${duration}ms`);
     
     // Flash effect to show invincibility
     this.flash(duration);
@@ -461,7 +461,7 @@ class Player {
     // Set timeout to remove invincibility
     setTimeout(() => {
       this.isInvincible = false;
-      console.log('Player invincibility ended');
+      debugLog('Player invincibility ended');
     }, duration);
     
     // Reset animation state
@@ -475,6 +475,6 @@ class Player {
     this.isInvincible = false;
     this.isVisible = true;
     
-    console.log('Player reset complete');
+    debugLog('Player reset complete');
   }
 }

@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useRive } from "@rive-app/react-canvas";
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 // Define the props interface
 export interface RiveMainCharacterProps {
@@ -34,15 +36,15 @@ const RiveMainCharacter: React.FC<RiveMainCharacterProps> = ({
 
   useEffect(() => {
     if (rive) {
-      console.log("Rive instance loaded:", rive);
-      console.log("Available state machines:", rive.stateMachineNames);
+      debugLog("Rive instance loaded:", rive);
+      debugLog("Available state machines:", rive.stateMachineNames);
       
       // Set up inputs if they exist
       const inputs = rive.stateMachineInputs("StateMachine_Idle_Blink");
       if (inputs) {
         const talkingInput = inputs.find(input => input.name === "isTalking");
         if (talkingInput) {
-          console.log("Found isTalking input");
+          debugLog("Found isTalking input");
         }
       }
     }
@@ -56,12 +58,12 @@ const RiveMainCharacter: React.FC<RiveMainCharacterProps> = ({
         if (inputs) {
           const talkingInput = inputs.find(input => input.name === "isTalking");
           if (talkingInput) {
-            console.log(`Updating isTalking state machine input to ${isTalking} (current value: ${talkingInput.value})`);
+            debugLog(`Updating isTalking state machine input to ${isTalking} (current value: ${talkingInput.value})`);
             talkingInput.value = isTalking;
           }
         }
       } catch (error) {
-        console.error("Error setting isTalking input:", error);
+        debugError("Error setting isTalking input:", error);
       }
     }
   }, [rive, isTalking]);

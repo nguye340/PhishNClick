@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hooked or Cooked - Phishing Email Game</title>
+  <script src="../../debug-utils.js"></script>
   <script src="../../game-telemetry.js"></script>
   <style>
     body {
@@ -1264,7 +1265,7 @@
           ...payload
         }, window.location.origin);
       } catch (error) {
-        console.error('Hooked or Cooked telemetry failed:', error);
+        debugError('Hooked or Cooked telemetry failed:', error);
       }
     };
 
@@ -1347,7 +1348,7 @@
         // Don't start game automatically - wait for player to click start
       })
       .catch(error => {
-        console.error('Error loading emails:', error);
+        debugError('Error loading emails:', error);
         // Fallback emails if JSON fails to load
         emails = [
           {
@@ -1503,11 +1504,11 @@
         audio.volume = 0.3; // Set volume to 30%
         audio.play().catch(e => {
           // Ignore audio play errors (browser restrictions)
-          console.log('Audio play prevented by browser');
+          debugLog('Audio play prevented by browser');
         });
       } catch (e) {
         // Ignore audio errors
-        console.log('Audio not supported');
+        debugLog('Audio not supported');
       }
     }
     
@@ -1517,11 +1518,11 @@
         audio.volume = 0.4; // Set volume to 40%
         audio.play().catch(e => {
           // Ignore audio play errors (browser restrictions)
-          console.log('Audio play prevented by browser');
+          debugLog('Audio play prevented by browser');
         });
       } catch (e) {
         // Ignore audio errors
-        console.log('Audio not supported');
+        debugLog('Audio not supported');
       }
     }
     
@@ -1531,11 +1532,11 @@
         audio.volume = 0.5; // Set volume to 50%
         audio.play().catch(e => {
           // Ignore audio play errors (browser restrictions)
-          console.log('Audio play prevented by browser');
+          debugLog('Audio play prevented by browser');
         });
       } catch (e) {
         // Ignore audio errors
-        console.log('Audio not supported');
+        debugLog('Audio not supported');
       }
     }
     

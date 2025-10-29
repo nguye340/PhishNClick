@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation"
 import { Github } from "lucide-react"
 import { FlickeringTitle } from "./flickering-title"
 import { Navbar } from "../layout/navbar"
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 export function LandingHero() {
   const router = useRouter()
@@ -43,7 +45,7 @@ export function LandingHero() {
     // Play coin sound
     if (coinSoundRef.current) {
       coinSoundRef.current.currentTime = 0; // Reset sound to start
-      coinSoundRef.current.play().catch(err => console.log('Audio play error:', err));
+      coinSoundRef.current.play().catch(err => debugLog('Audio play error:', err));
     }
     
     // Clean up cursor before navigation to prevent double cursor

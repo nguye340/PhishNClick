@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 // Fish colors
 const FISH_COLORS: string[] = [
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
   '#00FFFF', // Cyan
   '#FF00FF', // Magenta
   '#FFFF00', // Yellow
@@ -554,7 +556,7 @@ export function SwimmingFish() {
     // Play catch sound
     if (catchSoundRef.current) {
       catchSoundRef.current.currentTime = 0; // Reset sound to start
-      catchSoundRef.current.play().catch(err => console.log('Audio play error:', err));
+      catchSoundRef.current.play().catch(err => debugLog('Audio play error:', err));
     }
     
     // Show score popup
@@ -590,7 +592,7 @@ export function SwimmingFish() {
       if (newCount === MAX_SCORE) {
         // Play completion sound
         if (completeSoundRef.current) {
-          completeSoundRef.current.play().catch(err => console.log('Audio play error:', err));
+          completeSoundRef.current.play().catch(err => debugLog('Audio play error:', err));
         }
 
         setShowFireworks(true);
@@ -684,7 +686,7 @@ export function SwimmingFish() {
         nextRouter.events?.on('routeChangeComplete', handleRouteChange);
       }
     } catch (e) {
-      console.log('Next router not available for event binding');
+      debugLog('Next router not available for event binding');
     }
     
     // Add a mutation observer as a fallback to detect URL changes

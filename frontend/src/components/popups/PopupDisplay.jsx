@@ -5,6 +5,8 @@ import SystemAlert from './popup-types/SystemAlert';
 import BrowserNotification from './popup-types/BrowserNotification';
 import LoginForm from './popup-types/LoginForm';
 import SoftwareInstaller from './popup-types/SoftwareInstaller';
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 /**
  * Main component for fetching and displaying popups from the backend
@@ -22,7 +24,7 @@ export default function PopupDisplay() {
     try {
       // Use the same API endpoint as in popup-manic-game.tsx
       const url = `${process.env.NEXT_PUBLIC_API_URL || ''}/api/popup/random`;
-      console.log('Fetching popup from:', url);
+      debugLog('Fetching popup from:', url);
       
       const response = await fetch(url);
       
@@ -31,10 +33,10 @@ export default function PopupDisplay() {
       }
       
       const data = await response.json();
-      console.log('Popup data received:', data);
+      debugLog('Popup data received:', data);
       setPopup(data.data || data); // Handle both {data: popup} and direct popup response formats
     } catch (err) {
-      console.error('Failed to fetch popup:', err);
+      debugError('Failed to fetch popup:', err);
       setError('Failed to load popup. Please try again.');
     } finally {
       setLoading(false);
@@ -48,7 +50,7 @@ export default function PopupDisplay() {
 
   // Handle user interaction with the popup
   const handlePopupInteraction = (action) => {
-    console.log('User action:', action);
+    debugLog('User action:', action);
     // Here you would implement game logic based on the user's action
     // and whether it matches the popup's correct_action
     

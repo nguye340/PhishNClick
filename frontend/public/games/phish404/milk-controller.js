@@ -126,7 +126,7 @@ class MilkController {
     // Create a new milk bottle and add it to the array
     const milk = new Milk(this.gameWidth, this.gameHeight, this.scaleRatio);
     this.milkBottles.push(milk);
-    console.log("Milk bottle spawned!");
+    debugLog("Milk bottle spawned!");
     
     // Show notification when milk appears (only for the first 2 times)
     if (this.notificationCount < this.maxNotifications) {
@@ -144,13 +144,13 @@ class MilkController {
         if (!window.isMuted) {
           if (this.slurpSound) {
             this.slurpSound.currentTime = 0;
-            this.slurpSound.play().catch(e => console.log("Error playing slurp sound:", e));
+            this.slurpSound.play().catch(e => debugLog("Error playing slurp sound:", e));
           }
           
           setTimeout(() => {
             if (this.yummySound) {
               this.yummySound.currentTime = 0;
-              this.yummySound.play().catch(e => console.log("Error playing yummy sound:", e));
+              this.yummySound.play().catch(e => debugLog("Error playing yummy sound:", e));
             }
           }, 300);
         }

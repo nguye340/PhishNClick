@@ -3,6 +3,8 @@ import axios from "@/lib/axios";
 import { clearEvents } from "@/lib/telemetry";
 
 const AuthContext = createContext();
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 export const AuthProvider = ({children}) => {
     const [auth, setAuth] = useState(null);
@@ -17,8 +19,8 @@ export const AuthProvider = ({children}) => {
                 const derivedName = name ?? user?.name ?? (derivedEmail ? derivedEmail.split('@')[0] : null);
                 const derivedUserId = id ?? user?.id ?? user?._id ?? null;
                 
-                console.log('[Auth] User ID extracted:', derivedUserId);
-                console.log('[Auth] Full response:', res.data);
+                debugLog('[Auth] User ID extracted:', derivedUserId);
+                debugLog('[Auth] Full response:', res.data);
                 
                 setAuth({
                     accessToken: true, // Token is in httpOnly cookie, not accessible to JS
@@ -32,7 +34,7 @@ export const AuthProvider = ({children}) => {
                 // Silently fail - user can play as guest
                 // Only log if it's not a 404 (endpoint not found)
                 if (error.response && error.response.status !== 404) {
-                    console.log('Auth check failed:', error.message);
+                    debugLog('Auth check failed:', error.message);
                 }
                 setAuth(null);
             } finally {

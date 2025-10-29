@@ -33,7 +33,7 @@
         return authData.accessToken;
       }
     } catch (e) {
-      console.warn('Could not access auth token:', e);
+      debugWarn('Could not access auth token:', e);
     }
     return null;
   }
@@ -57,7 +57,7 @@
         return authData.userId;
       }
     } catch (e) {
-      console.warn('Could not access user ID:', e);
+      debugWarn('Could not access user ID:', e);
     }
     
     // Fallback: Get first user from database for testing
@@ -65,11 +65,11 @@
       const response = await fetch(`${BACKEND_URL}/api/users/first`);
       if (response.ok) {
         const data = await response.json();
-        console.log('⚠️ Using test user for telemetry:', data.username);
+        debugLog('⚠️ Using test user for telemetry:', data.username);
         return data._id;
       }
     } catch (e) {
-      console.warn('Could not fetch test user:', e);
+      debugWarn('Could not fetch test user:', e);
     }
     
     return null;
@@ -81,7 +81,7 @@
   async function apiRequest(endpoint, method = 'GET', data = null) {
     const token = getAuthToken();
     if (!token) {
-      console.warn('⚠️ No auth token, skipping telemetry');
+      debugWarn('⚠️ No auth token, skipping telemetry');
       return null;
     }
 
@@ -104,7 +104,7 @@
       }
       return await response.json();
     } catch (error) {
-      console.error(`❌ API request failed (${endpoint}):`, error);
+      debugError(`❌ API request failed (${endpoint}):`, error);
       return null;
     }
   }
@@ -116,7 +116,7 @@
     async startSession(mode = 'training') {
       const userId = await getUserId();
       if (!userId) {
-        console.warn('⚠️ No user available, telemetry disabled');
+        debugWarn('⚠️ No user available, telemetry disabled');
         return null;
       }
 
@@ -135,11 +135,11 @@
           };
           gameStartTime = Date.now();
           interactions = [];
-          console.log('✅ Game session started:', currentSession.sessionId);
+          debugLog('✅ Game session started:', currentSession.sessionId);
           return currentSession;
         }
       } catch (error) {
-        console.error('❌ Failed to start session:', error);
+        debugError('❌ Failed to start session:', error);
       }
       return null;
     },
@@ -149,17 +149,17 @@
      */
     async endSession() {
       if (!currentSession) {
-        console.warn('⚠️ No active session to end');
+        debugWarn('⚠️ No active session to end');
         return;
       }
 
       try {
         await apiRequest(`/api/session/end/${currentSession.sessionId}`, 'POST');
-        console.log('✅ Game session ended:', currentSession.sessionId);
+        debugLog('✅ Game session ended:', currentSession.sessionId);
         currentSession = null;
         gameStartTime = null;
       } catch (error) {
-        console.error('❌ Failed to end session:', error);
+        debugError('❌ Failed to end session:', error);
       }
     },
 
@@ -168,7 +168,7 @@
      */
     async recordInteraction(popupId, action, wasCorrect, reactionTimeMs) {
       if (!currentSession) {
-        console.warn('⚠️ No active session, skipping interaction');
+        debugWarn('⚠️ No active session, skipping interaction');
         return;
       }
 
@@ -186,9 +186,9 @@
 
       try {
         await apiRequest('/api/popup-event', 'POST', interaction);
-        console.log('✅ Interaction recorded');
+        debugLog('✅ Interaction recorded');
       } catch (error) {
-        console.error('❌ Failed to record interaction:', error);
+        debugError('❌ Failed to record interaction:', error);
       }
     },
 
@@ -197,7 +197,7 @@
      */
     async saveStats(stats) {
       if (!currentSession) {
-        console.warn('⚠️ No active session, skipping stats');
+        debugWarn('⚠️ No active session, skipping stats');
         return;
       }
 
@@ -216,9 +216,9 @@
 
       try {
         await apiRequest('/api/session-stats', 'POST', sessionStats);
-        console.log('✅ Session stats saved');
+        debugLog('✅ Session stats saved');
       } catch (error) {
-        console.error('❌ Failed to save stats:', error);
+        debugError('❌ Failed to save stats:', error);
       }
     },
 
@@ -259,5 +259,5 @@
     }
   });
 
-  console.log('🎮 Game Telemetry loaded and ready');
+  debugLog('🎮 Game Telemetry loaded and ready');
 })();

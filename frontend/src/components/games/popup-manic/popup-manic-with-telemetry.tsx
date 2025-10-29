@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from '@/context/auth.context';
 import { gameTelemetry } from '@/lib/game-telemetry';
 import PopupManicGame from './popup-manic-game';
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 /**
  * Wrapper component that adds telemetry tracking to Popup Manic game
@@ -23,9 +25,9 @@ export default function PopupManicWithTelemetry() {
         const session = await gameTelemetry.startSession(auth?.userId || null, 'training');
         sessionIdRef.current = session.sessionId;
         gameStartTimeRef.current = Date.now();
-        console.log('✅ Popup Manic session started:', session.sessionId);
+        debugLog('✅ Popup Manic session started:', session.sessionId);
       } catch (error) {
-        console.error('❌ Failed to start session:', error);
+        debugError('❌ Failed to start session:', error);
       }
     };
 
@@ -44,10 +46,10 @@ export default function PopupManicWithTelemetry() {
     const handlePopupInteraction = (event: CustomEvent) => {
       const { popupId, action, wasCorrect, reactionTime, spawnTime } = event.detail;
       
-      console.log('🎮 [Telemetry] Popup interaction received:', { popupId, action, wasCorrect });
+      debugLog('🎮 [Telemetry] Popup interaction received:', { popupId, action, wasCorrect });
       
       if (!sessionIdRef.current) {
-        console.warn('⚠️ [Telemetry] No session ID, skipping interaction');
+        debugWarn('⚠️ [Telemetry] No session ID, skipping interaction');
         return;
       }
 
@@ -62,15 +64,15 @@ export default function PopupManicWithTelemetry() {
       };
 
       popupInteractionsRef.current.push(interaction);
-      console.log('📊 [Telemetry] Recording popup event:', interaction);
+      debugLog('📊 [Telemetry] Recording popup event:', interaction);
       gameTelemetry.recordPopupEvent(interaction);
     };
 
     const handleGameEnd = async (event: CustomEvent) => {
-      console.log('🏁 [Telemetry] Game end received:', event.detail);
+      debugLog('🏁 [Telemetry] Game end received:', event.detail);
       
       if (!sessionIdRef.current) {
-        console.warn('⚠️ [Telemetry] No session ID, skipping game end');
+        debugWarn('⚠️ [Telemetry] No session ID, skipping game end');
         return;
       }
 

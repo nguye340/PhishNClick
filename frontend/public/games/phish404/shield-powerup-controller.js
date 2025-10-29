@@ -14,7 +14,7 @@ class ShieldPowerupController {
     // Load shield image
     this.image = new Image();
     this.image.src = '/games/phish404/img/shield-icon.png';
-    console.log('SHIELD CONTROLLER: Loading shield image from', this.image.src);
+    debugLog('SHIELD CONTROLLER: Loading shield image from', this.image.src);
     
     // Pulsing effect properties - much slower and subtle
     this.pulseScale = 1.0;
@@ -63,12 +63,12 @@ class ShieldPowerupController {
   
   // Create a moving shield that travels across the screen
   spawnShield() {
-    console.log('SHIELD CONTROLLER: Creating moving shield');
+    debugLog('SHIELD CONTROLLER: Creating moving shield');
     
     // Play spawn sound
     if (this.spawnSound) {
       this.spawnSound.currentTime = 0;
-      this.spawnSound.play().catch(e => console.log('Error playing shield spawn sound:', e));
+      this.spawnSound.play().catch(e => debugLog('Error playing shield spawn sound:', e));
     }
     
     // Start position at right side of screen
@@ -88,7 +88,7 @@ class ShieldPowerupController {
     };
     
     this.shields.push(shield);
-    console.log('SHIELD CONTROLLER: Moving shield created at', shield.x, shield.y);
+    debugLog('SHIELD CONTROLLER: Moving shield created at', shield.x, shield.y);
     return shield;
   }
   
@@ -100,7 +100,7 @@ class ShieldPowerupController {
     
     // Only spawn shields during hacker loading or in debug mode
     if ((hackerLoading || this.debugMode) && this.shields.length === 0 && !this.respawnTimer) {
-      console.log('SHIELD CONTROLLER: Hacker loading detected or debug mode, spawning shield');
+      debugLog('SHIELD CONTROLLER: Hacker loading detected or debug mode, spawning shield');
       this.respawnTimer = setTimeout(() => {
         this.spawnShield();
         this.respawnTimer = null;
@@ -117,7 +117,7 @@ class ShieldPowerupController {
       // Remove shield if it goes off screen
       if (shield.x + shield.width < 0) {
         this.shields.splice(i, 1);
-        console.log('SHIELD CONTROLLER: Shield moved off screen, removing');
+        debugLog('SHIELD CONTROLLER: Shield moved off screen, removing');
         
         // Spawn a new shield if we're still in hacker loading or debug mode
         if (hackerLoading || this.debugMode) {
@@ -131,7 +131,7 @@ class ShieldPowerupController {
     
     // Log current shield status
     if (hackerLoading || this.debugMode) {
-      console.log(`Shield update: ${this.shields.length} shields active`);
+      debugLog(`Shield update: ${this.shields.length} shields active`);
     }
   }
   
@@ -145,7 +145,7 @@ class ShieldPowerupController {
           player.y < shield.y + shield.height &&
           player.y + player.height > shield.y) {
             
-        console.log('SHIELD COLLECTED - removing from array');
+        debugLog('SHIELD COLLECTED - removing from array');
         
         // Remove the shield from the array
         this.shields.splice(i, 1);
@@ -153,18 +153,18 @@ class ShieldPowerupController {
         // Play collection sound
         if (this.collectSound) {
           this.collectSound.currentTime = 0;
-          this.collectSound.play().catch(e => console.log("Error playing shield collect sound:", e));
+          this.collectSound.play().catch(e => debugLog("Error playing shield collect sound:", e));
         }
         
         // Activate shield on player
         if (player.activateShield) {
           player.activateShield(3); // Shield absorbs 3 hits
-          console.log('Shield activated on player');
+          debugLog('Shield activated on player');
           
           // Show notification
           this.showNotification();
         } else {
-          console.error('Player does not have activateShield method');
+          debugError('Player does not have activateShield method');
         }
         
         // Spawn a new shield after a delay if in hacker loading
@@ -195,7 +195,7 @@ class ShieldPowerupController {
         window.pauseGame(true, 'shield_tutorial');
       }
       
-      console.log('Shield tutorial activated - game paused');
+      debugLog('Shield tutorial activated - game paused');
     }
   }
   
@@ -214,7 +214,7 @@ class ShieldPowerupController {
         window.pauseGame(false, 'shield_tutorial');
       }
       
-      console.log('Shield tutorial dismissed - game resumed');
+      debugLog('Shield tutorial dismissed - game resumed');
     }
   }
   

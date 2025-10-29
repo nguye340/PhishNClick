@@ -35,7 +35,7 @@ class VoiceCallManager {
       
       return url;
     } catch (error) {
-      console.error('Error converting base64 to audio URL:', error);
+      debugError('Error converting base64 to audio URL:', error);
       return null;
     }
   }
@@ -43,20 +43,20 @@ class VoiceCallManager {
   // Fetch random voice call from API
   async fetchRandomVoiceCall() {
     try {
-      console.log('🔍 Fetching voice call from API...');
+      debugLog('🔍 Fetching voice call from API...');
 
       const baseUrl = (typeof window !== 'undefined' && window.location?.origin)
         ? window.location.origin
         : '';
-      const endpoint = `${baseUrl}/api/voice/random`;
+      const endpoint = `${baseUrl}/api/voice-calls/random`;
 
-      console.log('🌐 Voice call endpoint:', endpoint);
+      debugLog('🌐 Voice call endpoint:', endpoint);
 
       const response = await fetch(endpoint);
-      console.log('📡 API Response status:', response.status);
+      debugLog('📡 API Response status:', response.status);
       
       const result = await response.json();
-      console.log('📦 API Result:', {
+      debugLog('📦 API Result:', {
         success: result.success,
         hasData: !!result.data,
         dataKeys: result.data ? Object.keys(result.data) : [],
@@ -68,18 +68,18 @@ class VoiceCallManager {
       
       // Use audioData if audioBase64 is not available (backward compatibility)
       if (result.data && !result.data.audioBase64 && result.data.audioData) {
-        console.log('🔧 Using audioData as fallback for audioBase64');
+        debugLog('🔧 Using audioData as fallback for audioBase64');
         result.data.audioBase64 = result.data.audioData;
       }
       
       if (result.success) {
         return result.data;
       } else {
-        console.error('❌ API returned error:', result.error);
+        debugError('❌ API returned error:', result.error);
         throw new Error(result.error || 'Failed to fetch voice call');
       }
     } catch (error) {
-      console.error('💥 Error fetching voice call:', error);
+      debugError('💥 Error fetching voice call:', error);
       return null;
     }
   }
@@ -87,11 +87,11 @@ class VoiceCallManager {
   // Get the appropriate voice call for current game state
   async getVoiceCall() {
     this.phoneCallCount++;
-    console.log(`🎯 Getting voice call #${this.phoneCallCount}`);
+    debugLog(`🎯 Getting voice call #${this.phoneCallCount}`);
     
     // First call always uses the static vishing.mp3 file
     if (this.isFirstCall) {
-      console.log('📞 First call - using static vishing.mp3');
+      debugLog('📞 First call - using static vishing.mp3');
       this.isFirstCall = false;
       return {
         audioUrl: '/games/phish404/audio/vishing.mp3',
@@ -104,13 +104,13 @@ class VoiceCallManager {
       };
     }
     
-    console.log('🎲 Subsequent call - fetching from database...');
+    debugLog('🎲 Subsequent call - fetching from database...');
     // Subsequent calls use database audio
     const voiceCallData = await this.fetchRandomVoiceCall();
     
     if (!voiceCallData) {
       // Fallback to static audio if API fails
-      console.log('❌ API failed, using fallback static audio');
+      debugLog('❌ API failed, using fallback static audio');
       return {
         audioUrl: '/games/phish404/audio/vishing.mp3',
         isPhishing: true,
@@ -124,8 +124,8 @@ class VoiceCallManager {
     
     // Handle mock data (when backend is not available)
     if (voiceCallData.mock || !voiceCallData.audioBase64) {
-      console.log('⚠️ Using mock/fallback data - no audioBase64 found');
-      console.log('📊 Voice call data:', {
+      debugLog('⚠️ Using mock/fallback data - no audioBase64 found');
+      debugLog('📊 Voice call data:', {
         mock: voiceCallData.mock,
         hasAudioBase64: !!voiceCallData.audioBase64,
         keys: Object.keys(voiceCallData)
@@ -145,7 +145,7 @@ class VoiceCallManager {
     const audioUrl = this.base64ToAudioUrl(voiceCallData.audioBase64);
     
     // Debug: Log voice call details to identify repetition
-    console.log('🎵 Voice call details:', {
+    debugLog('🎵 Voice call details:', {
       filename: voiceCallData.filename || 'unknown',
       originalName: voiceCallData.originalName || 'unknown',
       description: voiceCallData.description || 'no description',
@@ -157,7 +157,7 @@ class VoiceCallManager {
     
     if (!audioUrl) {
       // Fallback if conversion fails
-      console.log('❌ Audio URL conversion failed, using fallback');
+      debugLog('❌ Audio URL conversion failed, using fallback');
       return {
         audioUrl: '/games/phish404/audio/vishing.mp3',
         isPhishing: true,

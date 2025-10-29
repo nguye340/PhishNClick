@@ -29,7 +29,7 @@ const GameDialogue: React.FC<GameDialogueProps> = ({
   useEffect(() => {
     // Prevent duplicate animations by checking if the text has actually changed
     if (fullTextRef.current !== " " + text) {
-      console.log("Text changed to:", text);
+      debugLog("Text changed to:", text);
       // Add a space at the beginning of the text to prevent first letter cutoff
       fullTextRef.current = " " + text;
       charIndexRef.current = 0;
@@ -74,6 +74,8 @@ const GameDialogue: React.FC<GameDialogueProps> = ({
 
   // Handle click to complete text immediately or proceed
   const handleClick = () => {
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
     if (isTyping) {
       // If still typing, show all text immediately
       setDisplayedText(fullTextRef.current);
@@ -85,11 +87,11 @@ const GameDialogue: React.FC<GameDialogueProps> = ({
       }
     } else if (!isCompleted) {
       // If typing is done but not yet marked as completed
-      console.log("Dialogue clicked after typing finished");
+      debugLog("Dialogue clicked after typing finished");
       setIsCompleted(true);
       // Call the onComplete callback if provided
       if (onComplete) {
-        console.log("Calling onComplete callback");
+        debugLog("Calling onComplete callback");
         onComplete();
       }
     }

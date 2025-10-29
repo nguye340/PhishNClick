@@ -48,7 +48,7 @@ class BurgerController {
   
   // Reset method to clear all burgers
   reset() {
-    console.log('Clearing all burgers from BurgerController');
+    debugLog('Clearing all burgers from BurgerController');
     this.burgers = [];
     this.spawnTimer = 0;
     this.spawnInterval = this.getRandomSpawnInterval();
@@ -135,7 +135,7 @@ class BurgerController {
     // Create a new burger and add it to the array
     const burger = new Burger(this.gameWidth, this.gameHeight, this.scaleRatio);
     this.burgers.push(burger);
-    console.log("Burger spawned!");
+    debugLog("Burger spawned!");
     
     // Show notification when burger appears (only for the first 2 times)
     if (this.notificationCount < this.maxNotifications) {
@@ -156,7 +156,7 @@ class BurgerController {
         // Play burger collection sound
         this.burgerSound.currentTime = 0;
         if (this.burgerSound && !window.isMuted) {
-          this.burgerSound.play().catch(e => console.log("Error playing burger sound:", e));
+          this.burgerSound.play().catch(e => debugLog("Error playing burger sound:", e));
         }
         
         // Return true to indicate a collision occurred
@@ -181,6 +181,6 @@ class BurgerController {
     this.showNotification = false;
     this.notificationTimer = 0;
     
-    console.log('BurgerController reset complete');
+    debugLog('BurgerController reset complete');
   }
 }

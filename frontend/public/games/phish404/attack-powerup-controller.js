@@ -45,7 +45,7 @@ class AttackPowerupController {
     // Movement speed
     this.speed = 2 * scaleRatio;
     
-    console.log('ATTACK POWERUP: Controller initialized');
+    debugLog('ATTACK POWERUP: Controller initialized');
   }
   
   // Spawn a new attack powerup
@@ -58,7 +58,7 @@ class AttackPowerupController {
     // Play spawn sound
     if (this.spawnSound) {
       this.spawnSound.currentTime = 0;
-      this.spawnSound.play().catch(e => console.log('Error playing spawn sound:', e));
+      this.spawnSound.play().catch(e => debugLog('Error playing spawn sound:', e));
     }
     
     const powerup = {
@@ -70,7 +70,7 @@ class AttackPowerupController {
     };
     
     this.powerups.push(powerup);
-    console.log('ATTACK POWERUP: Spawned at', powerup.x, powerup.y);
+    debugLog('ATTACK POWERUP: Spawned at', powerup.x, powerup.y);
     
     return powerup;
   }
@@ -175,13 +175,13 @@ class AttackPowerupController {
         // Play collection sound
         if (this.collectSound && !window.isMuted) {
           this.collectSound.currentTime = 0;
-          this.collectSound.play().catch(e => console.log('Audio play error:', e));
+          this.collectSound.play().catch(e => debugLog('Audio play error:', e));
         }
         
         // Activate electric ball shooting if controller exists
         if (window.electricBallController) {
           window.electricBallController.activateStarPowerup(player);
-          console.log('ATTACK POWERUP: Activated star powerup - player can now shoot electric balls!');
+          debugLog('ATTACK POWERUP: Activated star powerup - player can now shoot electric balls!');
         }
         
         // Remove the powerup

@@ -86,7 +86,7 @@ class Hacker {
         if (this.explosionFrameIndex >= this.explosionFrames) {
           // Explosion animation complete
           this.explosionComplete = true;
-          console.log('HACKER: Explosion animation complete');
+          debugLog('HACKER: Explosion animation complete');
           return; // Don't update anything else
         }
       }
@@ -125,7 +125,7 @@ class Hacker {
       if (this.invincibleTimer >= this.invincibleDuration) {
         this.invincible = false;
         this.invincibleTimer = 0;
-        console.log('Hacker is no longer invincible');
+        debugLog('Hacker is no longer invincible');
       }
     }
     
@@ -136,16 +136,16 @@ class Hacker {
       
       // Debug logging every 500ms
       if (Math.floor(this.loadingTimer / 500) > Math.floor((this.loadingTimer - frameTimeDelta) / 500)) {
-        console.log(`HACKER LOADING: ${this.loadingTimer.toFixed(0)}ms / ${this.loadingDuration}ms`);
+        debugLog(`HACKER LOADING: ${this.loadingTimer.toFixed(0)}ms / ${this.loadingDuration}ms`);
       }
       
       // Check if loading is complete
       if (this.loadingTimer >= this.loadingDuration) {
-        console.log('HACKER: Loading phase complete! Exiting loading mode...');
+        debugLog('HACKER: Loading phase complete! Exiting loading mode...');
         this.isLoading = false;
         this.loadingTimer = 0;
         this.shootTimer = this.shootInterval; // Ready to shoot immediately after loading
-        console.log('HACKER: Successfully exited loading mode, ready to attack!');
+        debugLog('HACKER: Successfully exited loading mode, ready to attack!');
       }
     } else {
       // Only update shoot timer when not loading
@@ -283,23 +283,23 @@ class Hacker {
   }
   
   startLoading() {
-    console.log('HACKER: Starting loading phase...');
+    debugLog('HACKER: Starting loading phase...');
     this.isLoading = true;
     this.loadingTimer = 0;
-    console.log(`HACKER: Loading duration set to ${this.loadingDuration}ms`);
-    console.log('HACKER: Notifying hacker controller of loading state...');
+    debugLog(`HACKER: Loading duration set to ${this.loadingDuration}ms`);
+    debugLog('HACKER: Notifying hacker controller of loading state...');
     // Update global loading state
     if (window.hackerController) {
       window.hackerController.setLoadingState(true);
-      console.log('HACKER: Successfully notified hacker controller');
+      debugLog('HACKER: Successfully notified hacker controller');
     } else {
-      console.warn('HACKER: window.hackerController not found!');
+      debugWarn('HACKER: window.hackerController not found!');
     }
   }
   
   activate() {
     this.active = true;
-    console.log('Hacker activated');
+    debugLog('Hacker activated');
     // Set global loading state if needed
     if (window.hackerController) {
       window.hackerController.setLoadingState(this.isLoading);
@@ -310,12 +310,12 @@ class Hacker {
     // Reset lives with potential bonus for increased difficulty
     this.maxLives = 3 + bonusLives;
     this.lives = this.maxLives;
-    console.log(`HACKER: Lives reset to ${this.lives} (${bonusLives} bonus lives)`);
+    debugLog(`HACKER: Lives reset to ${this.lives} (${bonusLives} bonus lives)`);
   }
   
   deactivate() {
     this.active = false;
-    console.log('Hacker deactivated');
+    debugLog('Hacker deactivated');
     // Clear global loading state
     if (window.hackerController) {
       window.hackerController.setLoadingState(false);
@@ -326,13 +326,13 @@ class Hacker {
   takeDamage() {
     // If invincible, don't take damage
     if (this.invincible) {
-      console.log('Hacker is invincible, no damage taken');
+      debugLog('Hacker is invincible, no damage taken');
       return false;
     }
     
     // Reduce lives
     this.lives--;
-    console.log(`Hacker took damage! Remaining lives: ${this.lives}`);
+    debugLog(`Hacker took damage! Remaining lives: ${this.lives}`);
     
     // Make hacker invincible briefly
     this.invincible = true;
@@ -340,7 +340,7 @@ class Hacker {
     
     // Check if hacker is defeated
     if (this.lives <= 0) {
-      console.log('Hacker defeated!');
+      debugLog('Hacker defeated!');
       // If in loading phase, end it immediately
       if (this.isLoading) {
         this.isLoading = false;
@@ -407,17 +407,17 @@ class Hacker {
   // Take damage from electric ball hits
   takeDamage(damage) {
     if (this.invincible || !this.active) {
-      console.log('HACKER: Damage blocked - invincible or inactive');
+      debugLog('HACKER: Damage blocked - invincible or inactive');
       return false;
     }
     
     // Allow damage during loading phase (player's turn to attack)
     if (this.isLoading) {
-      console.log('HACKER: Taking damage during loading phase (player\'s turn)');
+      debugLog('HACKER: Taking damage during loading phase (player\'s turn)');
     }
     
     this.lives -= damage;
-    console.log(`HACKER: Took ${damage} damage! Lives remaining: ${this.lives}`);
+    debugLog(`HACKER: Took ${damage} damage! Lives remaining: ${this.lives}`);
     
     // Make hacker invincible for a short time after being hit
     this.invincible = true;
@@ -426,7 +426,7 @@ class Hacker {
     // Check if hacker is defeated
     if (this.lives <= 0) {
       this.lives = 0;
-      console.log('HACKER: Defeated by electric ball! Starting defeat sequence...');
+      debugLog('HACKER: Defeated by electric ball! Starting defeat sequence...');
       
       // Start defeat sequence
       this.startDefeatSequence();
@@ -438,7 +438,7 @@ class Hacker {
   }
   
   startDefeatSequence() {
-    console.log('HACKER: Starting defeat sequence with explosion and sounds...');
+    debugLog('HACKER: Starting defeat sequence with explosion and sounds...');
     
     // Set defeat flags
     this.isDefeated = true;
@@ -457,7 +457,7 @@ class Hacker {
   }
   
   playDefeatSounds() {
-    console.log('HACKER: Playing defeat sounds...');
+    debugLog('HACKER: Playing defeat sounds...');
     
     // Set volume based on game settings
     const volume = window.gameVolume || 0.5;
@@ -467,20 +467,20 @@ class Hacker {
       // Play boss defeat sound immediately
       this.bossDefeatSound.volume = volume;
       this.bossDefeatSound.currentTime = 0;
-      this.bossDefeatSound.play().catch(e => console.log('Error playing boss defeat sound:', e));
+      this.bossDefeatSound.play().catch(e => debugLog('Error playing boss defeat sound:', e));
       
       // Play victory sound after a short delay
       setTimeout(() => {
         this.victorySound.volume = volume;
         this.victorySound.currentTime = 0;
-        this.victorySound.play().catch(e => console.log('Error playing victory sound:', e));
+        this.victorySound.play().catch(e => debugLog('Error playing victory sound:', e));
       }, 500);
       
       // Play yummy sound after victory sound
       setTimeout(() => {
         this.yummySound.volume = volume;
         this.yummySound.currentTime = 0;
-        this.yummySound.play().catch(e => console.log('Error playing yummy sound:', e));
+        this.yummySound.play().catch(e => debugLog('Error playing yummy sound:', e));
       }, 1500);
     }
   }

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 
 // This is the URL of your backend server
 const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 export async function GET(request) {
   try {
@@ -15,7 +17,7 @@ export async function GET(request) {
       apiUrl += `?type=${type}`;
     }
     
-    console.log('Forwarding request to:', apiUrl);
+    debugLog('Forwarding request to:', apiUrl);
     
     // Forward the request to the backend API
     const response = await fetch(apiUrl, {
@@ -30,7 +32,7 @@ export async function GET(request) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Backend API error:', {
+      debugError('Backend API error:', {
         status: response.status,
         statusText: response.statusText,
         error: errorText
@@ -47,11 +49,11 @@ export async function GET(request) {
     });
     
   } catch (error) {
-    console.error('Error in /api/popup/random:', error);
+    debugError('Error in /api/popup/random:', error);
     
     // Return a mock response for development if the backend is not available
     if (process.env.NODE_ENV === 'development') {
-      console.warn('Using mock popup data due to error');
+      debugWarn('Using mock popup data due to error');
       return NextResponse.json({
         success: true,
         data: {

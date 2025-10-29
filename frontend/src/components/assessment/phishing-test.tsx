@@ -83,6 +83,8 @@ const questions: Question[] = [
 ]
 
 const phishingEmails: PhishingEmail[] = [
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
   {
     id: "1",
     from: "info@sheirdancollege.ca",
@@ -293,7 +295,7 @@ export function PhishingTest({ questions: providedQuestions }: PhishingTestProps
 
   // Handle when dialogue is completed (user clicked after reading)
   const handleDialogueComplete = () => {
-    console.log("Dialogue completed, action:", nextAction);
+    debugLog("Dialogue completed, action:", nextAction);
     
     if (nextAction === "NEXT_QUESTION") {
       if (currentQuestion < questionsToUse.length - 1) {

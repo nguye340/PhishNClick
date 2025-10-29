@@ -29,7 +29,7 @@ class SkullController {
   
   // Reset method to clear all skulls
   reset() {
-    console.log('Clearing all skulls from SkullController');
+    debugLog('Clearing all skulls from SkullController');
     this.skulls = [];
     this.spawnTimer = 0;
   }
@@ -66,7 +66,7 @@ class SkullController {
       
       // Play skull sound when a skull appears
       this.skullSound.currentTime = 0;
-      this.skullSound.play().catch(e => console.log("Error playing skull sound:", e));
+      this.skullSound.play().catch(e => debugLog("Error playing skull sound:", e));
       
       // Show notification if we haven't shown too many
       if (this.notificationCount < this.maxNotifications) {

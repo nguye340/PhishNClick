@@ -69,7 +69,7 @@ class ElectricBallController {
     // Debug settings
     this.showHitboxDebug = false; // Set to false to hide hitbox
     
-    console.log('ELECTRIC BALL: Controller initialized');
+    debugLog('ELECTRIC BALL: Controller initialized');
   }
   
   // Activate the star powerup - gives player 3 shots
@@ -81,7 +81,7 @@ class ElectricBallController {
     // Show star counter and hide instruction
     this.updateStarUI();
     
-    console.log(`FIRE BALL: Star powerup activated! ${this.shotsRemaining} shots available`);
+    debugLog(`FIRE BALL: Star powerup activated! ${this.shotsRemaining} shots available`);
   }
   
   // Update method called each frame
@@ -90,9 +90,9 @@ class ElectricBallController {
     
     // Debug hacker object
     if (this.activeBalls.length > 0) {
-      console.log('FIRE BALL: Update - Hacker object:', hacker ? 'exists' : 'null');
+      debugLog('FIRE BALL: Update - Hacker object:', hacker ? 'exists' : 'null');
       if (hacker) {
-        console.log('FIRE BALL: Hacker position:', hacker.x, hacker.y, 'Loading:', hacker.isLoading);
+        debugLog('FIRE BALL: Hacker position:', hacker.x, hacker.y, 'Loading:', hacker.isLoading);
       }
     }
     
@@ -106,7 +106,7 @@ class ElectricBallController {
         if (this.shotsRemaining <= 0) {
           this.autoFireEnabled = false;
           this.updateStarUI();
-          console.log('FIRE BALL: All shots used');
+          debugLog('FIRE BALL: All shots used');
         }
       }
     }
@@ -148,13 +148,13 @@ class ElectricBallController {
     // Play shoot sound
     if (!window.isMuted && this.shootSound) {
       this.shootSound.currentTime = 0;
-      this.shootSound.play().catch(e => console.log("Error playing shoot sound:", e));
+      this.shootSound.play().catch(e => debugLog("Error playing shoot sound:", e));
     }
     
     // Update UI to show remaining shots
     this.updateStarUI();
     
-    console.log('FIRE BALL: Fired fire ball');
+    debugLog('FIRE BALL: Fired fire ball');
   }
   
   // Update all active electric balls
@@ -216,7 +216,7 @@ class ElectricBallController {
     );
     
     if (collision) {
-      console.log('FIRE BALL: HIT! Ball pos:', ball.x, ball.y, 'Hacker pos:', hackerX, hackerY);
+      debugLog('FIRE BALL: HIT! Ball pos:', ball.x, ball.y, 'Hacker pos:', hackerX, hackerY);
     }
     
     return collision;
@@ -224,7 +224,7 @@ class ElectricBallController {
   
   // Handle hitting the hacker
   hitHacker(ball, hacker) {
-    console.log('FIRE BALL: Hit hacker! Creating impact effect...');
+    debugLog('FIRE BALL: Hit hacker! Creating impact effect...');
     
     // Create impact effect at hacker's center for better visual
     const hackerCenterX = (hacker.fixedX || hacker.x) + hacker.width / 2;
@@ -232,29 +232,29 @@ class ElectricBallController {
     this.createImpactEffect(hackerCenterX, hackerCenterY);
     
     // Debug hacker object
-    console.log('FIRE BALL: Hacker object:', hacker);
-    console.log('FIRE BALL: Hacker has takeDamage method:', typeof hacker.takeDamage === 'function');
-    console.log('FIRE BALL: Hacker lives before damage:', hacker.lives);
+    debugLog('FIRE BALL: Hacker object:', hacker);
+    debugLog('FIRE BALL: Hacker has takeDamage method:', typeof hacker.takeDamage === 'function');
+    debugLog('FIRE BALL: Hacker lives before damage:', hacker.lives);
     
     // Damage the hacker
     if (hacker && typeof hacker.takeDamage === 'function') {
       const wasDefeated = hacker.takeDamage(1); // Cost the attacker 1 life
-      console.log('FIRE BALL: Hacker took 1 damage! Lives remaining:', hacker.lives);
-      console.log('FIRE BALL: Hacker defeated:', wasDefeated);
+      debugLog('FIRE BALL: Hacker took 1 damage! Lives remaining:', hacker.lives);
+      debugLog('FIRE BALL: Hacker defeated:', wasDefeated);
     } else {
-      console.error('FIRE BALL: Hacker does not have takeDamage method!');
+      debugError('FIRE BALL: Hacker does not have takeDamage method!');
     }
     
     // Play hit sounds - both boss-hit.wav and boss-grunt.mp3
     if (!window.isMuted) {
-      console.log('FIRE BALL: Playing boss hit sounds...');
+      debugLog('FIRE BALL: Playing boss hit sounds...');
       
       // Play boss-hit.wav immediately
       if (this.bossHitSound) {
         this.bossHitSound.currentTime = 0;
         this.bossHitSound.volume = 0.3; // Ensure volume is set
-        this.bossHitSound.play().catch(e => console.log("Error playing boss hit sound:", e));
-        console.log('FIRE BALL: Played boss-hit.wav');
+        this.bossHitSound.play().catch(e => debugLog("Error playing boss hit sound:", e));
+        debugLog('FIRE BALL: Played boss-hit.wav');
       }
       
       // Play boss-grunt.mp3 slightly delayed
@@ -262,8 +262,8 @@ class ElectricBallController {
         if (this.bossGruntSound) {
           this.bossGruntSound.currentTime = 0;
           this.bossGruntSound.volume = 0.3; // Ensure volume is set
-          this.bossGruntSound.play().catch(e => console.log("Error playing boss grunt sound:", e));
-          console.log('FIRE BALL: Played boss-grunt.mp3');
+          this.bossGruntSound.play().catch(e => debugLog("Error playing boss grunt sound:", e));
+          debugLog('FIRE BALL: Played boss-grunt.mp3');
         }
       }, 200); // Slightly longer delay
     }
@@ -395,7 +395,7 @@ class ElectricBallController {
     this.autoFireEnabled = false;
     this.lastShotTime = 0;
     
-    console.log('FIRE BALL: Controller reset');
+    debugLog('FIRE BALL: Controller reset');
   }
   
   // Get current shots remaining (for UI display)

@@ -4,6 +4,8 @@
  */
 
 import axios from './axios';
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 export interface GameSession {
   sessionId: string;
@@ -61,10 +63,10 @@ class GameTelemetryService {
   async getFirstUser(): Promise<string | null> {
     try {
       const response = await axios.get('/api/users/first');
-      console.log('⚠️ Using test user for telemetry:', response.data.username);
+      debugLog('⚠️ Using test user for telemetry:', response.data.username);
       return response.data._id;
     } catch (error) {
-      console.warn('Could not fetch test user:', error);
+      debugWarn('Could not fetch test user:', error);
       return null;
     }
   }
@@ -93,10 +95,10 @@ class GameTelemetryService {
         startTime: new Date(response.data.start_time)
       };
 
-      console.log('✅ Game session started:', this.currentSession.sessionId);
+      debugLog('✅ Game session started:', this.currentSession.sessionId);
       return this.currentSession;
     } catch (error: any) {
-      console.error('❌ Failed to start session:', error.response?.data || error.message);
+      debugError('❌ Failed to start session:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -107,16 +109,16 @@ class GameTelemetryService {
   async endSession(sessionId?: string): Promise<void> {
     const id = sessionId || this.currentSession?.sessionId;
     if (!id) {
-      console.warn('⚠️ No active session to end');
+      debugWarn('⚠️ No active session to end');
       return;
     }
 
     try {
       await axios.post(`/api/session/end/${id}`);
-      console.log('✅ Game session ended:', id);
+      debugLog('✅ Game session ended:', id);
       this.currentSession = null;
     } catch (error: any) {
-      console.error('❌ Failed to end session:', error.response?.data || error.message);
+      debugError('❌ Failed to end session:', error.response?.data || error.message);
       throw error;
     }
   }
@@ -127,9 +129,9 @@ class GameTelemetryService {
   async recordPopupEvent(event: PopupInteraction): Promise<void> {
     try {
       await axios.post('/api/popupEvent', event);
-      console.log('✅ Popup event recorded');
+      debugLog('✅ Popup event recorded');
     } catch (error: any) {
-      console.error('❌ Failed to record popup event:', error.response?.data || error.message);
+      debugError('❌ Failed to record popup event:', error.response?.data || error.message);
       // Don't throw - allow game to continue even if telemetry fails
     }
   }
@@ -140,9 +142,9 @@ class GameTelemetryService {
   async saveSessionStats(stats: SessionStats): Promise<void> {
     try {
       await axios.post('/api/sessionStats', stats);
-      console.log('✅ Session stats saved');
+      debugLog('✅ Session stats saved');
     } catch (error: any) {
-      console.error('❌ Failed to save session stats:', error.response?.data || error.message);
+      debugError('❌ Failed to save session stats:', error.response?.data || error.message);
       // Don't throw - allow game to continue
     }
   }
@@ -153,9 +155,9 @@ class GameTelemetryService {
   async saveQuizResult(result: QuizResult): Promise<void> {
     try {
       await axios.post('/api/quiz-result', result);
-      console.log('✅ Quiz result saved');
+      debugLog('✅ Quiz result saved');
     } catch (error: any) {
-      console.error('❌ Failed to save quiz result:', error.response?.data || error.message);
+      debugError('❌ Failed to save quiz result:', error.response?.data || error.message);
       // Don't throw - allow game to continue
     }
   }
@@ -173,9 +175,9 @@ class GameTelemetryService {
   async recordPopupEventsBatch(events: PopupInteraction[]): Promise<void> {
     try {
       await Promise.all(events.map(event => this.recordPopupEvent(event)));
-      console.log(`✅ ${events.length} popup events recorded`);
+      debugLog(`✅ ${events.length} popup events recorded`);
     } catch (error: any) {
-      console.error('❌ Failed to record popup events batch:', error);
+      debugError('❌ Failed to record popup events batch:', error);
     }
   }
 }

@@ -1,4 +1,6 @@
 import Obstacle from "./Obstacle.js";
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 export default class OstacleController {
     OBSTACLE_INTERVAL_MIN = 500;
@@ -19,7 +21,7 @@ export default class OstacleController {
     setNextObstacleTime(){
         const num = this.getRandomNumber(this.OBSTACLE_INTERVAL_MIN, this.OBSTACLE_INTERVAL_MAX);
         this.nextObstacleInterval = num;
-       // console.log(this.nextObstacleInterval);
+       // debugLog(this.nextObstacleInterval);
     }
 
     getRandomNumber(min, max) {

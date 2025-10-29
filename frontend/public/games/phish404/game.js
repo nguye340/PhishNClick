@@ -3,8 +3,8 @@
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('Game initializing...', new Date().toISOString());
-  console.log('Canvas element exists:', !!document.getElementById('game'));
+  debugLog('Game initializing...', new Date().toISOString());
+  debugLog('Canvas element exists:', !!document.getElementById('game'));
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.origin
       );
     } catch (error) {
-      console.error('Failed to send Phish404 telemetry:', error);
+      debugError('Failed to send Phish404 telemetry:', error);
     }
   };
 
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
     canvas.width = newWidth;
     canvas.height = newHeight;
     
-    console.log('Canvas dimensions updated:', canvas.width, canvas.height, 'Scale ratio:', scaleRatio);
+    debugLog('Canvas dimensions updated:', canvas.width, canvas.height, 'Scale ratio:', scaleRatio);
     createSprite();
   }
 
@@ -459,16 +459,16 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function decrementLife() {
-    console.log('decrementLife called. Current lives:', lives);
+    debugLog('decrementLife called. Current lives:', lives);
     
     if (lives <= 0) {
-      console.log('No lives left to decrement');
+      debugLog('No lives left to decrement');
       return false;
     }
     
     // Decrement life
     lives--;
-    console.log('Life decremented. Remaining lives:', lives);
+    debugLog('Life decremented. Remaining lives:', lives);
     
     // Update the display
     updateLivesDisplay();
@@ -476,7 +476,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check for game over
     if (lives <= 0) {
       gameOver = true;
-      console.log('Game over triggered - no lives left');
+      debugLog('Game over triggered - no lives left');
       
       // Show game over screen after a short delay
       setTimeout(() => {
@@ -490,16 +490,16 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function updateLivesDisplay() {
-    console.log('Updating lives display. Current lives:', lives);
+    debugLog('Updating lives display. Current lives:', lives);
     
     // Update heart images for all 6 hearts
     for (let i = 1; i <= 6; i++) {
       const heartElement = document.getElementById(`heart${i}`);
       if (heartElement) {
         heartElement.src = i <= lives ? "/games/phish404/img/heart.gif" : "/games/phish404/img/heart-deplete.png";
-        console.log(`Heart ${i} updated to ${i <= lives ? 'active' : 'depleted'}`);
+        debugLog(`Heart ${i} updated to ${i <= lives ? 'active' : 'depleted'}`);
       } else {
-        console.error(`Heart element ${i} not found`);
+        debugError(`Heart element ${i} not found`);
       }
     }
     
@@ -507,7 +507,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const livesCounter = document.getElementById('lives');
     if (livesCounter) {
       livesCounter.textContent = lives;
-      console.log('Lives counter updated to:', lives);
+      debugLog('Lives counter updated to:', lives);
     }
   }
   
@@ -556,11 +556,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Define loseLife function
   function loseLife() {
-    console.log('loseLife function called', new Date().toISOString());
+    debugLog('loseLife function called', new Date().toISOString());
     
     // Don't lose life if already game over
     if (gameOver) {
-      console.log('Game already over, not losing life');
+      debugLog('Game already over, not losing life');
       return;
     }
     
@@ -576,21 +576,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Don't lose life if already invincible
     if (player && player.isInvincible) {
-      console.log('Player is invincible, not losing life');
+      debugLog('Player is invincible, not losing life');
       return;
     }
     
     // Decrease lives and update display
     lives--;
-    console.log('Life lost! Lives remaining:', lives);
+    debugLog('Life lost! Lives remaining:', lives);
     
     // Force update the lives display
     const livesDisplay = document.getElementById('lives');
     if (livesDisplay) {
       livesDisplay.textContent = lives;
-      console.log('Lives display updated to:', lives);
+      debugLog('Lives display updated to:', lives);
     } else {
-      console.error('Lives display element not found');
+      debugError('Lives display element not found');
     }
     
     // Call the standard update function as well
@@ -599,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // If no lives left, game over
     if (lives <= 0) {
       gameOver = true;
-      console.log('Game over, no lives left');
+      debugLog('Game over, no lives left');
       
       // Show game over screen after a short delay to allow the hit animation to complete
       setTimeout(() => {
@@ -633,7 +633,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
               if (player) {
                 player.isInvincible = false;
-                console.log('Player is no longer invincible');
+                debugLog('Player is no longer invincible');
               }
             }, 500);
           }
@@ -647,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Resume the game after a short delay (1 second)
     setTimeout(() => {
       if (!gameOver) {
-        console.log('Resuming game after life loss');
+        debugLog('Resuming game after life loss');
         startGameLoop();
       }
     }, 1000);
@@ -662,22 +662,22 @@ document.addEventListener('DOMContentLoaded', function() {
   let gameAnimationId = null;
   
   function startGameLoop() {
-    console.log('Starting game loop');
+    debugLog('Starting game loop');
     if (!gameLoopRunning) {
       gameLoopRunning = true;
       gameAnimationId = requestAnimationFrame(gameLoop);
-      console.log('Game loop started, running:', gameLoopRunning);
+      debugLog('Game loop started, running:', gameLoopRunning);
     } else {
-      console.log('Game loop already running with ID:', gameAnimationId);
+      debugLog('Game loop already running with ID:', gameAnimationId);
     }
   }
   
   function stopGameLoop() {
-    console.log('Stopping game loop');
+    debugLog('Stopping game loop');
     if (gameLoopRunning) {
       cancelAnimationFrame(gameAnimationId);
       gameLoopRunning = false;
-      console.log('Game loop stopped, running:', gameLoopRunning);
+      debugLog('Game loop stopped, running:', gameLoopRunning);
     }
   }
   
@@ -689,11 +689,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (shouldPause) {
       // Add this reason to pause reasons
       gamePausedReasons[reason] = true;
-      console.log(`Game paused for reason: ${reason}`, gamePausedReasons);
+      debugLog(`Game paused for reason: ${reason}`, gamePausedReasons);
     } else {
       // Remove this reason from pause reasons
       delete gamePausedReasons[reason];
-      console.log(`Game resumed for reason: ${reason}`, gamePausedReasons);
+      debugLog(`Game resumed for reason: ${reason}`, gamePausedReasons);
     }
     
     // Game is paused if there's at least one reason to pause
@@ -711,14 +711,14 @@ document.addEventListener('DOMContentLoaded', function() {
   function gameLoop(currentTime) {
     // If popup is visible, don't process game logic but continue the animation loop
     if (popupVisible) {
-      console.log('Game logic paused due to popup visible');
+      debugLog('Game logic paused due to popup visible');
       gameAnimationId = requestAnimationFrame(gameLoop);
       return;
     }
     
     // If game is over, don't continue processing
     if (gameOver) {
-      console.log('Game loop paused due to gameOver state');
+      debugLog('Game loop paused due to gameOver state');
       return;
     }
     
@@ -786,14 +786,14 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Debug logging when the flag changes
       if (oldValue !== isHackerLoading) {
-        console.log(`GAME LOOP: window.hackerIsLoading changed from ${oldValue} to ${isHackerLoading}`);
+        debugLog(`GAME LOOP: window.hackerIsLoading changed from ${oldValue} to ${isHackerLoading}`);
       }
     }
     
     // Debug logging (throttled to avoid console spam)
     const now = Date.now();
     if (now - (hackerController.lastDebugLog || 0) > 2000) { // Log every 2 seconds
-      console.log('Hacker state - Active:', isHackerActive, 'Loading:', isHackerLoading);
+      debugLog('Hacker state - Active:', isHackerActive, 'Loading:', isHackerLoading);
       hackerController.lastDebugLog = now;
     }
     
@@ -803,11 +803,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (player && shieldController.checkCollision) {
         const shieldCollected = shieldController.checkCollision(player);
         if (shieldCollected) {
-          console.log('Player collected a shield!');
+          debugLog('Player collected a shield!');
         }
       }
     } else {
-      console.error('Shield controller not available in game loop!');
+      debugError('Shield controller not available in game loop!');
     }
     
     // Update attack powerups during hacker loading phase
@@ -816,12 +816,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if (player && attackPowerupController.checkCollision) {
         const attackPowerupCollected = attackPowerupController.checkCollision(player);
         if (attackPowerupCollected) {
-          console.log('Player collected an attack powerup!');
+          debugLog('Player collected an attack powerup!');
           // Add any power-up collection logic here
         }
       }
     } else {
-      console.error('Attack powerup controller not available in game loop!');
+      debugError('Attack powerup controller not available in game loop!');
     }
     
     // Update electric ball controller
@@ -840,10 +840,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (hackerController.checkProjectileCollisions) {
       const projectileHit = hackerController.checkProjectileCollisions(player);
       if (projectileHit) {
-        console.log('Player hit by hacker projectile!');
+        debugLog('Player hit by hacker projectile!');
       }
     } else {
-      console.error('hackerController.checkProjectileCollisions is not a function');
+      debugError('hackerController.checkProjectileCollisions is not a function');
     }
     
     // Draw player
@@ -870,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (window.hackerIsLoading) {
-      console.log('Hacker loading phase - drawing all collectibles but skipping some obstacles');
+      debugLog('Hacker loading phase - drawing all collectibles but skipping some obstacles');
     }
     
     // Draw hacker obstacles - always draw the hacker itself, but conditionally draw projectiles
@@ -879,18 +879,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Draw shield powerups - ALWAYS draw for debugging
     if (shieldController) {
-      console.log('Drawing shield powerups (debug mode)');
+      debugLog('Drawing shield powerups (debug mode)');
       shieldController.draw(ctx);
     } else {
-      console.error('Shield controller not available for drawing!');
+      debugError('Shield controller not available for drawing!');
     }
     
     // Draw attack powerups
     if (attackPowerupController) {
-      console.log('Drawing attack powerups');
+      debugLog('Drawing attack powerups');
       attackPowerupController.draw(ctx);
     } else {
-      console.error('Attack powerup controller not available for drawing!');
+      debugError('Attack powerup controller not available for drawing!');
     }
     
     // Draw electric ball effects
@@ -937,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // 4. Play special power-up sound
       burgerSound.currentTime = 0;
-      burgerSound.play().catch(e => console.log("Error playing burger sound:", e));
+      burgerSound.play().catch(e => debugLog("Error playing burger sound:", e));
       
       // 5. Visual feedback (flash screen)
       canvas.style.animation = 'flash 0.5s';
@@ -957,7 +957,7 @@ document.addEventListener('DOMContentLoaded', function() {
           
           // If shield absorbed the hit, log it
           if (!damageResult) {
-            console.log('Shield protected player from virus!');
+            debugLog('Shield protected player from virus!');
             // Note: The shield guard sound is now played in the player.takeDamage method
           }
         } else {
@@ -967,18 +967,18 @@ document.addEventListener('DOMContentLoaded', function() {
           } else if (window.game && typeof window.game.loseLife === 'function') {
             window.game.loseLife();
           } else {
-            console.error('loseLife function not found!');
+            debugError('loseLife function not found!');
           }
           
           // Play cat hit sound
           catHitSound.volume = gameVolume;
           if (!isMuted) {
-            catHitSound.play().catch(e => console.log("Error playing cat hit sound:", e));
+            catHitSound.play().catch(e => debugLog("Error playing cat hit sound:", e));
           }
         }
       }
     } else {
-      console.log('Skipping skull collision detection during hacker loading phase');
+      debugLog('Skipping skull collision detection during hacker loading phase');
     }
     
     // Check for hacker collisions
@@ -990,26 +990,26 @@ document.addEventListener('DOMContentLoaded', function() {
       } else if (window.game && typeof window.game.loseLife === 'function') {
         window.game.loseLife();
       } else {
-        console.error('loseLife function not found!');
+        debugError('loseLife function not found!');
       }
       
       // Play wrong sound
       wrongSound.currentTime = 0;
-      wrongSound.play().catch(e => console.log("Error playing wrong sound:", e));
+      wrongSound.play().catch(e => debugLog("Error playing wrong sound:", e));
     }
     
     // Check for projectile collisions from the hacker
-    console.log('Checking for projectile collisions in game loop');
+    debugLog('Checking for projectile collisions in game loop');
     const projectileCollision = hackerController.checkProjectileCollisions(player);
-    console.log('Projectile collision result:', projectileCollision);
+    debugLog('Projectile collision result:', projectileCollision);
     
     if (projectileCollision) {
-      console.log('PROJECTILE HIT DETECTED! Losing a life...');
+      debugLog('PROJECTILE HIT DETECTED! Losing a life...');
       // Lose a life when hit by a projectile
       if (typeof loseLife === 'function') {
         loseLife();
       } else {
-        console.error('loseLife function not found!');
+        debugError('loseLife function not found!');
         // Fallback to direct life decrement if loseLife is not available
         lives--;
         updateLivesDisplay();
@@ -1033,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Play cat meow sound when energy is low (if not already played)
         if (!isEnergyWarningSound) {
           catMeowSound.currentTime = 0;
-          catMeowSound.play().catch(e => console.log("Error playing meow sound:", e));
+          catMeowSound.play().catch(e => debugLog("Error playing meow sound:", e));
           isEnergyWarningSound = true;
           
           // Reset the sound flag after a delay
@@ -1048,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const collision = obstacleController.collideWith(player);
 
     if (collision) {
-      console.log('Collision detected with:', collision.type);
+      debugLog('Collision detected with:', collision.type);
       if (collision.type === 'email') {
         showEmailPhishingPopup();
         return; // Early return to prevent further game loop execution
@@ -1081,17 +1081,17 @@ document.addEventListener('DOMContentLoaded', function() {
     correctSound.currentTime = 0;
     correctSound.play();
     
-    console.log(`Player leveled up to level ${playerLevel}`);
+    debugLog(`Player leveled up to level ${playerLevel}`);
   }
 
   // Popup result functions
   function showResultPopup(isPhished) {
-    console.log(`Showing result popup. isPhished: ${isPhished}`);
+    debugLog(`Showing result popup. isPhished: ${isPhished}`);
     const resultPopup = document.getElementById('resultPopup');
     const resultTitle = document.getElementById('resultTitle');
 
     if (!resultPopup) {
-      console.error('Result popup element not found!');
+      debugError('Result popup element not found!');
       return;
     }
     
@@ -1112,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Add new event listener
       newButton.onclick = function() {
-        console.log('Result popup continue button clicked');
+        debugLog('Result popup continue button clicked');
         resultPopup.style.display = 'none';
         popupVisible = false;
         
@@ -1120,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resumeGameAfterPopup();
       };
     } else {
-      console.error('Continue button not found in result popup');
+      debugError('Continue button not found in result popup');
     }
     
     // Set message based on whether player was phished
@@ -1136,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Function to explicitly resume the game after popup interactions
   function resumeGameAfterPopup() {
-    console.log('Resuming game after popup, preserving coin count', new Date().toISOString());
+    debugLog('Resuming game after popup, preserving coin count', new Date().toISOString());
     
     // Hide all popups to ensure they're closed
     document.getElementById('resultPopup').style.display = 'none';
@@ -1184,15 +1184,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start the game loop with a small delay to ensure everything is ready
     setTimeout(() => {
-      console.log('Starting game loop after resume');
+      debugLog('Starting game loop after resume');
       gameAnimationId = requestAnimationFrame(gameLoop);
     }, 100);
   }
   
   // Function to show legitimate email education result
   function showLegitimateEmailResult() {
-    console.log('[LegitimateResult] Showing legitimate email education popup');
-    console.log('[LegitimateResult] Current email data:', currentEmailData);
+    debugLog('[LegitimateResult] Showing legitimate email education popup');
+    debugLog('[LegitimateResult] Current email data:', currentEmailData);
     
     // Update the result popup with legitimate email information (using correct HTML element IDs)
     const resultTitle = document.getElementById('resultTitle');
@@ -1211,22 +1211,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clear and update email details with legitimate email data
     if (phishingIntent) {
       phishingIntent.textContent = currentEmailData?.intent || 'Legitimate Communication';
-      console.log('[LegitimateResult] Updated intent to:', currentEmailData?.intent);
+      debugLog('[LegitimateResult] Updated intent to:', currentEmailData?.intent);
     }
     if (phishingTechnique) {
       phishingTechnique.textContent = currentEmailData?.technique || 'N/A';
-      console.log('[LegitimateResult] Updated technique to:', currentEmailData?.technique);
+      debugLog('[LegitimateResult] Updated technique to:', currentEmailData?.technique);
     }
     if (phishingTarget) {
       phishingTarget.textContent = currentEmailData?.target || 'General';
-      console.log('[LegitimateResult] Updated target to:', currentEmailData?.target);
+      debugLog('[LegitimateResult] Updated target to:', currentEmailData?.target);
     }
     
     // Clear and update label
     if (phishingLabel) {
       phishingLabel.textContent = 'LEGITIMATE';
       phishingLabel.style.color = '#4CAF50'; // Green for legitimate
-      console.log('[LegitimateResult] Updated label to: LEGITIMATE');
+      debugLog('[LegitimateResult] Updated label to: LEGITIMATE');
     }
     
     if (resultMessage) {
@@ -1256,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', function() {
         continueButton.parentNode.replaceChild(newButton, continueButton);
         
         newButton.onclick = function() {
-          console.log('Legitimate result popup continue button clicked');
+          debugLog('Legitimate result popup continue button clicked');
           resultPopup.style.display = 'none';
           popupVisible = false;
           resumeGameAfterPopup();
@@ -1264,11 +1264,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    console.log('[LegitimateResult] Result popup displayed');
+    debugLog('[LegitimateResult] Result popup displayed');
   }
 
   function closeResultPopup() {
-    console.log('Closing result popup, lives:', lives);
+    debugLog('Closing result popup, lives:', lives);
     document.getElementById('resultPopup').style.display = 'none';
     document.getElementById('vishingResultPopup').style.display = 'none';
     document.getElementById('emailPopup').style.display = 'none';
@@ -1290,18 +1290,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (lives > 0) {
       resumeGame();
     } else {
-      console.log('Resetting game');
+      debugLog('Resetting game');
       resetGame();
     }
   }
 
   function showVishingResultPopup(isPhished) {
-    console.log(`Showing vishing result popup. isPhished: ${isPhished}`);
+    debugLog(`Showing vishing result popup. isPhished: ${isPhished}`);
     const vishingResultPopup = document.getElementById('vishingResultPopup');
     const vishingResultTitle = document.getElementById('vishingResultTitle');
     
     if (!vishingResultPopup) {
-      console.error('Vishing result popup element not found!');
+      debugError('Vishing result popup element not found!');
       return;
     }
     
@@ -1322,7 +1322,7 @@ document.addEventListener('DOMContentLoaded', function() {
       continueButton.parentNode.replaceChild(newButton, continueButton);
       
       newButton.onclick = function() {
-        console.log('Vishing result popup continue button clicked');
+        debugLog('Vishing result popup continue button clicked');
         vishingResultPopup.style.display = 'none';
         popupVisible = false;
         
@@ -1334,15 +1334,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Resume game if lives remaining, otherwise reset
         if (lives > 0) {
-          console.log('Lives remaining, resuming game after vishing popup');
+          debugLog('Lives remaining, resuming game after vishing popup');
           resumeGame();
         } else {
-          console.log('No lives remaining, resetting game after vishing popup');
+          debugLog('No lives remaining, resetting game after vishing popup');
           resetGame();
         }
       };
     } else {
-      console.error('Continue button not found in vishing result popup');
+      debugError('Continue button not found in vishing result popup');
     }
     
     // Set message based on whether player was vished
@@ -1355,12 +1355,12 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    console.log('Vishing result popup shown, popupVisible:', popupVisible);
+    debugLog('Vishing result popup shown, popupVisible:', popupVisible);
   }
 
   // Setup keyboard event listeners
   function setupKeyboardListeners() {
-    console.log('Setting up keyboard listeners');
+    debugLog('Setting up keyboard listeners');
     // Remove any existing listeners first to prevent duplicates
     document.removeEventListener('keydown', handleKeyDown);
     document.removeEventListener('keyup', handleKeyUp);
@@ -1368,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add fresh listeners
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
-    console.log('Keyboard listeners set up');
+    debugLog('Keyboard listeners set up');
   }
   
   // Handle keydown events
@@ -1398,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Make resumeGame globally accessible for inline HTML handlers
   window.resumeGame = function() {
-    console.log('Resuming game from global handler, lives:', lives);
+    debugLog('Resuming game from global handler, lives:', lives);
     // Reset game state flags
     gameOver = false;
     popupVisible = false;
@@ -1417,10 +1417,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start the game loop with a slight delay to ensure everything is ready
     setTimeout(() => {
       startGameLoop();
-      console.log('Game loop started after delay');
+      debugLog('Game loop started after delay');
     }, 100);
     
-    console.log('Game resumed');
+    debugLog('Game resumed');
   };
   
   function resumeGame() {
@@ -1429,13 +1429,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   function closeVishingResultPopup() {
-    console.log('Closing vishing result popup, lives:', lives);
+    debugLog('Closing vishing result popup, lives:', lives);
     document.getElementById('vishingResultPopup').style.display = 'none';
     popupVisible = false; // Reset popup visible flag
     if (lives > 0) {
       resumeGame();
     } else {
-      console.log('Resetting game');
+      debugLog('Resetting game');
       resetGame();
     }
   }
@@ -1501,12 +1501,12 @@ document.addEventListener('DOMContentLoaded', function() {
     emailPopupShownAt = Date.now();
     currentEmailCategory = emailCategoryFromData(currentEmailData);
     
-    console.log('[EmailPopup] Selected email data:', currentEmailData);
+    debugLog('[EmailPopup] Selected email data:', currentEmailData);
     
     // Update email popup content
     document.getElementById('emailFrom').innerHTML = `From: ${currentEmailData.spoofed_sender}`;
     document.getElementById('emailSubject').innerHTML = `Subject: ${currentEmailData.subject}`;
-    console.log('[EmailPopup] Updated email popup with:', {
+    debugLog('[EmailPopup] Updated email popup with:', {
       sender: currentEmailData.spoofed_sender,
       subject: currentEmailData.subject,
       intent: currentEmailData.intent,
@@ -1543,7 +1543,7 @@ document.addEventListener('DOMContentLoaded', function() {
         attachment.addEventListener('click', (e) => {
           e.preventDefault();
           const filename = attachment.getAttribute('data-filename');
-          console.log('Attachment clicked:', filename);
+          debugLog('Attachment clicked:', filename);
           
           if (currentEmailData.label === 'phishing') {
             // Show phishing result for malicious attachments
@@ -1573,7 +1573,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('emailPopup').style.display = 'none';
     
     // Debug: Log current email data
-    console.log('[PhishingResult] Current email data:', currentEmailData);
+    debugLog('[PhishingResult] Current email data:', currentEmailData);
     
     // Update result popup with phishing details
     const resultTitle = document.getElementById('resultTitle');
@@ -1588,20 +1588,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (phishingIntent) {
       phishingIntent.innerHTML = currentEmailData.intent || 'Unknown Intent';
-      console.log('[PhishingResult] Set intent to:', currentEmailData.intent);
+      debugLog('[PhishingResult] Set intent to:', currentEmailData.intent);
     }
     if (phishingTechnique) {
       phishingTechnique.innerHTML = currentEmailData.technique || 'Unknown Technique';
-      console.log('[PhishingResult] Set technique to:', currentEmailData.technique);
+      debugLog('[PhishingResult] Set technique to:', currentEmailData.technique);
     }
     if (phishingTarget) {
       phishingTarget.innerHTML = currentEmailData.target || 'Unknown Target';
-      console.log('[PhishingResult] Set target to:', currentEmailData.target);
+      debugLog('[PhishingResult] Set target to:', currentEmailData.target);
     }
     if (phishingLabel) {
       phishingLabel.innerHTML = (currentEmailData.label || 'unknown').toUpperCase();
       phishingLabel.style.color = currentEmailData.label === 'phishing' ? '#FF5555' : '#00AA00';
-      console.log('[PhishingResult] Set label to:', currentEmailData.label);
+      debugLog('[PhishingResult] Set label to:', currentEmailData.label);
     }
     
     // Update message content for phishing emails
@@ -1618,12 +1618,12 @@ document.addEventListener('DOMContentLoaded', function() {
         </ul>
         <p><strong>Stay alert. Stop. Think twice before you click!</strong></p>
       `;
-      console.log('[PhishingResult] Updated message content for phishing email');
+      debugLog('[PhishingResult] Updated message content for phishing email');
     }
     
     // Show result popup
     document.getElementById('resultPopup').style.display = 'block';
-    console.log('[PhishingResult] Result popup displayed');
+    debugLog('[PhishingResult] Result popup displayed');
   }
 
   // Function to hide email popup
@@ -1634,11 +1634,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Function to show vishing result popup with appropriate content
   function showVishingResultPopup(isFailure) {
-    console.log('[VishingResult] Showing vishing result popup, isFailure:', isFailure);
+    debugLog('[VishingResult] Showing vishing result popup, isFailure:', isFailure);
     
     // Get current voice call data to determine if it was legitimate or vishing
     const currentCall = window.currentVoiceCall || { isPhishing: true };
-    console.log('[VishingResult] Current call data:', currentCall);
+    debugLog('[VishingResult] Current call data:', currentCall);
     
     // Update the vishing result popup content
     const vishingResultTitle = document.getElementById('vishingResultTitle');
@@ -1738,7 +1738,7 @@ document.addEventListener('DOMContentLoaded', function() {
       vishingResultPopup.style.display = 'block';
       popupVisible = true;
       
-      console.log('[VishingResult] Vishing result popup displayed');
+      debugLog('[VishingResult] Vishing result popup displayed');
     }
   }
   
@@ -1786,7 +1786,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Voice call popup is now ready with simplified UI (no caller info)
       
-      console.log('Playing voice call:', {
+      debugLog('Playing voice call:', {
         isPhishing: voiceCallData.isPhishing,
         correctChoice: window.voiceCallManager.getCorrectChoice(voiceCallData.isPhishing),
         caller: voiceCallData.caller.name,
@@ -1827,7 +1827,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentAudio.currentTime = 0;
         await currentAudio.play();
       } catch (error) {
-        console.error('Error setting up Web Audio API, falling back to standard audio:', error);
+        debugError('Error setting up Web Audio API, falling back to standard audio:', error);
         // Fallback to standard audio if Web Audio API fails
         currentAudio.volume = isMuted ? 0 : Math.min(gameVolume * 1.5, 1.0); // Still boost volume a bit
         await currentAudio.play();
@@ -1841,17 +1841,17 @@ document.addEventListener('DOMContentLoaded', function() {
       currentAudio.onended = function() {
         showAudioIndicator(false);
         updateCallStatus('WAITING FOR RESPONSE', '#ffaa00');
-        console.log('Voice call audio ended, waiting for user response');
+        debugLog('Voice call audio ended, waiting for user response');
       };
       
     } catch (error) {
-      console.error('Error loading voice call:', error);
+      debugError('Error loading voice call:', error);
       
       // Fallback to original vishing sound
       vishingSound.currentTime = 0;
       vishingSound.volume = isMuted ? 0 : gameVolume;
       vishingSound.play()
-        .catch(err => console.log('Error playing fallback vishing sound:', err));
+        .catch(err => debugLog('Error playing fallback vishing sound:', err));
       
       // Set fallback voice call data
       window.currentVoiceCall = {
@@ -1869,14 +1869,14 @@ document.addEventListener('DOMContentLoaded', function() {
         phoneSkipBtn.style.opacity = '1';
         phoneDoItBtn.style.cursor = 'pointer';
         phoneSkipBtn.style.cursor = 'pointer';
-        console.log('Fallback vishing audio ended, buttons enabled');
+        debugLog('Fallback vishing audio ended, buttons enabled');
       };
     }
     
     // Show the phone popup with options
     document.getElementById('phonePopup').style.display = 'block';
     phonePopupShownAt = Date.now();
-    console.log('[PhonePopup] Phone popup displayed');
+    debugLog('[PhonePopup] Phone popup displayed');
   }
 
   // Create audio objects once to prevent duplication
@@ -1977,12 +1977,12 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Force create a shield for testing
   setTimeout(() => {
-    console.log('FORCING SHIELD CREATION FOR TESTING');
+    debugLog('FORCING SHIELD CREATION FOR TESTING');
     if (window.shieldController) {
       window.shieldController.debugMode = true;
       window.shieldController.spawnShield(true);
     } else {
-      console.error('Shield controller not initialized!');
+      debugError('Shield controller not initialized!');
     }
   }, 3000); // Wait 3 seconds after game starts
   
@@ -2005,7 +2005,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Add event listeners for popup close buttons
   function setupPopupEventListeners() {
-    console.log('Setting up popup event listeners');
+    debugLog('Setting up popup event listeners');
     
     // Find all close buttons in result popups
     const resultPopupButtons = document.querySelectorAll('#resultPopup button');
@@ -2013,20 +2013,20 @@ document.addEventListener('DOMContentLoaded', function() {
       // Add event listener to all buttons in the result popup
       resultPopupButtons.forEach(button => {
         button.addEventListener('click', function() {
-          console.log('Result popup close button clicked', new Date().toISOString());
+          debugLog('Result popup close button clicked', new Date().toISOString());
           document.getElementById('resultPopup').style.display = 'none';
           if (lives > 0) {
-            console.log('Lives remaining, resuming game');
+            debugLog('Lives remaining, resuming game');
             resumeGame();
           } else {
-            console.log('No lives remaining, resetting game');
+            debugLog('No lives remaining, resetting game');
             resetGame();
           }
         });
       });
-      console.log('Result popup close button listeners added');
+      debugLog('Result popup close button listeners added');
     } else {
-      console.error('Could not find any buttons in the result popup');
+      debugError('Could not find any buttons in the result popup');
     }
     
     // Find all close buttons in vishing result popup
@@ -2039,7 +2039,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add fresh event listener
         button.addEventListener('click', function() {
-          console.log('Vishing popup close button clicked', new Date().toISOString());
+          debugLog('Vishing popup close button clicked', new Date().toISOString());
           document.getElementById('vishingResultPopup').style.display = 'none';
           popupVisible = false; // Reset popup visible flag
           
@@ -2049,7 +2049,7 @@ document.addEventListener('DOMContentLoaded', function() {
           if (obstacleController) obstacleController.draw(ctx);
           
           if (lives > 0) {
-            console.log('Lives remaining, resuming game');
+            debugLog('Lives remaining, resuming game');
             // Use a direct approach to resume the game
             gameOver = false;
             waitingToStart = false;
@@ -2060,17 +2060,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // Start the game loop with a slight delay
             setTimeout(() => {
               startGameLoop();
-              console.log('Game loop started after vishing popup close');
+              debugLog('Game loop started after vishing popup close');
             }, 100);
           } else {
-            console.log('No lives remaining, resetting game');
+            debugLog('No lives remaining, resetting game');
             resetGame();
           }
         });
       });
-      console.log('Vishing popup close button listeners added');
+      debugLog('Vishing popup close button listeners added');
     } else {
-      console.error('Could not find any buttons in the vishing popup');
+      debugError('Could not find any buttons in the vishing popup');
     }
     
     // Add event handlers for phone popup buttons
@@ -2080,13 +2080,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (phoneDoItBtn && phoneSkipBtn) {
       // "Safe to Accept" button - dynamic logic based on voice call type
       phoneDoItBtn.addEventListener('click', function() {
-        console.log('Phone "Safe to Accept" button clicked');
+        debugLog('Phone "Safe to Accept" button clicked');
         
         // Stop any playing audio immediately when button is clicked
         if (window.voiceCallManager && window.voiceCallManager.currentAudio) {
           window.voiceCallManager.currentAudio.pause();
           window.voiceCallManager.currentAudio.currentTime = 0;
-          console.log('Voice call audio stopped');
+          debugLog('Voice call audio stopped');
         }
         
         // Hide popup and update call status
@@ -2098,7 +2098,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const correctChoice = window.voiceCallManager.getCorrectChoice(currentCall.isPhishing);
         const isCorrectChoice = correctChoice === 'doIt';
         
-        console.log('Voice call analysis:', {
+        debugLog('Voice call analysis:', {
           isPhishing: currentCall.isPhishing,
           correctChoice: correctChoice,
           playerChoice: 'doIt',
@@ -2130,14 +2130,14 @@ document.addEventListener('DOMContentLoaded', function() {
           const lifeLost = decrementLife();
           
           if (lifeLost) {
-            console.log('Showing vishing result popup after life loss');
+            debugLog('Showing vishing result popup after life loss');
             // Show vishing result popup and let it handle game resumption
             showVishingResultPopup(true); // true = failure
           } else if (gameOver) {
-            console.log('Game over already triggered from phone popup');
+            debugLog('Game over already triggered from phone popup');
             showGameOver();
           } else {
-            console.error('Failed to process life loss from phone popup');
+            debugError('Failed to process life loss from phone popup');
             // Still show the vishing result popup even if life decrement failed
             showVishingResultPopup(true);
           }
@@ -2146,13 +2146,13 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // "Skip" button - dynamic logic based on voice call type
       phoneSkipBtn.addEventListener('click', function() {
-        console.log('Phone "Skip" button clicked');
+        debugLog('Phone "Skip" button clicked');
         
         // Stop any playing audio immediately when button is clicked
         if (window.voiceCallManager && window.voiceCallManager.currentAudio) {
           window.voiceCallManager.currentAudio.pause();
           window.voiceCallManager.currentAudio.currentTime = 0;
-          console.log('Voice call audio stopped');
+          debugLog('Voice call audio stopped');
         }
         
         // Hide popup and update call status
@@ -2164,7 +2164,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const correctChoice = window.voiceCallManager.getCorrectChoice(currentCall.isPhishing);
         const isCorrectChoice = correctChoice === 'skip';
         
-        console.log('Voice call analysis:', {
+        debugLog('Voice call analysis:', {
           isPhishing: currentCall.isPhishing,
           correctChoice: correctChoice,
           playerChoice: 'skip',
@@ -2196,14 +2196,14 @@ document.addEventListener('DOMContentLoaded', function() {
           const lifeLost = decrementLife();
           
           if (lifeLost) {
-            console.log('Showing vishing result popup after life loss');
+            debugLog('Showing vishing result popup after life loss');
             // Show vishing result popup and let it handle game resumption
             showVishingResultPopup(true); // true = failure
           } else if (gameOver) {
-            console.log('Game over already triggered from phone popup');
+            debugLog('Game over already triggered from phone popup');
             showGameOver();
           } else {
-            console.error('Failed to process life loss from phone popup');
+            debugError('Failed to process life loss from phone popup');
             // Still show the vishing result popup even if life decrement failed
             showVishingResultPopup(true);
           }
@@ -2213,9 +2213,9 @@ document.addEventListener('DOMContentLoaded', function() {
         resumeGameAfterPopup();
       });
       
-      console.log('Phone popup button listeners added');
+      debugLog('Phone popup button listeners added');
     } else {
-      console.error('Could not find phone popup buttons');
+      debugError('Could not find phone popup buttons');
     }
   }
   
@@ -2230,7 +2230,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize audio controls
     initAudioControls();
     
-    console.log('All event listeners initialized');
+    debugLog('All event listeners initialized');
   }
   
   // Initialize all event listeners with a short delay to ensure DOM is ready
@@ -2250,7 +2250,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const backgroundMusic = document.getElementById('backgroundMusic');
     
     if (!audioControls || !volumeSlider || !muteButton || !musicButton) {
-      console.log('Audio control elements not found');
+      debugLog('Audio control elements not found');
       return;
     }
     
@@ -2308,7 +2308,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const startMusic = () => {
       if (backgroundMusic && !isMuted && musicEnabled) {
         backgroundMusic.volume = gameVolume * 0.5; // Background music at half volume
-        backgroundMusic.play().catch(error => console.log('Error playing background music:', error));
+        backgroundMusic.play().catch(error => debugLog('Error playing background music:', error));
       }
       
       // Show audio controls after first interaction
@@ -2362,7 +2362,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (backgroundMusic) {
         if (musicEnabled && !isMuted) {
           backgroundMusic.volume = gameVolume * 0.5;
-          backgroundMusic.play().catch(error => console.log('Error playing music:', error));
+          backgroundMusic.play().catch(error => debugLog('Error playing music:', error));
         } else {
           backgroundMusic.pause();
         }
@@ -2386,7 +2386,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (backgroundMusic) {
       if (musicEnabled && !isMuted) {
         backgroundMusic.volume = volume * 0.5;
-        backgroundMusic.play().catch(error => console.log('Error playing music:', error));
+        backgroundMusic.play().catch(error => debugLog('Error playing music:', error));
       } else {
         backgroundMusic.pause();
       }
@@ -2407,30 +2407,30 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to safely decrement player lives
   function decrementLife() {
     if (isProcessingLifeLoss) {
-      console.log('Life loss already being processed, ignoring duplicate call');
+      debugLog('Life loss already being processed, ignoring duplicate call');
       return false;
     }
 
     if (lives <= 0) {
-      console.log('No lives left, cannot decrement further');
+      debugLog('No lives left, cannot decrement further');
       return false;
     }
 
     isProcessingLifeLoss = true;
     try {
       lives--;
-      console.log('Life decremented. Remaining lives:', lives);
+      debugLog('Life decremented. Remaining lives:', lives);
       updateLivesDisplay();
       
       if (lives <= 0) {
-        console.log('No lives remaining, showing game over');
+        debugLog('No lives remaining, showing game over');
         gameOver = true;
         setTimeout(() => showGameOver(), 500); // Small delay before showing game over
       }
       
       return true;
     } catch (error) {
-      console.error('Error in decrementLife:', error);
+      debugError('Error in decrementLife:', error);
       return false;
     } finally {
       isProcessingLifeLoss = false;
@@ -2439,7 +2439,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Function to reset the game to initial state
   function resetGame() {
-    console.log('Resetting game to initial state');
+    debugLog('Resetting game to initial state');
     
     // Reset game state
     gameOver = false;
@@ -2474,7 +2474,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset voice call manager
     if (window.voiceCallManager) {
       window.voiceCallManager.reset();
-      console.log('Voice call manager reset');
+      debugLog('Voice call manager reset');
     }
     
     // Update UI
@@ -2495,12 +2495,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset game loop
     stopGameLoop();
     
-    console.log('Game has been reset');
+    debugLog('Game has been reset');
   }
   
   // Function to show game over screen with flashy effects
   function showGameOver() {
-    console.log('Showing game over screen - triggering React GameOverModal');
+    debugLog('Showing game over screen - triggering React GameOverModal');
     
     // Save telemetry stats before showing game over
     if (window.GameTelemetry && coinController) {
@@ -2534,7 +2534,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Play game over sound
     gameOverSound.currentTime = 0;
     gameOverSound.volume = isMuted ? 0 : gameVolume;
-    gameOverSound.play().catch(e => console.log('Error playing game over sound:', e));
+    gameOverSound.play().catch(e => debugLog('Error playing game over sound:', e));
     
     // Stop background music
     const backgroundMusic = document.getElementById('backgroundMusic');
@@ -2554,7 +2554,7 @@ document.addEventListener('DOMContentLoaded', function() {
         lives: lives || 0,
         timestamp: Date.now()
       };
-      console.log('Sending game over message to parent:', gameOverData);
+      debugLog('Sending game over message to parent:', gameOverData);
       // Use '*' as target origin to ensure message is delivered
       window.parent.postMessage(gameOverData, '*');
     }
@@ -2565,7 +2565,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to handle game resumption after popup
   function resumeGameAfterPopup() {
-    console.log('Resuming game after popup, preserving coin count');
+    debugLog('Resuming game after popup, preserving coin count');
     
     // Hide all popups
     document.getElementById('resultPopup').style.display = 'none';
@@ -2588,27 +2588,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Don't reset controllers here - we want to preserve the game state
     // Just make sure the game loop is running
     if (typeof gameLoopRunning === 'undefined' || !gameLoopRunning) {
-      console.log('Game loop was stopped or not defined, starting it');
+      debugLog('Game loop was stopped or not defined, starting it');
       stopGameLoop(); // Ensure any existing loop is stopped
       startGameLoop();
     } else {
-      console.log('Game loop already running, not restarting');
+      debugLog('Game loop already running, not restarting');
     }
     
-    console.log('Game resumed after popup. Game loop running:', gameLoopRunning);
+    debugLog('Game resumed after popup. Game loop running:', gameLoopRunning);
   }
 
   // Event listeners for popups
   const emailCleanBtn = document.getElementById('emailClean');
   if (emailCleanBtn) {
     emailCleanBtn.addEventListener('click', () => {
-      console.log('Email Clean button clicked', new Date().toISOString());
+      debugLog('Email Clean button clicked', new Date().toISOString());
       document.getElementById('emailPopup').style.display = 'none';
 
       // Check if this is a legitimate or phishing email
       if (currentEmailData && currentEmailData.label === 'legitimate') {
         // Correct action for legitimate email
-        console.log('Correct choice - legitimate email marked as clean');
+        debugLog('Correct choice - legitimate email marked as clean');
         correctSound.currentTime = 0;
         correctSound.play();
         
@@ -2620,7 +2620,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showLegitimateEmailResult();
       } else {
         // Wrong action for phishing email
-        console.log('Wrong choice - phishing email marked as clean');
+        debugLog('Wrong choice - phishing email marked as clean');
         wrongSound.currentTime = 0;
         wrongSound.play();
         
@@ -2628,25 +2628,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const lifeLost = decrementLife();
         
         if (lifeLost) {
-          console.log('Showing result popup after life loss');
+          debugLog('Showing result popup after life loss');
           showPhishingResult();
         } else if (gameOver) {
-          console.log('Game over already triggered');
+          debugLog('Game over already triggered');
         } else {
-          console.error('Failed to process life loss');
+          debugError('Failed to process life loss');
         }
       }
       emitEmailInteraction('mark_clean', currentEmailData);
     });
   } else {
-    console.error('Email Clean button not found');
+    debugError('Email Clean button not found');
   }
   
   // Event listener for the phishing link
   const phishingLinkBtn = document.getElementById('phishingLink');
   if (phishingLinkBtn) {
     phishingLinkBtn.addEventListener('click', (e) => {
-      console.log('Phishing link clicked - wrong choice', new Date().toISOString());
+      debugLog('Phishing link clicked - wrong choice', new Date().toISOString());
       e.preventDefault(); // Prevent default link behavior
       document.getElementById('emailPopup').style.display = 'none';
       wrongSound.currentTime = 0;
@@ -2656,29 +2656,29 @@ document.addEventListener('DOMContentLoaded', function() {
       const lifeLost = decrementLife();
       
       if (lifeLost) {
-        console.log('Showing result popup after phishing link click');
+        debugLog('Showing result popup after phishing link click');
         showPhishingResult();
       } else if (gameOver) {
-        console.log('Game over already triggered from phishing link');
+        debugLog('Game over already triggered from phishing link');
       } else {
-        console.error('Failed to process life loss from phishing link');
+        debugError('Failed to process life loss from phishing link');
       }
       emitEmailInteraction('click_link', currentEmailData);
     });
   } else {
-    console.error('Phishing link not found');
+    debugError('Phishing link not found');
   }
 
   const emailMaliciousBtn = document.getElementById('emailMalicious');
   if (emailMaliciousBtn) {
     emailMaliciousBtn.addEventListener('click', () => {
-      console.log('Email Malicious button clicked');
+      debugLog('Email Malicious button clicked');
       document.getElementById('emailPopup').style.display = 'none';
       
       // Check if this is a legitimate or phishing email
       if (currentEmailData && currentEmailData.label === 'phishing') {
         // Correct action for phishing email
-        console.log('Correct choice - phishing email reported');
+        debugLog('Correct choice - phishing email reported');
         correctSound.currentTime = 0;
         correctSound.play();
         
@@ -2688,14 +2688,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Increase player level for correct answer
         playerLevel++;
-        console.log(`Player leveled up to level ${playerLevel}`);
+        debugLog(`Player leveled up to level ${playerLevel}`);
         
         // Show phishing education result
         showPhishingResult();
         emitEmailInteraction('report_phishing', currentEmailData);
       } else {
         // Wrong action for legitimate email
-        console.log('Wrong choice - legitimate email reported as malicious');
+        debugLog('Wrong choice - legitimate email reported as malicious');
         wrongSound.currentTime = 0;
         wrongSound.play();
         
@@ -2703,19 +2703,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const lifeLost = decrementLife();
         
         if (lifeLost) {
-          console.log('Showing result popup after life loss');
+          debugLog('Showing result popup after life loss');
           showLegitimateEmailResult();
         } else if (gameOver) {
-          console.log('Game over already triggered');
+          debugLog('Game over already triggered');
         } else {
-          console.error('Failed to process life loss');
+          debugError('Failed to process life loss');
         }
         emitEmailInteraction('report_phishing', currentEmailData);
       }
       resumeGameAfterPopup();
     });  
   } else {
-    console.error('Email Malicious button not found');
+    debugError('Email Malicious button not found');
   }
 
   // NOTE: Removed duplicate event listeners for phone popup buttons
@@ -2739,5 +2739,5 @@ document.addEventListener('DOMContentLoaded', function() {
   window.lives = lives;
   window.updateLivesDisplay = updateLivesDisplay;
   window.decrementLife = decrementLife;
-  console.log('Game controllers exposed to window scope for game-fixes.js');
+  debugLog('Game controllers exposed to window scope for game-fixes.js');
 });

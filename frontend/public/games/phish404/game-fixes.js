@@ -14,7 +14,7 @@ function preserveCoinsAndResetControllers() {
   let currentCoins = 0;
   if (coinCtrl) {
     currentCoins = coinCtrl.coinsCollected;
-    console.log('Preserving coin count:', currentCoins);
+    debugLog('Preserving coin count:', currentCoins);
   }
   
   // Reset all controllers except coin count
@@ -34,15 +34,15 @@ function preserveCoinsAndResetControllers() {
 
 // Function to ensure loseLife is called correctly
 function safelyLoseLife() {
-  console.log('Safely losing life');
+  debugLog('Safely losing life');
   if (typeof window.loseLife === 'function') {
     window.loseLife();
   } else {
-    console.error('loseLife function not found, trying alternatives');
+    debugError('loseLife function not found, trying alternatives');
     if (window.game && typeof window.game.loseLife === 'function') {
       window.game.loseLife();
     } else if (window.lives > 0) {
-      console.log('Using manual life reduction');
+      debugLog('Using manual life reduction');
       window.lives--;
       if (typeof window.updateLivesDisplay === 'function') {
         window.updateLivesDisplay();

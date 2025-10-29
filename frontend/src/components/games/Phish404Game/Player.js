@@ -1,3 +1,5 @@
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 export default class Player {
    WALK_TIMER = 200;
    walkTimer = this.WALK_TIMER;
@@ -60,7 +62,7 @@ export default class Player {
     };
 
     update(gameSpeed, frametimeDelta) {
-        //console.log(this.jumpPressed);
+        //debugLog(this.jumpPressed);
         this.walk(gameSpeed, frametimeDelta);  
         this.jump(frametimeDelta);
     } // update

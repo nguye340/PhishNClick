@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
+
 
 export async function GET() {
   try {
@@ -52,7 +54,7 @@ export async function GET() {
         throw new Error(`Backend API returned ${response.status}`);
       }
     } catch (backendError) {
-      console.log('Backend not available, using fallback:', backendError.message);
+      debugLog('Backend not available, using fallback:', backendError.message);
       
       // Fallback: return mock data structure
       const isVishing = Math.random() > 0.5;
@@ -85,7 +87,7 @@ export async function GET() {
       });
     }
   } catch (error) {
-    console.error('Voice call API error:', error);
+    debugError('Voice call API error:', error);
     return NextResponse.json(
       { 
         success: false, 
