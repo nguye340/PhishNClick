@@ -34,7 +34,7 @@ export function GameModes() {
             description="Click smart, close fast! Malicious pop-ups flood your screen while benign ones hide among them. React with speed and precision—close the wrong one, and you lose points, or worse!"
             color="magenta"
             href="/games/popup-manic"
-            thumbnail="/screenshots/popup-manic4.png"
+            thumbnail="/img/popup-manic4.png"
           />
 
           <GameModeCard
@@ -42,7 +42,7 @@ export function GameModes() {
             description="Jump over scams before they jump you. A side-scroller where your catphish hero leaps past waves of inbox hazards, training you to recognize threats through pure instinct."
             color="cyan"
             href="/games/phish404"
-            thumbnail="/screenshots/phish404-2.png"
+            thumbnail="/img/phish404-2.png"
           />
 
           <GameModeCard
@@ -50,7 +50,7 @@ export function GameModes() {
             description="Shoot the phish, not the facts. Like Duck Hunt for cyber threats. Take aim at sketchy messages—miss one, and it might just be a real-world breach. Levels scale from rookie spam to red-team bait."
             color="green"
             href="/games/phish-hunt"
-            thumbnail="/screenshots/phishhunt4.png"
+            thumbnail="/img/phishhunt4.png"
           />
 
           <GameModeCard
@@ -58,7 +58,7 @@ export function GameModes() {
             description="Bite or bail — the inbox is your fishing ground. Fish icons hide emails—some safe, others sinister. Read, react, and reel in the legit ones while tossing the phish. Fast eyes win the game."
             color="yellow"
             href="/games/hooked-or-cooked"
-            thumbnail="/screenshots/hooked-or-cooked.png"
+            thumbnail="/img/hooked-or-cooked.png"
           />
         </div>
       </div>
