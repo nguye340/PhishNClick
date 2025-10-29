@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { PopupComponentProps } from './types';
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
 
 interface PhoneCallUIProps extends PopupComponentProps {
   // All required props are already in PopupComponentProps
@@ -167,8 +168,6 @@ const PhoneCallUI: React.FC<PhoneCallUIProps> = ({
   
   const callerInitials = getCallerInitials(callerName);
   const avatarBgColor = getRandomAvatarColor(callerName);
-import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
-
 
   return (
     <motion.div

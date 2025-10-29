@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react';
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
 
 interface GameDialogueProps {
   text: string;
@@ -74,8 +75,6 @@ const GameDialogue: React.FC<GameDialogueProps> = ({
 
   // Handle click to complete text immediately or proceed
   const handleClick = () => {
-import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
-
     if (isTyping) {
       // If still typing, show all text immediately
       setDisplayedText(fullTextRef.current);
