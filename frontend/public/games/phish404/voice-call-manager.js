@@ -44,7 +44,15 @@ class VoiceCallManager {
   async fetchRandomVoiceCall() {
     try {
       console.log('🔍 Fetching voice call from API...');
-      const response = await fetch('http://localhost:5000/api/voice-calls/random');
+
+      const baseUrl = (typeof window !== 'undefined' && window.location?.origin)
+        ? window.location.origin
+        : '';
+      const endpoint = `${baseUrl}/api/voice/random`;
+
+      console.log('🌐 Voice call endpoint:', endpoint);
+
+      const response = await fetch(endpoint);
       console.log('📡 API Response status:', response.status);
       
       const result = await response.json();
