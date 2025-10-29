@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { resetGameProgression } from '../../utils/game-progression'
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils'
 
 interface QuizQuestion {
   id: number
@@ -35,8 +36,6 @@ interface PlayerStats {
 
 // Enhanced quiz questions covering all 4 games with diverse question types
 const QUIZ_QUESTIONS: QuizQuestion[] = [
-import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
-
   // POPUP UI QUESTION
   {
     id: 1,

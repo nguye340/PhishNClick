@@ -5,11 +5,10 @@ import Image from 'next/image'
 import { Fireworks } from '../effects/fireworks'
 import { AboutUsModal } from '../modals/about-us-modal'
 import { motion, AnimatePresence } from 'framer-motion'
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
 
 // Fish colors
 const FISH_COLORS: string[] = [
-import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
-
   '#00FFFF', // Cyan
   '#FF00FF', // Magenta
   '#FFFF00', // Yellow

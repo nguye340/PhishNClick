@@ -26,11 +26,10 @@ import { AnimatedPopup, TrapGIF, InfectionOverlay, FreezeEffect, SlowMotionEffec
 import { GameSummaryModal } from './game-summary-modal'
 import { logEvent } from '../../../lib/telemetry'
 import { GameEvents } from '../../../lib/game-events'
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils'
 
 // Default dimensions for legacy popups
 const DEFAULT_POPUP_SIZE = {
-import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
-
   width: 450, // BIGGER for better visibility
   height: 350  // BIGGER for better visibility
 };

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { RiveMainCharacter } from "../../components/rive"
 import { GameDialogue } from "@/components/ui"
+import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
 
 interface Option {
   id: string;
@@ -83,8 +84,6 @@ const questions: Question[] = [
 ]
 
 const phishingEmails: PhishingEmail[] = [
-import { debugLog, debugError, debugWarn } from '@/lib/debug-utils';
-
   {
     id: "1",
     from: "info@sheirdancollege.ca",
