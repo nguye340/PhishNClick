@@ -111,7 +111,7 @@ export function LandingHero() {
                     onClick={handleInsertCoin}
                     className={`coin-button relative font-arcade text-xl px-10 py-5 bg-arcade-green text-white rounded-lg transition-colors group ${isButtonPressed ? 'active' : ''}`}
                   >
-                    <span className="relative z-10 vhs-aberration glow-heading">Start Here</span>
+                    <span className="coin-button-text relative z-10 vhs-aberration glow-heading">Start Here</span>
                     <div className="vhs-noise"></div>
                     <div className="vhs-glitch"></div>
                   </button>
@@ -129,9 +129,9 @@ export function LandingHero() {
 
                 <a
                   href="#choose-your-adventure"
-                  className="inline-flex items-center justify-center font-terminal text-lg px-8 py-4 border-2 border-arcade-magenta text-arcade-magenta rounded-lg transition-all transform hover:-translate-y-1 hover:bg-arcade-magenta hover:text-black active:translate-y-0"
+                  className="inline-flex items-center justify-center font-terminal text-lg px-8 py-4 rounded-lg secondary-cta"
                 >
-                  Explore Training Paths
+                  Explore Training Modules
                 </a>
               </div>
 
