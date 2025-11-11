@@ -5,17 +5,11 @@ services:
     image: nguyenthaohan214/phishnclick-backend:latest
     env_file:
       - backend.env
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"                     # INTERNAL only
+    volumes:
+      - /opt/phishnclick/uploads:/app/uploads   # adjust path to your app
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
       interval: 30s
@@ -24,11 +18,8 @@ services:
       start_period: 40s
     logging:
       driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - phishnclick-net
+      options: { max-size: "10m", max-file: "3" }
+    networks: [ phishnclick-net ]
 
   frontend:
     image: nguyenthaohan214/phishnclick-frontend:latest
@@ -37,17 +28,9 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"                     # INTERNAL only
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 512M
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
       interval: 30s
@@ -56,12 +39,100 @@ services:
       start_period: 60s
     logging:
       driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - phishnclick-net
+      options: { max-size: "10m", max-file: "3" }
+    networks: [ phishnclick-net ]
+
+  caddy:
+    image: caddy
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /opt/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - /opt/phishnclick/uploads:/srv/uploads:ro   # serve uploads statically
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [ phishnclick-net ]
 
 networks:
   phishnclick-net:
     driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+# name: phishnclick-prod
+
+# services:
+#   backend:
+#     image: nguyenthaohan214/phishnclick-backend:latest
+#     env_file:
+#       - backend.env
+#     ports:
+#       - "5000:5000"
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '1.0'
+#           memory: 512M
+#         reservations:
+#           cpus: '0.25'
+#           memory: 256M
+#     healthcheck:
+#       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 5
+#       start_period: 40s
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     networks:
+#       - phishnclick-net
+
+#   frontend:
+#     image: nguyenthaohan214/phishnclick-frontend:latest
+#     env_file:
+#       - frontend.env
+#     depends_on:
+#       backend:
+#         condition: service_healthy
+#     ports:
+#       - "3000:3000"
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '1.0'
+#           memory: 1G
+#         reservations:
+#           cpus: '0.25'
+#           memory: 512M
+#     healthcheck:
+#       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 5
+#       start_period: 60s
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
+#     networks:
+#       - phishnclick-net
+
+# networks:
+#   phishnclick-net:
+#     driver: bridge
