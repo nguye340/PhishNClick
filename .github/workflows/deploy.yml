@@ -10,11 +10,15 @@ env:
   COMPOSE_FILE: docker-compose.prod.yml
   APP_DIR: /opt/phishnclick
   FRONTEND_PUBLIC_API_URL: ${{ secrets.FRONTEND_PUBLIC_API_URL }}
+  #OAuth client IDs needed by the frontend bundle
+  NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+  NEXT_PUBLIC_GITHUB_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GITHUB_CLIENT_ID }}
 
 jobs:
   build-and-push:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     
     steps:
       - name: Checkout code
@@ -30,16 +34,16 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push backend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: true
           tags: ${{ env.DOCKERHUB_USERNAME }}/phishnclick-backend:latest
           cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/phishnclick-backend:buildcache
           cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/phishnclick-backend:buildcache,mode=max
-
+          provenance: false  # ADD: prevents extra manifest layers that can confuse docker pull
       - name: Build and push frontend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./frontend
           push: true
@@ -49,20 +53,22 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=${{ env.FRONTEND_PUBLIC_API_URL }}
             NEXT_PUBLIC_BACKEND_URL=${{ env.FRONTEND_PUBLIC_API_URL }}
-
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ env.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+            NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ env.NEXT_PUBLIC_GITHUB_CLIENT_ID }}
   deploy:
     name: Deploy to EC2
     needs: build-and-push
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     env:
       REPO: ${{ github.repository }}
     
     steps:
       - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.0
         env:
-          APP_DIR: ${{ env.APP_DIR }}
+          APP_DIR: ${{ env.APP_DIR }} # Since AWS EC2 Console don't necessarily know 'env' variables
           COMPOSE_FILE: ${{ env.COMPOSE_FILE }}
           REPO: ${{ env.REPO }}
         with:
@@ -70,43 +76,42 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: APP_DIR,COMPOSE_FILE,REPO
+          command_timeout: 8m
           script: |
             set -e
-            
+
             echo "==> Setting up deployment directory"
             sudo mkdir -p "${APP_DIR}"
             sudo chown -R ubuntu:ubuntu "${APP_DIR}"
             cd "${APP_DIR}"
-            
+
             echo "==> Syncing repository"
             if [ -d ".git" ]; then
               git fetch origin
               git reset --hard origin/main
               git clean -fd
             else
-              # Backup env files
-              mkdir -p /tmp/phishnclick-backup
-              cp backend.env /tmp/phishnclick-backup/ 2>/dev/null || true
-              cp frontend.env /tmp/phishnclick-backup/ 2>/dev/null || true
-              
-              # Clean and clone
+              # backup to home dir instead of /tmp (for more security)
+              mkdir -p ~/phishnclick-backup
+              cp backend.env ~/phishnclick-backup/ 2>/dev/null || true
+              cp frontend.env ~/phishnclick-backup/ 2>/dev/null || true
+
               sudo rm -rf "${APP_DIR}"/*
               sudo rm -rf "${APP_DIR}/.git"
               git clone "https://github.com/${REPO}" "${APP_DIR}"
               cd "${APP_DIR}"
-              
-              # Restore env files
-              cp /tmp/phishnclick-backup/backend.env . 2>/dev/null || true
-              cp /tmp/phishnclick-backup/frontend.env . 2>/dev/null || true
+
+              cp ~/phishnclick-backup/backend.env . 2>/dev/null || true
+              cp ~/phishnclick-backup/frontend.env . 2>/dev/null || true
             fi
-            
+
             echo "==> Deploying containers"
-            docker compose -f "${COMPOSE_FILE}" down || true
             docker compose -f "${COMPOSE_FILE}" pull
-            docker compose -f "${COMPOSE_FILE}" up -d
-            
+            docker compose -f "${COMPOSE_FILE}" up -d --remove-orphans
+            # --remove-orphans handles removed services cleanly
+
             echo "==> Cleaning up"
             docker image prune -af || true
-            
+
             echo "==> Deployment complete"
             docker compose -f "${COMPOSE_FILE}" ps
